@@ -30,6 +30,7 @@
   },
   "homepage": "https://github.com/httptoolkit/mockrtc#readme",
   "devDependencies": {
+    "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.1.0",
     "chai": "^4.3.6",
@@ -41,7 +42,12 @@
     "karma-mocha": "^2.0.1",
     "karma-spec-reporter": "^0.0.33",
     "mocha": "^9.2.0",
+    "rollup-plugin-node-polyfills": "^0.2.1",
     "ts-node": "^10.5.0",
-    "typescript": "^4.5.5"
+    "typescript": "^4.5.5",
+    "util": "^0.12.4"
+  },
+  "dependencies": {
+    "mockttp": "^2.6.0"
   }
 }
