@@ -15,8 +15,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "TS_NODE_FILES=true ts-node ./src/admin-bin.ts -c karma start",
-    "test:dev": "npm run test -- --auto-watch --no-single-run"
+    "test": "karma start",
+    "test:dev": "CONTINUOUS_TEST=true npm run test"
   },
   "repository": {
     "type": "git",
@@ -51,6 +51,7 @@
     "karma-mocha": "^2.0.1",
     "karma-spec-reporter": "^0.0.33",
     "mocha": "^9.2.0",
+    "node-dev": "^7.1.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "ts-node": "^10.5.0",
     "typescript": "^4.5.5",

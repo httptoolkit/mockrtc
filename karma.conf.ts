@@ -1,7 +1,30 @@
-const { NodeModulesPolyfillPlugin } = require('./test/node-esbuild-polyfills');
-const { NodeGlobalsPolyfillPlugin } = require('@esbuild-plugins/node-globals-polyfill');
+const CONTINUOUS = process.env.CONTINUOUS_TEST === 'true';
 
-module.exports = function(config) {
+import * as ChildProcess from 'child_process';
+
+import { NodeModulesPolyfillPlugin } from './test/node-esbuild-polyfills';
+import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
+
+if (CONTINUOUS) {
+    const adminProc = ChildProcess.spawn(
+        "./node_modules/.bin/node-dev",
+        [
+            '--notify=false',
+            './test/start-test-admin-server.ts'
+        ],
+        { stdio: 'inherit' }
+    );
+
+    process.on('exit', () => adminProc.kill());
+
+    adminProc.on('exit', (code) => {
+        process.exit(code ?? 0); // Signalled = null = we killed it
+    });
+} else {
+    require('./test/start-test-admin-server');
+}
+
+module.exports = function(config: any) {
     config.set({
         frameworks: ['mocha', 'chai'],
         files: [
@@ -36,8 +59,8 @@ module.exports = function(config) {
 
         browsers: ['ChromeHeadless'],
 
-        autoWatch: false,
-        singleRun: true,
+        autoWatch: CONTINUOUS,
+        singleRun: !CONTINUOUS,
         concurrency: Infinity
     });
 };

@@ -1,9 +1,10 @@
-// A fork of https://www.npmjs.com/package/@esbuild-plugins/node-modules-polyfill, but using
-// the modern polyfills from https://www.npmjs.com/package/node-stdlib-browser.
+// A fork of https://www.npmjs.com/package/@esbuild-plugins/node-modules-polyfill,
+// but with some polyfills updated.
 
-const escapeStringRegexp = require('escape-string-regexp')
-const fs = require('fs')
-const path = require('path')
+import * as escapeStringRegexp from 'escape-string-regexp'
+import * as fs from 'fs'
+import * as path from 'path'
+import * as esbuild from 'esbuild'
 
 const EMPTY_PATH = require.resolve(
     'rollup-plugin-node-polyfills/polyfills/empty.js',
@@ -157,14 +158,21 @@ function builtinsPolyfills() {
 const NAME = 'node-modules-polyfills'
 const NAMESPACE = NAME
 
-function removeEndingSlash(importee) {
+function removeEndingSlash(importee: string) {
     if (importee && importee.slice(-1) === '/') {
         importee = importee.slice(0, -1)
     }
     return importee
 }
 
-exports.NodeModulesPolyfillPlugin = function NodeModulesPolyfillPlugin(options = {}) {
+export interface NodePolyfillsOptions {
+    name?: string
+    namespace?: string
+}
+
+export function NodeModulesPolyfillPlugin(
+    options: NodePolyfillsOptions = {}
+) {
     const { namespace = NAMESPACE, name = NAME } = options
     if (namespace.endsWith('commonjs')) {
         throw new Error(`namespace ${namespace} must not end with commonjs`)
@@ -176,7 +184,7 @@ exports.NodeModulesPolyfillPlugin = function NodeModulesPolyfillPlugin(options =
 
     return {
         name,
-        setup: function setup({ onLoad, onResolve, initialOptions }) {
+        setup: function setup({ onLoad, onResolve, initialOptions }: esbuild.PluginBuild) {
             // polyfills contain global keyword, it must be defined
             if (initialOptions?.define && !initialOptions.define?.global) {
                 initialOptions.define['global'] = 'globalThis'
@@ -185,7 +193,7 @@ exports.NodeModulesPolyfillPlugin = function NodeModulesPolyfillPlugin(options =
             }
 
             // TODO these polyfill module cannot import anything, is that ok?
-            async function loader(args) {
+            async function loader(args: esbuild.OnLoadArgs): Promise<any> {
                 try {
                     const isCommonjs = args.namespace.endsWith('commonjs')
 
@@ -224,7 +232,7 @@ exports.NodeModulesPolyfillPlugin = function NodeModulesPolyfillPlugin(options =
             const filter = new RegExp(
                 polyfilledBuiltinsNames.map(escapeStringRegexp).join('|'), // TODO builtins could end with slash, keep in mind in regex
             )
-            async function resolver(args) {
+            async function resolver(args: esbuild.OnResolveArgs) {
                 const ignoreRequire = args.namespace === commonjsNamespace
 
                 if (!polyfilledBuiltins.has(args.path)) {
@@ -245,7 +253,7 @@ exports.NodeModulesPolyfillPlugin = function NodeModulesPolyfillPlugin(options =
     }
 }
 
-function commonJsTemplate({ importPath }) {
+function commonJsTemplate({ importPath }: { importPath: string }) {
     return `
 const polyfill = require('${importPath}')
 if (polyfill && polyfill.default) {
