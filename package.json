@@ -4,13 +4,19 @@
   "description": "Powerful friendly WebRTC mock peer & proxy",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
+  "browser": {
+    "dist/main.js": "./dist/main-browser.js"
+  },
+  "bin": {
+    "mockrtc": "./dist/admin-bin.js"
+  },
   "directories": {
     "test": "test"
   },
   "scripts": {
     "build": "tsc",
-    "pretest": "npm run build",
-    "test": "karma start"
+    "test": "TS_NODE_FILES=true ts-node ./src/admin-bin.ts -c karma start",
+    "test:dev": "npm run test -- --auto-watch --no-single-run"
   },
   "repository": {
     "type": "git",
@@ -29,6 +35,9 @@
     "url": "https://github.com/httptoolkit/mockrtc/issues"
   },
   "homepage": "https://github.com/httptoolkit/mockrtc#readme",
+  "engines": {
+    "node": ">=14.17.0"
+  },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@types/chai": "^4.3.0",
@@ -48,6 +57,9 @@
     "util": "^0.12.4"
   },
   "dependencies": {
-    "mockttp": "^2.6.0"
+    "graphql": "^15.8.0",
+    "graphql-tag": "^2.12.6",
+    "mockttp": "^2.7.0",
+    "node-datachannel": "^0.2.3"
   }
 }

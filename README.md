@@ -44,12 +44,11 @@ describe("MockRTC", () => {
         const dataChannel = localConnection.createDataChannel("dataChannel");
 
         const localOffer = await localConnection.createOffer();
-        localConnection.setLocalDescription(offer);
+        localConnection.setLocalDescription(localOffer);
 
         // Get the remote details for the mock peer:
-        const { mockIceCandidate, mockAnswer } = await mockPeer.getConnectionAnswer(localOffer);
-        localConnection.addIceCandidate(mockIceCandidate);
-        localConnection.setRemoteDescription(mockAnswer);
+        const mockAnswer = await mockPeer.getSessionDescription(localOffer);
+        await localConnection.setRemoteDescription(mockAnswer.sessionDescription);
 
         // Once the connection is open, message the peer
         dataChannel.onopen = () => {

@@ -1,6 +1,11 @@
-import * as Mockttp from 'mockttp';
+import { MockRTC } from "./mockrtc";
+import { MockRTCServer } from "./mockrtc-server";
+import { MockRTCAdminServer } from "./mockrtc-admin-server";
 
-export async function mock() {
-    console.log(Mockttp);
-    return true
+export function getLocal(): MockRTC {
+    return new MockRTCServer();
+}
+
+export function getAdminServer(): MockRTCAdminServer {
+    return new MockRTCAdminServer();
 }
