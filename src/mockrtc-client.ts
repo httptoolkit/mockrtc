@@ -4,10 +4,10 @@ import { PluggableAdmin } from 'mockttp';
 import { MockRTC, MockRTCPeerBuilder } from "./mockrtc";
 
 import { MockRTCAdminPlugin } from "./mockrtc-admin-plugin";
-import { HandlerStep, MockRTCHandlerBuilder } from './mockrtc-handler-builder';
-
 import type { MockRTCPeer } from './mockrtc-peer';
 import { MockRTCRemotePeer } from './mockrtc-remote-peer';
+import { MockRTCHandlerBuilder } from './handling/handler-builder';
+import { HandlerStep } from './handling/handler-steps';
 
 export type MockRTCClientOptions = PluggableAdmin.AdminClientOptions;
 

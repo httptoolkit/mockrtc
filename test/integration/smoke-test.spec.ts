@@ -33,7 +33,7 @@ describe("MockRTC", function () {
 
     it("should pass the README example test", async () => {
         // Create a mock peer who sends 'Goodbye' after receiving its first message.
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenReply('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
 
         // Create a data connection:
         const localConnection = new RTCPeerConnection();

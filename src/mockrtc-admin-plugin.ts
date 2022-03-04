@@ -1,7 +1,7 @@
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 
-import { HandlerStep } from './mockrtc-handler-builder';
+import { HandlerStep, StepLookup } from './handling/handler-steps';
 import { MockRTCServer } from './mockrtc-server';
 
 export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
@@ -25,7 +25,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
         }
 
         input RTCHandlerData {
-            steps: [Json!]!
+            steps: [Raw!]!
         }
 
         type MockedPeer {
@@ -41,13 +41,17 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
             type: String!
             sdp: String!
         }
+
+        scalar HandlerStep
     `;
 
     buildResolvers() {
         return {
             Mutation: {
-                createPeer: (__: any, { steps }: { steps: Array<HandlerStep> }) => {
-                    return this.mockRTCServer.buildPeerFromData(steps);
+                createPeer: (__: any, { data: { steps } }: { data: { steps: Array<HandlerStep> } }) => {
+                    return this.mockRTCServer.buildPeerFromData(
+                        steps.map(deserializeStepData)
+                    );
                 },
                 getSessionDescription: async (__: any, { peerId, offer } : {
                     peerId: string,
@@ -62,4 +66,11 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
             }
         };
     }
+}
+
+function deserializeStepData(
+    data: { type: keyof typeof StepLookup }
+) {
+    const type = StepLookup[data.type];
+    return Object.assign(Object.create(type.prototype), data);
 }

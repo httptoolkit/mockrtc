@@ -1,6 +1,7 @@
 import { MockRTCConnectionParams } from "./mockrtc";
+import type { MockRTCPeer } from "./mockrtc-peer";
 
-export class MockRTCRemotePeer {
+export class MockRTCRemotePeer implements MockRTCPeer {
 
     constructor(
         readonly id: string,

@@ -1,43 +1,45 @@
 import { randomUUID } from 'crypto';
-import * as NodeDataChannel from 'node-datachannel';
 
 import { MockRTCConnectionParams } from "./mockrtc";
+import { HandlerStep } from './handling/handler-steps';
+import { MockRTCPeerConnection } from './webrtc/peer-connection';
 
-export class MockRTCPeer {
+export interface MockRTCPeer {
+    readonly id: string;
+    getSessionDescription(offer: RTCSessionDescriptionInit): Promise<MockRTCConnectionParams>;
+}
+
+export class MockRTCServerPeer {
 
     readonly id = randomUUID();
 
-    async getSessionDescription(offer: RTCSessionDescriptionInit): Promise<MockRTCConnectionParams> {
-        const { type: offerType, sdp: offerSdp } = offer;
-        if (!offerSdp) throw new Error("Cannot get MockRTC peer params without an offer SDP");
+    constructor(
+        private handlerSteps: HandlerStep[]
+    ) {}
 
-        const peer = new NodeDataChannel.PeerConnection("MockRTCPeer", { iceServers: [] });
+    async getSessionDescription(offer: RTCSessionDescriptionInit): Promise<MockRTCConnectionParams> {
+        const peerConn = new MockRTCPeerConnection();
 
         // Setting the remote description immediately ensures that we'll gather an 'answer'
         // localDescription, rather than an 'offer'.
-        peer.setRemoteDescription(offerSdp, offerType[0].toUpperCase() + offerType.slice(1) as any);
+        peerConn.setRemoteDescription(offer);
 
-        const gatheringCompletePromise = new Promise<void>((resolve) => {
-            peer.onGatheringStateChange((state) => {
-                if (state === 'complete') resolve();
-            });
-
-            // Handle race conditions where gathering has already completed
-            if (peer.gatheringState() === 'complete') resolve();
+        this.handleConnection(peerConn).catch((error) => {
+            console.error("Error handling WebRTC connection:", error);
+            peerConn.close().catch(() => {});
         });
-
-        peer.onDataChannel((channel) => {
-            channel.onMessage((msg) => {
-                console.log('Peer received', msg);
-                channel.sendMessage("Goodbye");
-            });
-        });
-
-        await gatheringCompletePromise;
 
         return {
-            sessionDescription: peer.localDescription() as RTCSessionDescriptionInit
+            sessionDescription: await peerConn.getLocalDescription()
         };
+    }
+
+    private async handleConnection(peerConn: MockRTCPeerConnection) {
+        for (const step of this.handlerSteps) {
+            await step.handle(peerConn);
+        }
+
+        peerConn.close();
     }
 
 }

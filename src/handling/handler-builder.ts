@@ -1,3 +1,5 @@
+import { HandlerStep, SendStep, WaitStep } from "./handler-steps";
+
 /**
  * The builder logic for composing RTC handling behaviour for both mock peers and rules,
  * by internally queuing defined actions until a `.thenX()` method is called to compile
@@ -12,16 +14,13 @@ export class MockRTCHandlerBuilder<R> {
     ) {}
 
     waitForMessage(): this {
-        // Handler logic not yet implemented
+        this.handlerSteps.push(new WaitStep());
         return this;
     }
 
-    thenReply(response: string | Buffer): Promise<R> {
-        // Handler logic not yet implemented
+    thenSend(message: string | Buffer): Promise<R> {
+        this.handlerSteps.push(new SendStep(message));
         return this.buildCallback(this.handlerSteps);
     }
 
-}
-
-export interface HandlerStep {
 }
