@@ -24,11 +24,11 @@ Let's write an automated test with MockRTC. To test WebRTC-based code, you will 
     * Using MockRTC's ICE candidates directly.
     * Installing the MockRTC browser extension (WIP), which can capture and redirect _all_ WebRTC traffic regardless of the session configuration used.
 
-A simple example of that, running in a browser using the built-in WebRTC APIs and MockRTC's ICE candidates, might look like this:
+A simple example of that, running as a test in a browser, using the built-in WebRTC APIs, might look like this:
 
 ```typescript
 import * as MockRTC from 'mockrtc'
-const mockRTC = MockRTC.getLocal();
+const mockRTC = MockRTC.getRemote({ recordMessages: true });
 
 describe("MockRTC", () => {
     // Start & stop your mock server between tests

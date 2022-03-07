@@ -1,6 +1,6 @@
 import { MockRTC } from "./mockrtc";
-import { MockRTCClient } from "./mockrtc-client";
+import { MockRTCClient, MockRTCClientOptions } from "./mockrtc-client";
 
-export function getRemote(): MockRTC {
-    return new MockRTCClient();
+export function getRemote(options: MockRTCClientOptions): MockRTC {
+    return new MockRTCClient(options);
 }

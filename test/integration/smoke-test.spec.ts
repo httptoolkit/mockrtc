@@ -26,7 +26,7 @@ before(async function () {
 
 describe("MockRTC", function () {
 
-    const mockRTC = MockRTC.getRemote();
+    const mockRTC = MockRTC.getRemote({ recordMessages: true });
 
     beforeEach(() => mockRTC.start());
     afterEach(() => mockRTC.stop());
@@ -56,6 +56,9 @@ describe("MockRTC", function () {
             dataChannel.addEventListener('message', (event) => resolve(event.data));
         });
         expect(message).to.equal('Goodbye'); // <-- We get our mock response!
+
+        // Assert on the messages the mock peer received:
+        expect(await mockPeer.getAllMessages()).to.deep.equal(['Hello']);
     });
 
 });

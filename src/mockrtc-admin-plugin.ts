@@ -2,13 +2,15 @@ import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 
 import { HandlerStep, StepLookup } from './handling/handler-steps';
+import { MockRTCOptions } from './mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 
-export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
+export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOptions, {}> {
 
-    private mockRTCServer = new MockRTCServer();
+    private mockRTCServer!: MockRTCServer;
 
-    start() {
+    start(options: MockRTCOptions) {
+        this.mockRTCServer = new MockRTCServer(options);
         return this.mockRTCServer.start();
     }
 
@@ -42,6 +44,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
             sdp: String!
         }
 
+        extend type Query {
+            getSeenMessages(peerId: ID!, channelName: String): [Raw!]
+        }
+
         scalar HandlerStep
     `;
 
@@ -62,6 +68,28 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<{}, {}> {
 
                     const result = await peer.getSessionDescription(offer);
                     return result.sessionDescription;
+                }
+            },
+            Query: {
+                getSeenMessages: async (__: any, { peerId, channelName }: {
+                    peerId: string,
+                    channelName?: string
+                }) => {
+                    const peer = this.mockRTCServer.activePeers.find(({ id }) => id === peerId);
+                    if (!peer) throw new Error("Id matches no active peer");
+
+                    const messages = await (channelName != undefined
+                        ? peer.getMessagesOnChannel(channelName)
+                        : peer.getAllMessages()
+                    );
+
+                    return messages.map((message) => {
+                        if (Buffer.isBuffer(message)) {
+                            return { type: 'buffer', value: message.toString('base64') };
+                        } else {
+                            return message;
+                        }
+                    });
                 }
             }
         };

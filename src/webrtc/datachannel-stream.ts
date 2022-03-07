@@ -7,7 +7,7 @@ import * as NodeDataChannel from 'node-datachannel';
  * and support for piping data elsewhere.
  *
  * Read & written data may be either UTF-8 strings or Buffers - this difference exists at
- * the protocol level, and is preserved here.
+ * the protocol level, and is preserved here throughout.
  */
 export class DataChannelStream extends stream.Duplex {
 
@@ -22,7 +22,7 @@ export class DataChannelStream extends stream.Duplex {
         super({
             ...streamOptions,
             allowHalfOpen: false, // Not supported by WebRTC (AFAICT)
-            decodeStrings: false // Preserve the string/buffer distinction (WebRTC treats them differently)
+            objectMode: true // Preserve the string/buffer distinction (WebRTC treats them differently)
         });
 
         rawChannel.onMessage((msg) => {
@@ -55,11 +55,18 @@ export class DataChannelStream extends stream.Duplex {
         this._readActive = true;
     }
 
-    _write(chunk: string | Buffer, encoding: string, callback: (error: Error | null) => void) {
-        // The underlying source only deals with strings.
-        const sentOk = (Buffer.isBuffer(chunk))
-            ? this.rawChannel.sendMessageBinary(chunk)
-            : this.rawChannel.sendMessage(chunk);
+    _write(chunk: string | Buffer | unknown, encoding: string, callback: (error: Error | null) => void) {
+        let sentOk: boolean;
+        if (Buffer.isBuffer(chunk)) {
+            sentOk = this.rawChannel.sendMessageBinary(chunk);
+        } else if (typeof chunk === 'string') {
+            sentOk = this.rawChannel.sendMessage(chunk);
+        } else {
+            const typeName = (chunk as object).constructor.name ||
+                (typeof chunk);
+            callback(new Error(`Cannot write ${typeName} to DataChannel stream`));
+            return;
+        }
 
         if (sentOk) {
             callback(null);
@@ -71,6 +78,10 @@ export class DataChannelStream extends stream.Duplex {
     _final() {
         // When the writable end finishes, we close the DataChannel.
         this.rawChannel.close();
+    }
+
+    get label() {
+        return this.rawChannel.getLabel();
     }
 
 }
