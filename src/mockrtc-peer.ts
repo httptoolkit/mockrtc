@@ -1,4 +1,4 @@
-import { MockRTCConnectionParams } from "./mockrtc";
+import { MockRTCOfferParams } from "./mockrtc";
 
 export interface MockRTCPeerOptions {
     recordMessages?: boolean;
@@ -7,6 +7,7 @@ export interface MockRTCPeerOptions {
 export interface MockRTCPeer {
     readonly id: string;
 
+    createOffer(): Promise<MockRTCOfferParams>;
     answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
 
     getAllMessages(): Promise<Array<string | Buffer>>;

@@ -1,6 +1,6 @@
 import { randomUUID } from 'crypto';
 
-import { MockRTCConnectionParams } from "./mockrtc";
+import { MockRTCOfferParams } from "./mockrtc";
 import { MockRTCPeer, MockRTCPeerOptions } from './mockrtc-peer';
 import { HandlerStep } from './handling/handler-steps';
 
@@ -16,12 +16,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
         private options: MockRTCPeerOptions = {}
     ) {}
 
-    async answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
+    private createConnection() {
         const peerConn = new MockRTCPeerConnection();
-
-        // Setting the remote description immediately ensures that we'll gather an 'answer'
-        // localDescription, rather than an 'offer'.
-        peerConn.setRemoteDescription(offer);
 
         this.handleConnection(peerConn).catch((error) => {
             console.error("Error handling WebRTC connection:", error);
@@ -38,6 +34,28 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 });
             });
         }
+
+        return peerConn;
+    }
+
+    async createOffer(): Promise<MockRTCOfferParams> {
+        const peerConn = this.createConnection();
+        const offer = await peerConn.getLocalDescription();
+
+        return {
+            offer: offer,
+            setAnswer: async (answer: RTCSessionDescriptionInit) => {
+                peerConn.setRemoteDescription(answer);
+            }
+        };
+    }
+
+    async answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
+        const peerConn = this.createConnection();
+
+        // Setting the remote description ensures that we'll gather an 'answer'
+        // localDescription, rather than an 'offer'.
+        peerConn.setRemoteDescription(offer);
 
         return peerConn.getLocalDescription();
     }

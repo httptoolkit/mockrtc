@@ -2,7 +2,7 @@ import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 
 import { HandlerStep, StepLookup } from './handling/handler-steps';
-import { MockRTCOptions } from './mockrtc';
+import { MockRTCOfferParams, MockRTCOptions } from './mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 
 export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOptions, {}> {
@@ -23,6 +23,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
     schema = gql`
         extend type Mutation {
             createPeer(data: RTCHandlerData!): MockedPeer!
+
+            createOffer(peerId: ID!): SessionDescriptionResult!
+            completeOffer(originalOffer: SessionDescriptionInput!, answer: SessionDescriptionInput!): Void
+
             answerOffer(peerId: ID!, offer: SessionDescriptionInput!): SessionDescriptionResult!
         }
 
@@ -52,12 +56,34 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
     `;
 
     buildResolvers() {
+        const pendingOffers: MockRTCOfferParams[] = [];
+
         return {
             Mutation: {
                 createPeer: (__: any, { data: { steps } }: { data: { steps: Array<HandlerStep> } }) => {
                     return this.mockRTCServer.buildPeerFromData(
                         steps.map(deserializeStepData)
                     );
+                },
+                createOffer: async (__: any, { peerId }: { peerId: string }): Promise<RTCSessionDescriptionInit> => {
+                    const peer = this.mockRTCServer.activePeers.find(({ id }) => id === peerId);
+                    if (!peer) throw new Error("Id matches no active peer");
+
+                    const offerParams = await peer.createOffer();
+                    pendingOffers.push(offerParams);
+                    return offerParams.offer;
+                },
+                completeOffer: async (__: any, { originalOffer, answer } : {
+                    originalOffer: RTCSessionDescriptionInit,
+                    answer: RTCSessionDescriptionInit
+                }): Promise<void> => {
+                    const pendingOfferIndex = pendingOffers.findIndex(({ offer }) => offer.sdp === originalOffer.sdp);
+                    if (pendingOfferIndex === -1) throw new Error("Offer matches no pending offer");
+
+                    const pendingOffer = pendingOffers[pendingOfferIndex];
+                    pendingOffers.splice(pendingOfferIndex, 1);
+
+                    await pendingOffer.setAnswer(answer);
                 },
                 answerOffer: async (__: any, { peerId, offer } : {
                     peerId: string,

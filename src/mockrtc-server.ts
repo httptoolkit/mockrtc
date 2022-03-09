@@ -1,4 +1,4 @@
-import { MockRTC, MockRTCConnectionParams, MockRTCOptions, MockRTCPeerBuilder } from "./mockrtc";
+import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "./mockrtc";
 import { MockRTCPeer } from "./mockrtc-peer";
 import { MockRTCServerPeer } from "./mockrtc-server-peer";
 import { MockRTCHandlerBuilder } from "./handling/handler-builder";

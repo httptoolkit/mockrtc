@@ -1,6 +1,7 @@
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 
+import { MockRTCOfferParams } from "./mockrtc";
 import type { MockRTCPeer } from "./mockrtc-peer";
 
 export class MockRTCRemotePeer implements MockRTCPeer {
@@ -9,6 +10,36 @@ export class MockRTCRemotePeer implements MockRTCPeer {
         readonly id: string,
         private adminClient: PluggableAdmin.AdminClient<{}>
     ) {}
+
+    async createOffer(): Promise<MockRTCOfferParams> {
+        const offer = await this.adminClient.sendQuery<
+            { createOffer: RTCSessionDescriptionInit },
+            RTCSessionDescriptionInit
+        >({
+            query: gql`
+                mutation GetPeerRTCOffer($id: ID!) {
+                    createOffer(peerId: $id) {
+                        type
+                        sdp
+                    }
+                }
+            `,
+            variables: { id: this.id },
+            transformResponse: ({ createOffer }) => createOffer
+        });
+
+        return {
+            offer,
+            setAnswer: (answer) => this.adminClient.sendQuery({
+                query: gql`
+                    mutation GetPeerRTCOffer($originalOffer: SessionDescriptionInput!, $answer: SessionDescriptionInput!) {
+                        completeOffer(originalOffer: $originalOffer, answer: $answer)
+                    }
+                `,
+                variables: { originalOffer: offer, answer: answer }
+            })
+        };
+    }
 
     async answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
         return this.adminClient.sendQuery<

@@ -43,6 +43,15 @@ export class MockRTCPeerConnection extends EventEmitter {
      * tracks or remote description have been provided beforehand.
      */
     async getLocalDescription(): Promise<RTCSessionDescriptionInit> {
+        let setupChannel: NodeDataChannel.DataChannel | undefined;
+        if (this.rawConn.gatheringState() === 'new') {
+            // We can't create an offer until we have something to negotiate, but we don't want to
+            // negotiate ourselves when we don't really know what's being negotiated here. To work
+            // around that, we create a channel to trigger gathering & get an offer, and then we
+            // remove it before the offer is delivered, so it's never visible remotely.
+            setupChannel = this.rawConn.createDataChannel('mockrtc.setup-channel');
+        }
+
         await new Promise<void>((resolve) => {
             this.rawConn.onGatheringStateChange((state) => {
                 if (state === 'complete') resolve();
@@ -52,7 +61,9 @@ export class MockRTCPeerConnection extends EventEmitter {
             if (this.rawConn.gatheringState() === 'complete') resolve();
         });
 
-        return this.rawConn.localDescription() as RTCSessionDescriptionInit;
+        const sessionDescription = this.rawConn.localDescription() as RTCSessionDescriptionInit;
+        setupChannel?.close();
+        return sessionDescription;
     }
 
     async close() {

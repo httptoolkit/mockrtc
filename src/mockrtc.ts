@@ -30,6 +30,7 @@ export interface MockRTC {
 
 }
 
-export interface MockRTCConnectionParams {
-    sessionDescription: RTCSessionDescriptionInit;
+export interface MockRTCOfferParams {
+    offer: RTCSessionDescriptionInit;
+    setAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
 }
