@@ -49,58 +49,7 @@ export class MockRTCClient implements MockRTC {
 
         const { id } = peerData;
 
-        return new MockRTCRemotePeer(
-            id,
-            this.getPeerOfferClient(id),
-            this.getPeerMessagesClient(id)
-        );
-    }
-
-    private getPeerOfferClient(id: string) {
-        return (offer: RTCSessionDescriptionInit) => {
-            return this.adminClient.sendQuery<
-                { getSessionDescription: RTCSessionDescriptionInit },
-                RTCSessionDescriptionInit
-            >({
-                query: gql`
-                    mutation GetPeerRTCAnswer($id: ID!, $offer: RTCOffer!) {
-                        getSessionDescription(peerId: $id, offer: $offer) {
-                            type
-                            sdp
-                        }
-                    }
-                `,
-                variables: { id, offer },
-                transformResponse: ({ getSessionDescription }) => getSessionDescription
-            });
-        }
-    }
-
-    private getPeerMessagesClient(id: string) {
-        return (channelName?: string) => {
-            return this.adminClient.sendQuery<
-                { getSeenMessages: Array<string | { type: 'buffer', value: string }> },
-                Array<string | Buffer>
-            >({
-                query: gql`
-                    query GetPeerSeenMessages($id: ID!, $channelName: String) {
-                        getSeenMessages(peerId: $id, channelName: $channelName)
-                    }
-                `,
-                variables: { id, channelName },
-                transformResponse: ({ getSeenMessages }) => {
-                    return getSeenMessages.map((message) => {
-                        if (typeof message === 'string') {
-                            return message;
-                        } else if (message.type === 'buffer') {
-                            return Buffer.from(message.value, 'base64');
-                        } else {
-                            throw new Error(`Unparseable message data: ${JSON.stringify(message)}`);
-                        }
-                    });
-                }
-            });
-        }
+        return new MockRTCRemotePeer(id, this.adminClient);
     }
 
     async start(): Promise<void> {

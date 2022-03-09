@@ -16,7 +16,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
         private options: MockRTCPeerOptions = {}
     ) {}
 
-    async getSessionDescription(offer: RTCSessionDescriptionInit): Promise<MockRTCConnectionParams> {
+    async answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
         const peerConn = new MockRTCPeerConnection();
 
         // Setting the remote description immediately ensures that we'll gather an 'answer'
@@ -39,9 +39,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
             });
         }
 
-        return {
-            sessionDescription: await peerConn.getLocalDescription()
-        };
+        return peerConn.getLocalDescription();
     }
 
     private async handleConnection(peerConn: MockRTCPeerConnection) {

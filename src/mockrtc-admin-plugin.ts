@@ -23,7 +23,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
     schema = gql`
         extend type Mutation {
             createPeer(data: RTCHandlerData!): MockedPeer!
-            getSessionDescription(peerId: ID!, offer: RTCOffer!): RTCAnswer!
+            answerOffer(peerId: ID!, offer: SessionDescriptionInput!): SessionDescriptionResult!
         }
 
         input RTCHandlerData {
@@ -34,12 +34,12 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             id: ID!
         }
 
-        input RTCOffer {
+        input SessionDescriptionInput {
             type: String!
             sdp: String!
         }
 
-        type RTCAnswer {
+        type SessionDescriptionResult {
             type: String!
             sdp: String!
         }
@@ -59,15 +59,14 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         steps.map(deserializeStepData)
                     );
                 },
-                getSessionDescription: async (__: any, { peerId, offer } : {
+                answerOffer: async (__: any, { peerId, offer } : {
                     peerId: string,
                     offer: RTCSessionDescriptionInit
                 }): Promise<RTCSessionDescriptionInit> => {
                     const peer = this.mockRTCServer.activePeers.find(({ id }) => id === peerId);
                     if (!peer) throw new Error("Id matches no active peer");
 
-                    const result = await peer.getSessionDescription(offer);
-                    return result.sessionDescription;
+                    return peer.answerOffer(offer);
                 }
             },
             Query: {

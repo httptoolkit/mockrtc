@@ -7,7 +7,7 @@ export interface MockRTCPeerOptions {
 export interface MockRTCPeer {
     readonly id: string;
 
-    getSessionDescription(offer: RTCSessionDescriptionInit): Promise<MockRTCConnectionParams>;
+    answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
 
     getAllMessages(): Promise<Array<string | Buffer>>;
     getMessagesOnChannel(channelName: string): Promise<Array<string | Buffer>>;
