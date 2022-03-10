@@ -5,7 +5,8 @@
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
   "browser": {
-    "dist/main.js": "./dist/main-browser.js"
+    "dist/main.js": "./dist/main-browser.js",
+    "node-datachannel": false
   },
   "bin": {
     "mockrtc": "./dist/admin-bin.js"

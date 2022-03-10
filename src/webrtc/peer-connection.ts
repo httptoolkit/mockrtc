@@ -13,22 +13,42 @@ export class MockRTCPeerConnection extends EventEmitter {
         super();
 
         this.rawConn.onDataChannel((channel) => {
-            const channelStream = new DataChannelStream(channel);
-            this.channels.push(channelStream);
-
-            channel.onClosed(() => {
-                const channelIndex = this.channels.findIndex(c => c === channelStream);
-                if (channelIndex !== -1) {
-                    this.channels.splice(channelIndex, 1);
-                }
-            });
-
-            channelStream.on('error', (error) => {
-                console.error('Channel error:', error);
-            });
-
-            this.emit('channel-open', channelStream);
+            this.trackNewChannel(channel, { isLocal: false });
         });
+
+        this.rawConn.onStateChange((state) => {
+            if (state === 'closed') this.emit('connection-closed');
+        });
+    }
+
+    createDataChannel(label: string) {
+        const channel = this.rawConn.createDataChannel(label);
+        return this.trackNewChannel(channel, { isLocal: true });
+    }
+
+    private trackNewChannel(channel: NodeDataChannel.DataChannel, options: { isLocal: boolean }) {
+        const channelStream = new DataChannelStream(channel);
+        this.channels.push(channelStream);
+
+        channelStream.on('close', () => {
+            const channelIndex = this.channels.findIndex(c => c === channelStream);
+            if (channelIndex !== -1) {
+                this.channels.splice(channelIndex, 1);
+            }
+        });
+
+        channelStream.on('error', (error) => {
+            console.error('Channel error:', error);
+        });
+
+        this.emit('channel-open', channelStream);
+        if (options.isLocal) {
+            this.emit('local-channel-open', channelStream);
+        } else {
+            this.emit('remote-channel-open', channelStream);
+        }
+
+        return channelStream;
     }
 
     setRemoteDescription(description: RTCSessionDescriptionInit) {
@@ -67,9 +87,9 @@ export class MockRTCPeerConnection extends EventEmitter {
     }
 
     async close() {
-        const closedPromise = new Promise<void>((resolve) => {
-            if (this.rawConn.state() === 'closed') resolve();
+        if (this.rawConn.state() === 'closed') return;
 
+        const closedPromise = new Promise<void>((resolve) => {
             this.rawConn.onStateChange((state) => {
                 if (state === 'closed') resolve();
             });
@@ -77,6 +97,29 @@ export class MockRTCPeerConnection extends EventEmitter {
 
         this.rawConn.close();
         await closedPromise;
+        this.emit('connection-closed');
+    }
+
+    proxyTrafficFrom(otherConnection: MockRTCPeerConnection) {
+        otherConnection.channels.forEach((otherChannel: DataChannelStream) => {
+            const mirrorChannel = this.rawConn.createDataChannel(otherChannel.label);
+            const mirrorChannelStream = this.trackNewChannel(mirrorChannel, { isLocal: true });
+            otherChannel.pipe(mirrorChannelStream).pipe(otherChannel);
+        });
+
+        otherConnection.addListener('local-channel-open', (otherChannel: DataChannelStream) => {
+            const mirrorChannel = this.rawConn.createDataChannel(otherChannel.label);
+            const mirrorChannelStream = this.trackNewChannel(mirrorChannel, { isLocal: true });
+            otherChannel.pipe(mirrorChannelStream).pipe(otherChannel);
+        });
+
+        this.on('remote-channel-open', (incomingChannel: DataChannelStream) => {
+            const otherChannel = otherConnection.createDataChannel(incomingChannel.label);
+            incomingChannel.pipe(otherChannel).pipe(incomingChannel);
+        });
+
+        this.on('connection-closed', () => otherConnection.close());
+        otherConnection.on('connection-closed', () => this.close());
     }
 
 }

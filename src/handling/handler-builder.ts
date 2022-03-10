@@ -1,4 +1,9 @@
-import { HandlerStep, SendStep, WaitStep } from "./handler-steps";
+import {
+    type HandlerStep,
+    PeerProxyStep,
+    SendStep,
+    WaitStep
+} from "./handler-steps";
 
 /**
  * The builder logic for composing RTC handling behaviour for both mock peers and rules,
@@ -18,8 +23,18 @@ export class MockRTCHandlerBuilder<R> {
         return this;
     }
 
-    thenSend(message: string | Buffer): Promise<R> {
+    send(message: string | Buffer): this {
         this.handlerSteps.push(new SendStep(message));
+        return this;
+    }
+
+    thenSend(message: string | Buffer): Promise<R> {
+        return this.send(message)
+            .buildCallback(this.handlerSteps);
+    }
+
+    thenForwardTo(peer: RTCPeerConnection): Promise<R> {
+        this.handlerSteps.push(new PeerProxyStep(peer));
         return this.buildCallback(this.handlerSteps);
     }
 
