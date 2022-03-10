@@ -16,7 +16,8 @@
   "scripts": {
     "build": "tsc",
     "test": "karma start",
-    "test:dev": "CONTINUOUS_TEST=true npm run test"
+    "test:dev": "CONTINUOUS_TEST=true npm run test",
+    "test:dev:debug": "HEADFUL_TEST=true CONTINUOUS_TEST=true npm run test"
   },
   "repository": {
     "type": "git",

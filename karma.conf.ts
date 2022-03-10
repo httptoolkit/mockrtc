@@ -1,4 +1,5 @@
 const CONTINUOUS = process.env.CONTINUOUS_TEST === 'true';
+const HEADFUL = process.env.HEADFUL_TEST === 'true';
 
 import * as ChildProcess from 'child_process';
 
@@ -57,7 +58,9 @@ module.exports = function(config: any) {
         port: 9876,
         logLevel: config.LOG_INFO,
 
-        browsers: ['ChromeHeadless'],
+        browsers: HEADFUL
+            ? ['Chrome']
+            : ['ChromeHeadless'],
 
         autoWatch: CONTINUOUS,
         singleRun: !CONTINUOUS,
