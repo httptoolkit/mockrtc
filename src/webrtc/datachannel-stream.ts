@@ -17,11 +17,12 @@ export class DataChannelStream extends stream.Duplex {
             // These are the only Duplex options supported:
             readableHighWaterMark?: number | undefined;
             writableHighWaterMark?: number | undefined;
+            allowHalfOpen?: boolean;
         } = {}
     ) {
         super({
+            allowHalfOpen: false, // Default to autoclose on end().
             ...streamOptions,
-            allowHalfOpen: false, // Not supported by WebRTC (AFAICT)
             objectMode: true // Preserve the string/buffer distinction (WebRTC treats them differently)
         });
 
@@ -75,9 +76,15 @@ export class DataChannelStream extends stream.Duplex {
         }
     }
 
-    _final() {
-        // When the writable end finishes, we close the DataChannel.
+    _final(callback: (error: Error | null) => void) {
+        if (!this.allowHalfOpen) this.destroy();
+        callback(null);
+    }
+
+    _destroy(maybeErr: Error | null, callback: (error: Error | null) => void) {
+        // When the stream is destroyed, we close the DataChannel.
         this.rawChannel.close();
+        callback(maybeErr);
     }
 
     get label() {
