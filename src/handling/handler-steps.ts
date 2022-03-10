@@ -1,12 +1,13 @@
+import { ClientServerChannel, Serializable } from 'mockttp/dist/util/serialization';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
 import type { MockRTCPeerConnection } from '../webrtc/peer-connection';
 
-export interface HandlerStep {
+export interface HandlerStep extends Serializable {
     readonly type: keyof typeof StepLookup;
     handle(connection: MockRTCPeerConnection): Promise<void>;
 }
 
-export class WaitStep implements HandlerStep {
+export class WaitStep extends Serializable implements HandlerStep {
 
     readonly type = 'wait-for-message';
 
@@ -32,13 +33,15 @@ export class WaitStep implements HandlerStep {
 
 }
 
-export class SendStep implements HandlerStep {
+export class SendStep extends Serializable implements HandlerStep {
 
     readonly type = 'send-all';
 
     constructor(
         private message: string | Buffer
-    ) {}
+    ) {
+        super();
+    }
 
     async handle({ channels }: MockRTCPeerConnection): Promise<void> {
         await Promise.all(

@@ -1,5 +1,6 @@
 import gql from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
+import { serialize } from 'mockttp/dist/util/serialization';
 
 import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "./mockrtc";
 
@@ -28,6 +29,8 @@ export class MockRTCClient implements MockRTC {
     }
 
     private buildPeerFromData = async (handlerSteps: HandlerStep[]): Promise<MockRTCPeer> => {
+        const { adminStream } = this.adminClient;
+
         const peerData = await this.adminClient.sendQuery<
             { createPeer: { id: string } },
             { id: string }
@@ -41,7 +44,7 @@ export class MockRTCClient implements MockRTC {
             `,
             variables: {
                 peerData: {
-                    steps: handlerSteps
+                    steps: handlerSteps.map(step => serialize(step, adminStream))
                 }
             },
             transformResponse: ({ createPeer }) => createPeer

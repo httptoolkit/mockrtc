@@ -1,5 +1,7 @@
+import * as stream from 'stream';
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
+import { deserialize, SerializedValue } from 'mockttp/dist/util/serialization';
 
 import { HandlerStep, StepLookup } from './handling/handler-steps';
 import { MockRTCOfferParams, MockRTCOptions } from './mockrtc';
@@ -55,14 +57,18 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         scalar HandlerStep
     `;
 
-    buildResolvers() {
+    buildResolvers(adminStream: stream.Duplex, ruleParams: {}) {
         const pendingOffers: MockRTCOfferParams[] = [];
 
         return {
             Mutation: {
-                createPeer: (__: any, { data: { steps } }: { data: { steps: Array<HandlerStep> } }) => {
+                createPeer: (__: any, { data: { steps } }: { data: {
+                    steps: Array<SerializedValue<HandlerStep>>
+                } }) => {
                     return this.mockRTCServer.buildPeerFromData(
-                        steps.map(deserializeStepData)
+                        steps.map((stepData) =>
+                            deserialize(stepData, adminStream, ruleParams, StepLookup)
+                        )
                     );
                 },
                 createOffer: async (__: any, { peerId }: { peerId: string }): Promise<RTCSessionDescriptionInit> => {
