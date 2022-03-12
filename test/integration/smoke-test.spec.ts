@@ -3,7 +3,7 @@ import {
     expect
 } from '../test-setup';
 
-describe("MockRTC", function () {
+describe("MockRTC smoke test:", function () {
 
     const mockRTC = MockRTC.getRemote({ recordMessages: true });
 

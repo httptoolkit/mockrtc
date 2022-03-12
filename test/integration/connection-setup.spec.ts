@@ -1,9 +1,6 @@
-import {
-    MockRTC,
-    expect
-} from '../test-setup';
+import { MockRTC } from '../test-setup';
 
-describe("MockRTC", function () {
+describe("When connecting, MockRTC", function () {
 
     const mockRTC = MockRTC.getRemote();
 

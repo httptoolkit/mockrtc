@@ -2,7 +2,8 @@ import {
     type HandlerStep,
     PeerProxyStep,
     SendStep,
-    WaitStep
+    WaitStep,
+    DynamicProxyStep
 } from "./handler-steps";
 
 /**
@@ -35,6 +36,11 @@ export class MockRTCHandlerBuilder<R> {
 
     thenForwardTo(peer: RTCPeerConnection): Promise<R> {
         this.handlerSteps.push(new PeerProxyStep(peer));
+        return this.buildCallback(this.handlerSteps);
+    }
+
+    thenForwardDynamically(): Promise<R> {
+        this.handlerSteps.push(new DynamicProxyStep());
         return this.buildCallback(this.handlerSteps);
     }
 

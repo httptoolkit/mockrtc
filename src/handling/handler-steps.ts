@@ -1,17 +1,18 @@
 import { ClientServerChannel, Serializable } from 'mockttp/dist/util/serialization';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
-import { MockRTCPeerConnection } from '../webrtc/peer-connection';
+import { MockRTCConnection } from '../webrtc/mockrtc-connection';
+import { RTCConnection } from '../webrtc/rtc-connection';
 
 export interface HandlerStep extends Serializable {
     readonly type: keyof typeof StepLookup;
-    handle(connection: MockRTCPeerConnection): Promise<void>;
+    handle(connection: MockRTCConnection): Promise<void>;
 }
 
 export class WaitStep extends Serializable implements HandlerStep {
 
     readonly type = 'wait-for-message';
 
-    async handle(connection: MockRTCPeerConnection): Promise<void> {
+    async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
             const messageReceived = () => {
                 connection.removeListener('channel-open', listenForMessage);
@@ -44,7 +45,7 @@ export class SendStep extends Serializable implements HandlerStep {
         super();
     }
 
-    async handle({ channels }: MockRTCPeerConnection): Promise<void> {
+    async handle({ channels }: MockRTCConnection): Promise<void> {
         await Promise.all(
             channels.map((channel) => {
                 return new Promise<void>((resolve, reject) => {
@@ -65,7 +66,7 @@ export class PeerProxyStep extends Serializable implements HandlerStep {
 
     private getAnswer: (offer: RTCSessionDescriptionInit) => Promise<RTCSessionDescriptionInit>;
 
-    private externalPeers: MockRTCPeerConnection[] = [];
+    private externalConnections: RTCConnection[] = [];
 
     constructor(
         connectionTarget:
@@ -85,19 +86,17 @@ export class PeerProxyStep extends Serializable implements HandlerStep {
         }
     }
 
-    async handle(connection: MockRTCPeerConnection) {
-        const externalPeer = new MockRTCPeerConnection();
-        this.externalPeers.push(externalPeer);
+    async handle(connection: MockRTCConnection) {
+        const externalConn = new RTCConnection();
+        this.externalConnections.push(externalConn);
 
-        const externalOffer = await externalPeer.getLocalDescription();
-        externalPeer.setRemoteDescription(await this.getAnswer(externalOffer));
+        const externalOffer = await externalConn.getLocalDescription();
+        externalConn.setRemoteDescription(await this.getAnswer(externalOffer));
 
-        externalPeer.proxyTrafficFrom(connection);
+        connection.proxyTrafficTo(externalConn);
 
-        // This step isn't 'done' unless the remote connection closes.
-        return new Promise<void>((resolve) => {
-            externalPeer.on('connection-closed', resolve);
-        });
+        // This step keeps running indefinitely, until the connection closes
+        return new Promise<void>((resolve) => connection.on('connection-closed', resolve));
     }
 
     serialize(channel: ClientServerChannel): {} {
@@ -122,7 +121,30 @@ export class PeerProxyStep extends Serializable implements HandlerStep {
     }
 
     dispose(): void {
-        this.externalPeers.forEach(peer => peer.close());
+        this.externalConnections.forEach(conn => conn.close());
+    }
+
+}
+
+export class DynamicProxyStep extends Serializable implements HandlerStep {
+
+    readonly type = 'dynamic-proxy';
+
+    private externalConnections: RTCConnection[] = [];
+
+    constructor() {
+        super();
+    }
+
+    async handle(connection: MockRTCConnection) {
+        await connection.proxyTrafficToExternalConnection();
+
+        // This step keeps running indefinitely, until the connection closes
+        return new Promise<void>((resolve) => connection.on('connection-closed', resolve));
+    }
+
+    dispose(): void {
+        this.externalConnections.forEach(conn => conn.close());
     }
 
 }
@@ -130,5 +152,6 @@ export class PeerProxyStep extends Serializable implements HandlerStep {
 export const StepLookup = {
     'wait-for-message': WaitStep,
     'send-all': SendStep,
-    'peer-proxy': PeerProxyStep
+    'peer-proxy': PeerProxyStep,
+    'dynamic-proxy': DynamicProxyStep
 };

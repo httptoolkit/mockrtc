@@ -3,9 +3,14 @@ import * as NodeDataChannel from 'node-datachannel';
 
 import { DataChannelStream } from './datachannel-stream';
 
-export class MockRTCPeerConnection extends EventEmitter {
+/**
+ * An RTC connection is a single connection. This base class defines the raw connection management and
+ * tracking logic for a generic connection. The MockRTCConnection subclass extends this and adds
+ * logic to support control channels, proxying and other MockRTC-specific additions.
+ */
+export class RTCConnection extends EventEmitter {
 
-    private rawConn = new NodeDataChannel.PeerConnection("MockRTCPeer", { iceServers: [] });
+    protected rawConn = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
 
     public readonly channels: Array<DataChannelStream> = [];
 
@@ -26,7 +31,7 @@ export class MockRTCPeerConnection extends EventEmitter {
         return this.trackNewChannel(channel, { isLocal: true });
     }
 
-    private trackNewChannel(channel: NodeDataChannel.DataChannel, options: { isLocal: boolean }) {
+    protected trackNewChannel(channel: NodeDataChannel.DataChannel, options: { isLocal: boolean }) {
         const channelStream = new DataChannelStream(channel);
         this.channels.push(channelStream);
 
@@ -98,28 +103,6 @@ export class MockRTCPeerConnection extends EventEmitter {
         this.rawConn.close();
         await closedPromise;
         this.emit('connection-closed');
-    }
-
-    proxyTrafficFrom(otherConnection: MockRTCPeerConnection) {
-        otherConnection.channels.forEach((otherChannel: DataChannelStream) => {
-            const mirrorChannel = this.rawConn.createDataChannel(otherChannel.label);
-            const mirrorChannelStream = this.trackNewChannel(mirrorChannel, { isLocal: true });
-            otherChannel.pipe(mirrorChannelStream).pipe(otherChannel);
-        });
-
-        otherConnection.addListener('local-channel-open', (otherChannel: DataChannelStream) => {
-            const mirrorChannel = this.rawConn.createDataChannel(otherChannel.label);
-            const mirrorChannelStream = this.trackNewChannel(mirrorChannel, { isLocal: true });
-            otherChannel.pipe(mirrorChannelStream).pipe(otherChannel);
-        });
-
-        this.on('remote-channel-open', (incomingChannel: DataChannelStream) => {
-            const otherChannel = otherConnection.createDataChannel(incomingChannel.label);
-            incomingChannel.pipe(otherChannel).pipe(incomingChannel);
-        });
-
-        this.on('connection-closed', () => otherConnection.close());
-        otherConnection.on('connection-closed', () => this.close());
     }
 
 }

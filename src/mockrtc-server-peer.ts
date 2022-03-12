@@ -1,31 +1,68 @@
 import { randomUUID } from 'crypto';
 
-import { MockRTCOfferParams } from "./mockrtc";
+import { MockRTCExternalAnswerParams, MockRTCExternalOfferParams, MockRTCOfferParams } from "./mockrtc";
 import { MockRTCPeer, MockRTCPeerOptions } from './mockrtc-peer';
 import { HandlerStep } from './handling/handler-steps';
 
-import { MockRTCPeerConnection } from './webrtc/peer-connection';
+import { RTCConnection } from './webrtc/rtc-connection';
+import { MockRTCConnection } from './webrtc/mockrtc-connection';
 import { DataChannelStream } from './webrtc/datachannel-stream';
 
 export class MockRTCServerPeer implements MockRTCPeer {
 
     readonly id = randomUUID();
 
+    private unassignedExternalConnections: { [id: string]: RTCConnection } = {};
+
     constructor(
         private handlerSteps: HandlerStep[],
         private options: MockRTCPeerOptions = {}
     ) {}
 
-    private createConnection() {
-        const peerConn = new MockRTCPeerConnection();
+    private getExternalConnection = (id: string) => {
+        const externalConn = this.unassignedExternalConnections[id];
+        if (!externalConn) throw new Error(`Attempted to connect unknown external conn ${id}`);
+        delete this.unassignedExternalConnections[id];
+        return externalConn;
+    }
 
-        this.handleConnection(peerConn).catch((error) => {
+    async createExternalOffer(): Promise<MockRTCExternalOfferParams> {
+        const externalConn = new RTCConnection();
+        const externalConnId = randomUUID();
+        this.unassignedExternalConnections[externalConnId] = externalConn;
+
+        return {
+            id: externalConnId,
+            offer: await externalConn.getLocalDescription(),
+            setAnswer: async (answer: RTCSessionDescriptionInit) => {
+                externalConn.setRemoteDescription(answer);
+            }
+        };
+    }
+
+    async answerExternalOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCExternalAnswerParams> {
+        const externalConn = new RTCConnection();
+        const externalConnId = randomUUID();
+        this.unassignedExternalConnections[externalConnId] = externalConn;
+
+        externalConn.setRemoteDescription(offer);
+
+        return {
+            id: externalConnId,
+            answer: await externalConn.getLocalDescription()
+        };
+    }
+
+    private createConnection() {
+        const conn = new MockRTCConnection(this.getExternalConnection);
+
+        this.handleConnection(conn).catch((error) => {
             console.error("Error handling WebRTC connection:", error);
-            peerConn.close().catch(() => {});
+            conn.close().catch(() => {});
         });
 
         if (this.options.recordMessages) {
-            peerConn.on('channel-open', (channel: DataChannelStream) => {
+            conn.on('channel-open', (channel: DataChannelStream) => {
                 const channelLabel = channel.label;
                 const messageLog = (this.messages[channelLabel] ??= []);
 
@@ -35,37 +72,37 @@ export class MockRTCServerPeer implements MockRTCPeer {
             });
         }
 
-        return peerConn;
+        return conn;
     }
 
     async createOffer(): Promise<MockRTCOfferParams> {
-        const peerConn = this.createConnection();
-        const offer = await peerConn.getLocalDescription();
+        const conn = this.createConnection();
+        const offer = await conn.getLocalDescription();
 
         return {
             offer: offer,
             setAnswer: async (answer: RTCSessionDescriptionInit) => {
-                peerConn.setRemoteDescription(answer);
+                conn.setRemoteDescription(answer);
             }
         };
     }
 
     async answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
-        const peerConn = this.createConnection();
+        const conn = this.createConnection();
 
         // Setting the remote description ensures that we'll gather an 'answer'
         // localDescription, rather than an 'offer'.
-        peerConn.setRemoteDescription(offer);
+        conn.setRemoteDescription(offer);
 
-        return peerConn.getLocalDescription();
+        return conn.getLocalDescription();
     }
 
-    private async handleConnection(peerConn: MockRTCPeerConnection) {
+    private async handleConnection(conn: MockRTCConnection) {
         for (const step of this.handlerSteps) {
-            await step.handle(peerConn);
+            await step.handle(conn);
         }
 
-        peerConn.close();
+        conn.close();
     }
 
     private messages: { [channelName: string]: Array<string | Buffer> } = {};
