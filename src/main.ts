@@ -1,6 +1,20 @@
-import { MockRTC } from "./mockrtc";
+import {
+    MockRTC,
+    MockRTCOptions,
+    MockRTCOfferParams,
+    MockRTCExternalOfferParams,
+    MockRTCExternalAnswerParams
+} from "./mockrtc";
 import { MockRTCServer } from "./mockrtc-server";
 import { MockRTCAdminServer } from "./mockrtc-admin-server";
+
+export type {
+    MockRTC,
+    MockRTCOptions,
+    MockRTCOfferParams,
+    MockRTCExternalOfferParams,
+    MockRTCExternalAnswerParams
+};
 
 export type { MockRTCPeer } from './mockrtc-peer';
 
