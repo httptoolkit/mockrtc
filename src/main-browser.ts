@@ -7,7 +7,7 @@ import {
 } from "./mockrtc";
 import { MockRTCClient, MockRTCClientOptions } from "./mockrtc-client";
 
-export {
+export type {
     MockRTC,
     MockRTCOptions,
     MockRTCOfferParams,
