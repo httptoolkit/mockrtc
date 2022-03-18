@@ -87,7 +87,7 @@ export class MockRTCConnection extends RTCConnection {
         // (connected by externalConnection). This code forwards between the local mocking peer & local external peer.
 
         // Forward any existing mocked channels to the external connection:
-        this.channels.forEach((channel: DataChannelStream) => {
+        this.channels.forEach((channel: DataChannelStream) => { // All channels, in case a previous step created one
             const mirrorChannelStream = externalConnection.createDataChannel(channel.label);
             channel.pipe(mirrorChannelStream).pipe(channel);
         });
@@ -98,8 +98,9 @@ export class MockRTCConnection extends RTCConnection {
             channel.pipe(mirrorChannelStream).pipe(channel);
         });
 
-        // Forward any existing external channels back to our mocked peer connection:
-        externalConnection.channels.forEach((channel: DataChannelStream) => {
+        // Forward any existing external channels back to this peer connection. Note that we're mirroring
+        // *remote* channels only, so we skip the channels that we've just created above.
+        externalConnection.remoteChannels.forEach((channel: DataChannelStream) => {
             const mirrorChannelStream = this.createDataChannel(channel.label);
             channel.pipe(mirrorChannelStream).pipe(channel);
         });
