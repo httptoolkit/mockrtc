@@ -12,7 +12,24 @@ export class RTCConnection extends EventEmitter {
 
     protected rawConn = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
 
-    public readonly channels: Array<DataChannelStream> = [];
+    private readonly trackedChannels: Array<{ stream: DataChannelStream, isLocal: boolean }> = [];
+
+    get channels(): ReadonlyArray<DataChannelStream> {
+        return this.trackedChannels
+            .map(channel => channel.stream);
+    }
+
+    get localChannels(): ReadonlyArray<DataChannelStream> {
+        return this.trackedChannels
+            .filter(channel => channel.isLocal)
+            .map(channel => channel.stream);
+    }
+
+    get remoteChannels(): ReadonlyArray<DataChannelStream> {
+        return this.trackedChannels
+            .filter(channel => !channel.isLocal)
+            .map(channel => channel.stream);
+    }
 
     constructor() {
         super();
@@ -33,12 +50,12 @@ export class RTCConnection extends EventEmitter {
 
     protected trackNewChannel(channel: NodeDataChannel.DataChannel, options: { isLocal: boolean }) {
         const channelStream = new DataChannelStream(channel);
-        this.channels.push(channelStream);
+        this.trackedChannels.push({ stream: channelStream, isLocal: options.isLocal });
 
         channelStream.on('close', () => {
-            const channelIndex = this.channels.findIndex(c => c === channelStream);
+            const channelIndex = this.trackedChannels.findIndex(c => c.stream === channelStream);
             if (channelIndex !== -1) {
-                this.channels.splice(channelIndex, 1);
+                this.trackedChannels.splice(channelIndex, 1);
             }
         });
 
