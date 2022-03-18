@@ -270,4 +270,74 @@ describe("When proxying WebRTC traffic", () => {
         ]);
     });
 
+    it("should be able to transparently forward messages when hooking both ends of a connection", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForMessage()
+            .send('Injected message')
+            .thenForwardDynamically();
+
+        const remoteConn = new RTCPeerConnection();
+        hookWebRTCPeer(remoteConn, mockPeer); // Automatically redirect traffic via mockPeer
+
+        const remotelyReceivedMessages: Array<string | Buffer> = [];
+
+        // Like localChannel, We have to create an outgoing channel for the wait & send step.
+        remoteConn.createDataChannel("remote-channel").onopen = function () {
+            this.addEventListener('message', ({ data }) => remotelyReceivedMessages.push(data));
+            this.send('remote message 1'); // Required on an outgoing channel to pass waitForMessage
+        };
+
+        // Remote listens for local's channel, sends replies, and closes
+        remoteConn.addEventListener('datachannel', ({ channel }) => {
+            channel.addEventListener('message', ({ data }) => remotelyReceivedMessages.push(data));
+            channel.send("remote message 2");
+            channel.send("remote message 3");
+            channel.send("remote message 4");
+            setTimeout(() => channel.close(), 500);
+        });
+
+        // Remote connection starts first, sending a hooked offer:
+        const remoteOffer = await remoteConn.createOffer();
+        remoteConn.setLocalDescription(remoteOffer);
+
+        // We create a local data connection too:
+        const localConn = new RTCPeerConnection();
+        hookWebRTCPeer(localConn, mockPeer); // Automatically redirect traffic via mockPeer
+
+        const dataChannel = localConn.createDataChannel("localDataChannel");
+        const channelOpenPromise = new Promise<void>((resolve) => dataChannel.onopen = () => resolve());
+        const locallyReceivedMessages: Array<string | Buffer> = [];
+        dataChannel.addEventListener('message', ({ data }) => locallyReceivedMessages.push(data));
+
+        // Receive the remote offer, use that locally to create an answer (all hooked):
+        await localConn.setRemoteDescription(remoteOffer);
+        const localAnswer = await localConn.createAnswer();
+        localConn.setLocalDescription(localAnswer);
+
+        // Signal the answer back to the remote connection, which hooks this too:
+        await remoteConn.setRemoteDescription(localAnswer);
+
+        await channelOpenPromise;
+
+        dataChannel.send('local message 1');
+        dataChannel.send('local message 2');
+        dataChannel.send('local message 3');
+
+        await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+
+        expect(locallyReceivedMessages).to.deep.equal([
+            'Injected message', // Injected by send step
+            'remote message 2',
+            'remote message 3',
+            'remote message 4'
+        ]);
+
+        expect(remotelyReceivedMessages).to.deep.equal([
+            'Injected message', // Injected by send step here too! Both peers are hooked
+            // Local message is eaten by waitForMessage
+            'local message 2',
+            'local message 3'
+        ]);
+    });
+
 });
