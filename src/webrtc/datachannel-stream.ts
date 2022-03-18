@@ -58,15 +58,18 @@ export class DataChannelStream extends stream.Duplex {
 
     _write(chunk: string | Buffer | unknown, encoding: string, callback: (error: Error | null) => void) {
         let sentOk: boolean;
-        if (Buffer.isBuffer(chunk)) {
-            sentOk = this.rawChannel.sendMessageBinary(chunk);
-        } else if (typeof chunk === 'string') {
-            sentOk = this.rawChannel.sendMessage(chunk);
-        } else {
-            const typeName = (chunk as object).constructor.name ||
-                (typeof chunk);
-            callback(new Error(`Cannot write ${typeName} to DataChannel stream`));
-            return;
+
+        try {
+            if (Buffer.isBuffer(chunk)) {
+                sentOk = this.rawChannel.sendMessageBinary(chunk);
+            } else if (typeof chunk === 'string') {
+                sentOk = this.rawChannel.sendMessage(chunk);
+            } else {
+                const typeName = (chunk as object).constructor.name || typeof chunk;
+                throw new Error(`Cannot write ${typeName} to DataChannel stream`);
+            }
+        } catch (err: any) {
+            return callback(err);
         }
 
         if (sentOk) {
