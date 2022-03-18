@@ -2,8 +2,10 @@ import {
     type HandlerStep,
     PeerProxyStep,
     SendStep,
-    WaitStep,
-    DynamicProxyStep
+    DynamicProxyStep,
+    WaitForChannelStep,
+    WaitForMessageStep,
+    WaitForDurationStep
 } from "./handler-steps";
 
 /**
@@ -19,8 +21,30 @@ export class MockRTCHandlerBuilder<R> {
         private buildCallback: (handlerSteps: HandlerStep[]) => Promise<R>
     ) {}
 
+    /**
+     * Wait for a given duration, in milliseconds
+     */
+    sleep(duration: number): this {
+        this.handlerSteps.push(new WaitForDurationStep(duration));
+        return this;
+    }
+
+    /**
+     * Wait until the remote client has opened at least one DataChannel.
+     */
+    waitForChannel(): this {
+        this.handlerSteps.push(new WaitForChannelStep());
+        return this;
+    }
+
+    /**
+     * Wait until the remote client sends a message to us on any DataChannel.
+     *
+     * This looks for new messages, ignoring any messages already consumed by
+     * previous steps.
+     */
     waitForMessage(): this {
-        this.handlerSteps.push(new WaitStep());
+        this.handlerSteps.push(new WaitForMessageStep());
         return this;
     }
 

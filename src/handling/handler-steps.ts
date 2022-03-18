@@ -8,7 +8,36 @@ export interface HandlerStep extends Serializable {
     handle(connection: MockRTCConnection): Promise<void>;
 }
 
-export class WaitStep extends Serializable implements HandlerStep {
+export class WaitForDurationStep extends Serializable implements HandlerStep {
+
+    readonly type = 'wait-for-duration';
+
+    constructor(
+        private durationMs: number
+    ) {
+        super();
+    }
+
+    async handle(connection: MockRTCConnection): Promise<void> {
+        return new Promise<void>((resolve) => setTimeout(resolve, this.durationMs));
+    }
+
+}
+
+export class WaitForChannelStep extends Serializable implements HandlerStep {
+
+    readonly type = 'wait-for-channel';
+
+    async handle(connection: MockRTCConnection): Promise<void> {
+        return new Promise<void>((resolve) => {
+            if (connection.remoteChannels.length > 0) resolve();
+            connection.once('remote-channel-open', () => resolve());
+        });
+    }
+
+}
+
+export class WaitForMessageStep extends Serializable implements HandlerStep {
 
     readonly type = 'wait-for-message';
 
@@ -150,7 +179,9 @@ export class DynamicProxyStep extends Serializable implements HandlerStep {
 }
 
 export const StepLookup = {
-    'wait-for-message': WaitStep,
+    'wait-for-duration': WaitForDurationStep,
+    'wait-for-channel': WaitForChannelStep,
+    'wait-for-message': WaitForMessageStep,
     'send-all': SendStep,
     'peer-proxy': PeerProxyStep,
     'dynamic-proxy': DynamicProxyStep
