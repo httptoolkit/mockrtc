@@ -60,19 +60,29 @@ export class MockRTCHandlerBuilder<R> {
         return this;
     }
 
-    send(message: string | Buffer): this {
-        this.handlerSteps.push(new SendStep(message));
+    send(message: string | Buffer): this;
+    send(channel: string | undefined, message: string | Buffer): this;
+    send(...args: [string | undefined, string | Buffer] | [string | Buffer]): this {
+        if (args[1] !== undefined) {
+            const [channel, message] = args as [string, string | Buffer];
+            this.handlerSteps.push(new SendStep(channel, message));
+        } else {
+            const [message] = args as [string | Buffer];
+            this.handlerSteps.push(new SendStep(undefined, message));
+        }
         return this;
+    }
+
+    thenSend(message: string | Buffer): Promise<R>;
+    thenSend(channel: string, message: string | Buffer): Promise<R>;
+    thenSend(...args: [string, string | Buffer] | [string | Buffer]): Promise<R> {
+        return this.send(...args as [string | undefined, string | Buffer])
+            .buildCallback(this.handlerSteps);
     }
 
     thenClose(): Promise<R> {
         this.handlerSteps.push(new CloseStep());
         return this.buildCallback(this.handlerSteps);
-    }
-
-    thenSend(message: string | Buffer): Promise<R> {
-        return this.send(message)
-            .buildCallback(this.handlerSteps);
     }
 
     thenForwardTo(peer: RTCPeerConnection): Promise<R> {

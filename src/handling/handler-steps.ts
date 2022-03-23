@@ -95,17 +95,24 @@ export class WaitForMessageStep extends Serializable implements HandlerStep {
 
 export class SendStep extends Serializable implements HandlerStep {
 
-    readonly type = 'send-all';
+    readonly type = 'send-message';
 
     constructor(
+        private channelLabel: string | undefined,
         private message: string | Buffer
     ) {
         super();
     }
 
+    private matchesChannel(channel: DataChannelStream) {
+        return this.channelLabel === undefined || this.channelLabel === channel.label;
+    }
+
     async handle({ channels }: MockRTCConnection): Promise<void> {
         await Promise.all(
-            channels.map((channel) => {
+            channels
+            .filter((channel) => this.matchesChannel(channel))
+            .map((channel) => {
                 return new Promise<void>((resolve, reject) => {
                     channel.write(this.message, (error: Error | null | undefined) => {
                         if (error) reject(error);
@@ -221,7 +228,7 @@ export const StepLookup = {
     'wait-for-duration': WaitForDurationStep,
     'wait-for-channel': WaitForChannelStep,
     'wait-for-message': WaitForMessageStep,
-    'send-all': SendStep,
+    'send-message': SendStep,
     'close-connection': CloseStep,
     'peer-proxy': PeerProxyStep,
     'dynamic-proxy': DynamicProxyStep
