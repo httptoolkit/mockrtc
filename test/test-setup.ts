@@ -33,10 +33,30 @@ before(async function () {
 
 export async function waitForState(connection: RTCPeerConnection, state: RTCPeerConnectionState) {
     await new Promise<void>((resolve) => {
-        connection.addEventListener('connectionstatechange', () => {
-            if (connection.connectionState === state) resolve();
-        });
         if (connection.connectionState === state) resolve();
+        else {
+            connection.addEventListener('connectionstatechange', () => {
+                if (connection.connectionState === state) resolve();
+            });
+        }
+    });
+}
+
+export async function waitForChannelOpen(channel: RTCDataChannel) {
+    await new Promise<void>((resolve) => {
+        if (channel.readyState === 'open') resolve();
+        else {
+            channel.addEventListener('open', () => resolve());
+        }
+    });
+}
+
+export async function waitForChannelClose(channel: RTCDataChannel) {
+    await new Promise<void>((resolve) => {
+        if (channel.readyState === 'closed') resolve();
+        else {
+            channel.addEventListener('close', () => resolve());
+        }
     });
 }
 

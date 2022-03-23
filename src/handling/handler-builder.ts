@@ -49,6 +49,17 @@ export class MockRTCHandlerBuilder<R> {
         return this;
     }
 
+    /**
+     * Wait until the remote client sends a message to us on a specific DataChannel.
+     *
+     * This looks for new messages, ignoring any messages already consumed by
+     * previous steps.
+     */
+    waitForMessageOnChannel(channelLabel: string): this {
+        this.handlerSteps.push(new WaitForMessageStep(channelLabel));
+        return this;
+    }
+
     send(message: string | Buffer): this {
         this.handlerSteps.push(new SendStep(message));
         return this;

@@ -41,6 +41,12 @@ export class WaitForMessageStep extends Serializable implements HandlerStep {
 
     readonly type = 'wait-for-message';
 
+    constructor(
+        private channelLabel?: string
+    ) {
+        super();
+    }
+
     async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
             const messageReceived = () => {
@@ -54,7 +60,9 @@ export class WaitForMessageStep extends Serializable implements HandlerStep {
             };
 
             const listenForMessage = (channel: DataChannelStream) => {
-                channel.once('data', messageReceived);
+                if (this.channelLabel === undefined || this.channelLabel === channel.label) {
+                    channel.once('data', messageReceived);
+                }
             }
 
             connection.on('channel-open', listenForMessage);

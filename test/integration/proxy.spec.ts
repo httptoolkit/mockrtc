@@ -1,6 +1,8 @@
 import {
     MockRTC,
-    expect
+    expect,
+    waitForChannelOpen,
+    waitForChannelClose
 } from '../test-setup';
 
 describe("When proxying WebRTC traffic", () => {
@@ -127,13 +129,13 @@ describe("When proxying WebRTC traffic", () => {
         const mockAnswer = await mockPeer.answerOffer(localOffer);
         await localPeer.setRemoteDescription(mockAnswer);
 
-        await new Promise((resolve) => dataChannel.addEventListener('open', resolve));
+        await waitForChannelOpen(dataChannel);
 
         dataChannel.send('local message 1');
         dataChannel.send('local message 2');
         dataChannel.send('local message 3');
 
-        await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+        await waitForChannelClose(dataChannel);
 
         expect(locallyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by thenSend step
