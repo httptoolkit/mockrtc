@@ -33,8 +33,8 @@ export class MockRTCHandlerBuilder<R> {
     /**
      * Wait until the remote client has opened at least one DataChannel.
      */
-    waitForChannel(): this {
-        this.handlerSteps.push(new WaitForChannelStep());
+    waitForChannel(channelLabel?: string): this {
+        this.handlerSteps.push(new WaitForChannelStep(channelLabel));
         return this;
     }
 

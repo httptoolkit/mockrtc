@@ -22,7 +22,7 @@ describe("Wait steps", function () {
 
         const receivedMessages: string[] = [];
         const testChannel = localConnection.createDataChannel('data-channel');
-        testChannel.addEventListener('message', (event) => { receivedMessages.push(event.data) });
+        testChannel.addEventListener('message', ({ data }) => { receivedMessages.push(data) });
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
@@ -38,6 +38,61 @@ describe("Wait steps", function () {
         expect(receivedMessages).to.deep.equal(['delayed message']);
     });
 
+    it("should be able to wait the existence of a channel", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForChannel()
+            .thenSend('delayed message');
+
+        const localConnection = new RTCPeerConnection();
+
+        const { offer, setAnswer } = await mockPeer.createOffer();
+        await localConnection.setRemoteDescription(offer);
+        const localAnswer = await localConnection.createAnswer();
+        await localConnection.setLocalDescription(localAnswer);
+        await setAnswer(localAnswer);
+
+        await waitForState(localConnection, 'connected');
+        await delay(100);
+
+        const receivedMessages: string[] = [];
+        const testChannel = localConnection.createDataChannel('data-channel');
+        testChannel.addEventListener('message', ({ data }) => { receivedMessages.push(data) });
+
+        await delay(100);
+        expect(receivedMessages).to.deep.equal(['delayed message']);
+    });
+
+    it("should be able to wait for the existence of a specific named channel", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForChannel('message-channel')
+            .thenSend('delayed message');
+
+        const localConnection = new RTCPeerConnection();
+
+        const { offer, setAnswer } = await mockPeer.createOffer();
+        await localConnection.setRemoteDescription(offer);
+        const localAnswer = await localConnection.createAnswer();
+        await localConnection.setLocalDescription(localAnswer);
+        await setAnswer(localAnswer);
+
+        await waitForState(localConnection, 'connected');
+        await delay(100);
+
+        const receivedIgnoredChannelMessages: string[] = [];
+        const ignoredChannel = localConnection.createDataChannel('ignored-channel');
+        ignoredChannel.addEventListener('message', ({ data }) => { receivedIgnoredChannelMessages.push(data) });
+
+        await delay(100);
+        expect(receivedIgnoredChannelMessages).to.deep.equal([]);
+
+        const receivedRealChannelMessages: string[] = [];
+        const testChannel = localConnection.createDataChannel('message-channel');
+        testChannel.addEventListener('message', ({ data }) => { receivedRealChannelMessages.push(data) });
+
+        await delay(100);
+        expect(receivedRealChannelMessages).to.deep.equal(['delayed message']);
+    });
+
     it("should be able to wait for a message on any channel", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessage()
@@ -47,7 +102,7 @@ describe("Wait steps", function () {
 
         const receivedMessages: string[] = [];
         const testChannel = localConnection.createDataChannel('data-channel');
-        testChannel.addEventListener('message', (event) => { receivedMessages.push(event.data) });
+        testChannel.addEventListener('message', ({ data }) => { receivedMessages.push(data) });
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
@@ -64,7 +119,7 @@ describe("Wait steps", function () {
         expect(receivedMessages).to.deep.equal(['delayed message']);
     });
 
-    it("should be able to wait for a message on a specific channel", async () => {
+    it("should be able to wait for a message on a specific named channel", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessageOnChannel("message-channel")
             .thenSend('delayed message');
@@ -74,7 +129,7 @@ describe("Wait steps", function () {
         const receivedMessages: string[] = [];
         const ignoredChannel = localConnection.createDataChannel('ignored-channel');
         const messageChannel = localConnection.createDataChannel('message-channel');
-        messageChannel.addEventListener('message', (event) => { receivedMessages.push(event.data) });
+        messageChannel.addEventListener('message', ({ data }) => { receivedMessages.push(data) });
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);

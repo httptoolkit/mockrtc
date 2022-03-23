@@ -18,7 +18,7 @@ export class WaitForDurationStep extends Serializable implements HandlerStep {
         super();
     }
 
-    async handle(connection: MockRTCConnection): Promise<void> {
+    async handle(): Promise<void> {
         return new Promise<void>((resolve) => setTimeout(resolve, this.durationMs));
     }
 
@@ -28,10 +28,27 @@ export class WaitForChannelStep extends Serializable implements HandlerStep {
 
     readonly type = 'wait-for-channel';
 
+    constructor(
+        private channelLabel?: string
+    ) {
+        super();
+    }
+
+    private matchesChannel(channel: DataChannelStream) {
+        return this.channelLabel === undefined || this.channelLabel === channel.label;
+    }
+
     async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
-            if (connection.remoteChannels.length > 0) resolve();
-            connection.once('remote-channel-open', () => resolve());
+            const channelOpened = (channel: DataChannelStream) => {
+                if (this.matchesChannel(channel)) {
+                    connection.removeListener('remote-channel-open', channelOpened);
+                    resolve();
+                }
+            };
+
+            connection.on('remote-channel-open', channelOpened);
+            connection.remoteChannels.forEach(channelOpened);
         });
     }
 
@@ -47,6 +64,10 @@ export class WaitForMessageStep extends Serializable implements HandlerStep {
         super();
     }
 
+    private matchesChannel(channel: DataChannelStream) {
+        return this.channelLabel === undefined || this.channelLabel === channel.label;
+    }
+
     async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
             const messageReceived = () => {
@@ -60,7 +81,7 @@ export class WaitForMessageStep extends Serializable implements HandlerStep {
             };
 
             const listenForMessage = (channel: DataChannelStream) => {
-                if (this.channelLabel === undefined || this.channelLabel === channel.label) {
+                if (this.matchesChannel(channel)) {
                     channel.once('data', messageReceived);
                 }
             }
