@@ -89,6 +89,16 @@ export class SendStep extends Serializable implements HandlerStep {
 
 }
 
+export class CloseStep extends Serializable implements HandlerStep {
+
+    readonly type = 'close-connection';
+
+    async handle(connection: MockRTCConnection): Promise<void> {
+        await connection.close();
+    }
+
+}
+
 export class PeerProxyStep extends Serializable implements HandlerStep {
 
     readonly type = 'peer-proxy';
@@ -183,6 +193,7 @@ export const StepLookup = {
     'wait-for-channel': WaitForChannelStep,
     'wait-for-message': WaitForMessageStep,
     'send-all': SendStep,
+    'close-connection': CloseStep,
     'peer-proxy': PeerProxyStep,
     'dynamic-proxy': DynamicProxyStep
 };

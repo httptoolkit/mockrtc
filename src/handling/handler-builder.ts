@@ -5,13 +5,14 @@ import {
     DynamicProxyStep,
     WaitForChannelStep,
     WaitForMessageStep,
-    WaitForDurationStep
+    WaitForDurationStep,
+    CloseStep
 } from "./handler-steps";
 
 /**
  * The builder logic for composing RTC handling behaviour for both mock peers and rules,
  * by internally queuing defined actions until a `.thenX()` method is called to compile
- * the actions into either a peer or a rule (handled by an abstract method).
+ * the actions into either a peer or a rule (handled by an constructor callback param).
  */
 export class MockRTCHandlerBuilder<R> {
 
@@ -51,6 +52,11 @@ export class MockRTCHandlerBuilder<R> {
     send(message: string | Buffer): this {
         this.handlerSteps.push(new SendStep(message));
         return this;
+    }
+
+    thenClose(): Promise<R> {
+        this.handlerSteps.push(new CloseStep());
+        return this.buildCallback(this.handlerSteps);
     }
 
     thenSend(message: string | Buffer): Promise<R> {
