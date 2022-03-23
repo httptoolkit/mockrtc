@@ -12,12 +12,21 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
     readonly id = randomUUID();
 
-    private unassignedExternalConnections: { [id: string]: RTCConnection } = {};
+    private readonly unassignedExternalConnections: { [id: string]: RTCConnection } = {};
+    private readonly connections: RTCConnection[] = [];
 
     constructor(
         private handlerSteps: HandlerStep[],
         private options: MockRTCPeerOptions = {}
     ) {}
+
+    trackConnection(conn: RTCConnection) {
+        this.connections.push(conn);
+        conn.once('connection-closed', () => {
+            const connIndex = this.connections.indexOf(conn);
+            if (connIndex !== -1) this.connections.splice(connIndex, 1);
+        });
+    }
 
     private getExternalConnection = (id: string) => {
         const externalConn = this.unassignedExternalConnections[id];
@@ -30,6 +39,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
         const externalConn = new RTCConnection();
         const externalConnId = randomUUID();
         this.unassignedExternalConnections[externalConnId] = externalConn;
+        this.trackConnection(externalConn);
 
         return {
             id: externalConnId,
@@ -44,6 +54,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
         const externalConn = new RTCConnection();
         const externalConnId = randomUUID();
         this.unassignedExternalConnections[externalConnId] = externalConn;
+        this.trackConnection(externalConn);
 
         externalConn.setRemoteDescription(offer);
 
@@ -55,6 +66,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
     private createConnection() {
         const conn = new MockRTCConnection(this.getExternalConnection);
+        this.trackConnection(conn);
 
         this.handleConnection(conn).catch((error) => {
             console.error("Error handling WebRTC connection:", error);
@@ -98,11 +110,21 @@ export class MockRTCServerPeer implements MockRTCPeer {
     }
 
     private async handleConnection(conn: MockRTCConnection) {
+        await conn.waitUntilConnected();
+
         for (const step of this.handlerSteps) {
             await step.handle(conn);
         }
 
-        conn.close();
+        await conn.close();
+    }
+
+    async close() {
+        await Promise.all(
+            this.connections.map(c =>
+                c.close()
+            )
+        );
     }
 
     private messages: { [channelName: string]: Array<string | Buffer> } = {};

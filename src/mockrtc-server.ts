@@ -11,7 +11,13 @@ export class MockRTCServer implements MockRTC {
     ) {}
 
     async start(): Promise<void> {}
-    async stop(): Promise<void> {}
+    async stop(): Promise<void> {
+        await Promise.all(
+            this._activePeers.map(peer =>
+                peer.close()
+            )
+        );
+    }
 
     buildPeer(): MockRTCPeerBuilder {
         return new MockRTCHandlerBuilder(this.buildPeerFromData);

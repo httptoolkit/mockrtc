@@ -10,7 +10,10 @@ import { DataChannelStream } from './datachannel-stream';
  */
 export class RTCConnection extends EventEmitter {
 
-    protected rawConn = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
+    // Set to null when the connection is closed, as otherwise calling any method (including checking
+    // the connection state) will segfault the process.
+    private rawConn: NodeDataChannel.PeerConnection | null
+        = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
 
     private readonly trackedChannels: Array<{ stream: DataChannelStream, isLocal: boolean }> = [];
 
@@ -34,16 +37,23 @@ export class RTCConnection extends EventEmitter {
     constructor() {
         super();
 
-        this.rawConn.onDataChannel((channel) => {
+        this.rawConn!.onDataChannel((channel) => {
             this.trackNewChannel(channel, { isLocal: false });
         });
 
-        this.rawConn.onStateChange((state) => {
+        // Important to remember that only node-dc only allows one listener per event. To handle that,
+        // we reemit important events here to use normal node event methods instead:
+        this.rawConn!.onStateChange((state) => {
+            this.emit('connection-state-changed', state);
+        });
+
+        this.on('connection-state-changed', (state) => {
             if (state === 'closed') this.emit('connection-closed');
         });
     }
 
     createDataChannel(label: string) {
+        if (!this.rawConn) throw new Error("Can't create data channel after connection is closed");
         const channel = this.rawConn.createDataChannel(label);
         return this.trackNewChannel(channel, { isLocal: true });
     }
@@ -74,6 +84,8 @@ export class RTCConnection extends EventEmitter {
     }
 
     setRemoteDescription(description: RTCSessionDescriptionInit) {
+        if (!this.rawConn) throw new Error("Can't set remote description after connection is closed");
+
         const { type: offerType, sdp: offerSdp } = description;
         if (!offerSdp) throw new Error("Cannot set MockRTC peer description without providing an SDP");
         this.rawConn.setRemoteDescription(offerSdp, offerType[0].toUpperCase() + offerType.slice(1) as any);
@@ -85,6 +97,8 @@ export class RTCConnection extends EventEmitter {
      * tracks or remote description have been provided beforehand.
      */
     async getLocalDescription(): Promise<RTCSessionDescriptionInit> {
+        if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
+
         let setupChannel: NodeDataChannel.DataChannel | undefined;
         if (this.rawConn.gatheringState() === 'new') {
             // We can't create an offer until we have something to negotiate, but we don't want to
@@ -95,30 +109,47 @@ export class RTCConnection extends EventEmitter {
         }
 
         await new Promise<void>((resolve) => {
-            this.rawConn.onGatheringStateChange((state) => {
+            this.rawConn!.onGatheringStateChange((state) => {
                 if (state === 'complete') resolve();
             });
 
             // Handle race conditions where gathering has already completed
-            if (this.rawConn.gatheringState() === 'complete') resolve();
+            if (this.rawConn!.gatheringState() === 'complete') resolve();
         });
+
+        if (!this.rawConn) throw new Error("Connection was closed while building local description");
 
         const sessionDescription = this.rawConn.localDescription() as RTCSessionDescriptionInit;
         setupChannel?.close();
         return sessionDescription;
     }
 
-    async close() {
-        if (this.rawConn.state() === 'closed') return;
+    waitUntilConnected() {
+        return new Promise<void>((resolve, reject) => {
+            if (!this.rawConn) throw new Error("Connection closed while/before waiting until connected");
 
-        const closedPromise = new Promise<void>((resolve) => {
-            this.rawConn.onStateChange((state) => {
-                if (state === 'closed') resolve();
+            this.on('connection-state-changed', (state) => {
+                if (state === 'connected') resolve();
+                if (state === 'failed') {
+                    reject(new Error("Connection failed while waiting for connection"));
+                }
             });
-        });
 
-        this.rawConn.close();
-        await closedPromise;
+            if (this.rawConn.state() === 'connected') resolve();
+            if (this.rawConn.state() === 'failed') {
+                reject(new Error("Connection failed while waiting for connection"));
+            }
+        });
+    }
+
+    async close() {
+        if (!this.rawConn) return; // Already closed
+
+        const { rawConn } = this;
+        this.rawConn = null; // Drop the reference, so nothing tries to use it after close
+
+        if (rawConn.state() === 'closed') return;
+        rawConn.close();
         this.emit('connection-closed');
     }
 
