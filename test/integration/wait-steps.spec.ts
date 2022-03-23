@@ -1,7 +1,8 @@
 import {
     MockRTC,
     expect,
-    waitForState
+    waitForState,
+    delay
 } from '../test-setup';
 
 describe("Wait steps", function () {
@@ -29,10 +30,10 @@ describe("Wait steps", function () {
 
         await waitForState(localConnection, 'connected');
 
-        await new Promise((resolve) => setTimeout(resolve, 200));
+        await delay(200);
         expect(receivedMessages).to.deep.equal([]);
 
-        await new Promise((resolve) => setTimeout(resolve, 300));
+        await delay(300);
         expect(receivedMessages).to.deep.equal(['delayed message']);
     });
 

@@ -39,3 +39,9 @@ export async function waitForState(connection: RTCPeerConnection, state: RTCPeer
         if (connection.connectionState === state) resolve();
     });
 }
+
+export function delay(durationMs: number) {
+    return new Promise<void>((resolve) => {
+        setTimeout(resolve, durationMs);
+    });
+}
