@@ -135,6 +135,24 @@ export class CloseStep extends Serializable implements HandlerStep {
 
 }
 
+export class EchoStep extends Serializable implements HandlerStep {
+
+    readonly type = 'echo-channels';
+
+    async handle(connection: MockRTCConnection): Promise<void> {
+        const listenForMessage = (channel: DataChannelStream) => {
+            channel.pipe(channel);
+        }
+
+        connection.on('channel-open', listenForMessage);
+        connection.channels.forEach(listenForMessage);
+
+        // This step keeps running indefinitely, until the connection closes
+        return new Promise<void>((resolve) => connection.on('connection-closed', resolve));
+    }
+
+}
+
 export class PeerProxyStep extends Serializable implements HandlerStep {
 
     readonly type = 'peer-proxy';
@@ -230,6 +248,7 @@ export const StepLookup = {
     'wait-for-message': WaitForMessageStep,
     'send-message': SendStep,
     'close-connection': CloseStep,
+    'echo-channels': EchoStep,
     'peer-proxy': PeerProxyStep,
     'dynamic-proxy': DynamicProxyStep
 };

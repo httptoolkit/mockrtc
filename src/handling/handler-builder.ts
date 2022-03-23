@@ -6,7 +6,8 @@ import {
     WaitForChannelStep,
     WaitForMessageStep,
     WaitForDurationStep,
-    CloseStep
+    CloseStep,
+    EchoStep
 } from "./handler-steps";
 
 /**
@@ -78,6 +79,11 @@ export class MockRTCHandlerBuilder<R> {
     thenSend(...args: [string, string | Buffer] | [string | Buffer]): Promise<R> {
         return this.send(...args as [string | undefined, string | Buffer])
             .buildCallback(this.handlerSteps);
+    }
+
+    thenEcho(): Promise<R> {
+        this.handlerSteps.push(new EchoStep());
+        return this.buildCallback(this.handlerSteps);
     }
 
     thenClose(): Promise<R> {
