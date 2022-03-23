@@ -1,4 +1,4 @@
-import { MockRTC } from '../test-setup';
+import { MockRTC, waitForState } from '../test-setup';
 
 describe("When connecting, MockRTC", function () {
 
@@ -20,11 +20,7 @@ describe("When connecting, MockRTC", function () {
         await setAnswer(localAnswer);
 
         // Wait until the connection opens successfully:
-        await new Promise<void>((resolve) => {
-            localConnection.addEventListener('connectionstatechange', () => {
-                if (localConnection.connectionState === 'connected') resolve();
-            });
-        });
+        await waitForState(localConnection, 'connected');
     });
 
     it("should be able to answer an offer", async () => {
@@ -40,11 +36,7 @@ describe("When connecting, MockRTC", function () {
         await localConnection.setRemoteDescription(mockAnswer);
 
         // Wait until the connection opens successfully:
-        await new Promise<void>((resolve) => {
-            localConnection.addEventListener('connectionstatechange', () => {
-                if (localConnection.connectionState === 'connected') resolve();
-            });
-        });
+        await waitForState(localConnection, 'connected');
     });
 
 });

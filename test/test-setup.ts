@@ -30,3 +30,12 @@ before(async function () {
         }
     }
 });
+
+export async function waitForState(connection: RTCPeerConnection, state: RTCPeerConnectionState) {
+    await new Promise<void>((resolve) => {
+        connection.addEventListener('connectionstatechange', () => {
+            if (connection.connectionState === state) resolve();
+        });
+        if (connection.connectionState === state) resolve();
+    });
+}
