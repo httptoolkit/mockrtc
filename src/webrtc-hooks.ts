@@ -32,7 +32,6 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     let mockOffer: MockRTCOfferParams | undefined;
 
     let internalAnswer: Promise<RTCSessionDescriptionInit> | undefined;
-    let remoteOffer: RTCSessionDescriptionInit | undefined;
 
     conn.addEventListener('connectionstatechange', async () => {
         if (conn.connectionState === 'connected') {
@@ -55,13 +54,13 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     }) as any;
 
     conn.createAnswer = (async () => {
-        const externalAnswerParams = await mockPeer.answerExternalOffer(remoteOffer!);
+        const externalAnswerParams = await mockPeer.answerExternalOffer(conn.pendingRemoteDescription!);
         const externalAnswer = externalAnswerParams.answer;
         externalAnswers[externalAnswer.sdp!] = externalAnswerParams;
         return externalAnswer;
     }) as any;
 
-    // Mock various props that expose the local connection description:
+    // Mock various props that expose the connection description:
     let pendingLocalDescription: RTCSessionDescriptionInit | null = null;
     Object.defineProperty(conn, 'pendingLocalDescription', {
         get: () => pendingLocalDescription
@@ -74,6 +73,20 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
 
     Object.defineProperty(conn, 'localDescription', {
         get: () => conn.pendingLocalDescription ?? conn.currentLocalDescription
+    });
+
+    let pendingRemoteDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'pendingRemoteDescription', {
+        get: () => pendingRemoteDescription
+    });
+
+    let currentRemoteDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'currentRemoteDescription', {
+        get: () => currentRemoteDescription
+    });
+
+    Object.defineProperty(conn, 'remoteDescription', {
+        get: () => conn.pendingRemoteDescription ?? conn.currentRemoteDescription
     });
 
     // Mock all mutations of the connection description:
@@ -105,14 +118,16 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
             await _setLocalDescription(realAnswer);
 
             currentLocalDescription = localDescription;
+            currentRemoteDescription = pendingRemoteDescription;
             pendingLocalDescription = null;
+            pendingRemoteDescription = null;
         }
     }) as any;
 
     conn.setRemoteDescription = (async (remoteDescription: RTCSessionDescriptionInit) => {
         if (remoteDescription.type === 'offer') {
             // We have an offer! Remember it, so we can createAnswer shortly.
-            remoteOffer = remoteDescription;
+            pendingRemoteDescription = remoteDescription;
             mockOffer = await mockPeer.createOffer();
             await _setRemoteDescription(mockOffer.offer);
         } else {
@@ -121,7 +136,9 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
             await _setRemoteDescription(await internalAnswer!);
 
             currentLocalDescription = pendingLocalDescription;
+            currentRemoteDescription = remoteDescription;
             pendingLocalDescription = null;
+            pendingRemoteDescription = null;
         }
     }) as any;
 
