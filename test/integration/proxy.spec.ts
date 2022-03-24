@@ -214,7 +214,7 @@ describe("When proxying WebRTC traffic", () => {
             channel.send("remote message 2");
             channel.send("remote message 3");
             channel.send("remote message 4");
-            setTimeout(() => channel.close(), 500);
+            setTimeout(() => channel.close(), 100);
         });
 
         // Remote connection starts first, sending a hooked offer:
@@ -256,6 +256,126 @@ describe("When proxying WebRTC traffic", () => {
         expect(remotelyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by send step here too! Both peers are hooked
             // Local message is eaten by waitForMessage
+            'local message 2',
+            'local message 3'
+        ]);
+    });
+
+    function setupPerfectNegotiation(
+        peer: RTCPeerConnection,
+        polite: boolean,
+        signaler: { send: (msg: any) => void, onmessage: (msg: any) => void }
+    ) {
+        // Example almost verbatim from https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
+
+        // keep track of some negotiation state to prevent races and errors
+        let makingOffer = false;
+        let ignoreOffer = false;
+        let isSettingRemoteAnswerPending = false;
+
+        // send any ice candidates to the other peer
+        peer.onicecandidate = ({candidate}) => signaler.send({candidate});
+
+        // let the "negotiationneeded" event trigger offer generation
+        peer.onnegotiationneeded = async () => {
+            try {
+                makingOffer = true;
+                await peer.setLocalDescription();
+                signaler.send({description: peer.localDescription});
+            } catch (err) {
+                console.error('onnegotiationneeded', err);
+            } finally {
+                makingOffer = false;
+            }
+        };
+
+        signaler.onmessage = async ({description, candidate}) => {
+            try {
+                if (description) {
+                    // An offer may come in while we are busy processing SRD(answer).
+                    // In this case, we will be in "stable" by the time the offer is processed
+                    // so it is safe to chain it on our Operations Chain now.
+                    const readyForOffer = !makingOffer &&
+                        (peer.signalingState == "stable" || isSettingRemoteAnswerPending);
+                    const offerCollision = description.type == "offer" && !readyForOffer;
+
+                    ignoreOffer = !polite && offerCollision;
+                    if (ignoreOffer) {
+                        return;
+                    }
+                    isSettingRemoteAnswerPending = description.type == "answer";
+                    await peer.setRemoteDescription(description); // SRD rolls back as needed
+                    isSettingRemoteAnswerPending = false;
+                    if (description.type == "offer") {
+                        await peer.setLocalDescription();
+                        signaler.send({description: peer.localDescription});
+                    }
+                } else if (candidate) {
+                    try {
+                        await peer.addIceCandidate(candidate);
+                    } catch (err) {
+                        if (!ignoreOffer) throw err; // Suppress ignored offer's candidates
+                    }
+                }
+            } catch (err) {
+                console.error('onmessage error', err);
+            }
+        }
+    }
+
+    it("should be able to transparently forward messages when hooking both ends of a perfect negotiation", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .sleep(100)
+            .send('Injected message')
+            .thenForwardDynamically();
+
+        // Two hooked peers:
+        const remoteConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCPeer(remoteConn, mockPeer);
+        const localConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+
+        // A fake synchronous signalling channel:
+        const signaler1 = { send: (msg: any) => signaler2.onmessage(msg), onmessage: (msg: any) => {} };
+        const signaler2 = { send: (msg: any) => signaler1.onmessage(msg), onmessage: (msg: any) => {} };
+
+        // Do perfect negotiation in parallel to connect our two peers:
+        setupPerfectNegotiation(remoteConn, true, signaler1); // Polite
+        setupPerfectNegotiation(localConn, false, signaler2); // Impolite
+
+        const remotelyReceivedMessages: Array<string | Buffer> = [];
+
+        // Remote listens for local's channel, sends replies, and closes
+        remoteConn.addEventListener('datachannel', ({ channel }) => {
+            channel.addEventListener('message', ({ data }) => remotelyReceivedMessages.push(data));
+            channel.send("remote message 2");
+            channel.send("remote message 3");
+            channel.send("remote message 4");
+            setTimeout(() => channel.close(), 100);
+        });
+
+        const dataChannel = localConn.createDataChannel("localDataChannel");
+        const channelOpenPromise = new Promise<void>((resolve) => dataChannel.onopen = () => resolve());
+        const locallyReceivedMessages: Array<string | Buffer> = [];
+        dataChannel.addEventListener('message', ({ data }) => locallyReceivedMessages.push(data));
+
+        await channelOpenPromise;
+
+        dataChannel.send('local message 1');
+        dataChannel.send('local message 2');
+        dataChannel.send('local message 3');
+
+        await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+
+        expect(locallyReceivedMessages).to.deep.equal([
+            'Injected message', // Injected by send step
+            'remote message 2',
+            'remote message 3',
+            'remote message 4'
+        ]);
+
+        expect(remotelyReceivedMessages).to.deep.equal([
+            'local message 1',
             'local message 2',
             'local message 3'
         ]);

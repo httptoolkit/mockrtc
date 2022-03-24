@@ -61,13 +61,39 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
         return externalAnswer;
     }) as any;
 
+    // Mock various props that expose the local connection description:
+    let pendingLocalDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'pendingLocalDescription', {
+        get: () => pendingLocalDescription
+    });
+
+    let currentLocalDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'currentLocalDescription', {
+        get: () => currentLocalDescription
+    });
+
+    Object.defineProperty(conn, 'localDescription', {
+        get: () => conn.pendingLocalDescription ?? conn.currentLocalDescription
+    });
+
+    // Mock all mutations of the connection description:
     conn.setLocalDescription = (async (localDescription: RTCSessionDescriptionInit) => {
+        if (!localDescription) {
+            if (["stable", "have-local-offer", "have-remote-pranswer"].includes(conn.signalingState)) {
+                localDescription = await conn.createOffer();
+            } else {
+                localDescription = await conn.createAnswer();
+            }
+        }
+
         // When we set an offer or answer locally, it must be the external offer/answer we've
         // generated to send to the other peer. We swap it back for a real equivalent that will
         // connect us to the mock peer instead:
         if (localDescription.type === 'offer') {
+            pendingLocalDescription = localDescription;
             selectedExternalOffer = externalOffers[localDescription.sdp!];
             const realOffer = _createOffer();
+
             // Start mock answer generation async, so it's ready/waitable in
             // setRemoteDescription if it's not complete by then.
             internalAnswer = realOffer.then((offer) => mockPeer.answerOffer(offer));
@@ -77,6 +103,9 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
             const realAnswer = await _createAnswer();
             mockOffer!.setAnswer(realAnswer);
             await _setLocalDescription(realAnswer);
+
+            currentLocalDescription = localDescription;
+            pendingLocalDescription = null;
         }
     }) as any;
 
@@ -90,6 +119,14 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
             // We have an answer - we must've sent an offer, complete & use that.
             await selectedExternalOffer!.setAnswer(remoteDescription);
             await _setRemoteDescription(await internalAnswer!);
+
+            currentLocalDescription = pendingLocalDescription;
+            pendingLocalDescription = null;
         }
     }) as any;
+
+    Object.defineProperty(conn, 'onicecandidate', {
+        get: () => {},
+        set: () => {} // Ignore this completely - never call the callback
+    });
 }
