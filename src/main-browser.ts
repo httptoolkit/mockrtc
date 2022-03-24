@@ -23,6 +23,7 @@ export type {
 export type { MockRTCPeer } from './mockrtc-peer';
 
 export { MOCKRTC_CONTROL_CHANNEL } from './control-channel';
+export { hookWebRTCPeer } from "./webrtc-hooks";
 
 export function getRemote(options: MockRTCClientOptions = {}): MockRTC {
     return new MockRTCClient(options);

@@ -11,6 +11,7 @@
   "bin": {
     "mockrtc": "./dist/admin-bin.js"
   },
+  "sideEffects": ["./test/**/*.spec.ts"],
   "directories": {
     "test": "test"
   },
