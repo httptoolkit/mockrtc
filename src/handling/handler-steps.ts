@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Tim Perry <tim@httptoolkit.tech>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { ClientServerChannel, Serializable } from 'mockttp/dist/util/serialization';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
 import { MockRTCConnection } from '../webrtc/mockrtc-connection';

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Tim Perry <tim@httptoolkit.tech>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import type { MockRTCHandlerBuilder } from "./handling/handler-builder";
 import type { MockRTCPeer } from "./mockrtc-peer";
 

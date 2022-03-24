@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Tim Perry <tim@httptoolkit.tech>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 const CONTINUOUS = process.env.CONTINUOUS_TEST === 'true';
 const HEADFUL = process.env.HEADFUL_TEST === 'true';
 

@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Tim Perry <tim@httptoolkit.tech>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import * as stream from 'stream';
 import * as NodeDataChannel from 'node-datachannel';
 
