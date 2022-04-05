@@ -18,13 +18,13 @@ npm install --save-dev mockrtc
 
 Let's write an automated test with MockRTC. To test WebRTC-based code, you will typically need to:
 
-* Start a MockRTC mock server
+* Start a MockRTC mock session
 * Define rules that match and mock the traffic you're interested in
 * Create a WebRTC connection to a mock peer, by either:
     * Using MockRTC's ICE candidates directly.
     * Installing the MockRTC browser extension (WIP), which can capture and redirect _all_ WebRTC traffic regardless of the session configuration used.
 
-A simple example of that, running as a test in a browser, using the built-in WebRTC APIs, might look like this:
+A simple example of that, running as a test in a browser using the built-in WebRTC APIs, might look like this:
 
 ```typescript
 import * as MockRTC from 'mockrtc'
@@ -47,8 +47,8 @@ describe("MockRTC", () => {
         await localConnection.setLocalDescription(localOffer);
 
         // Get the remote details for the mock peer:
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         // Once the connection is open, message the peer
         dataChannel.onopen = () => {
@@ -62,7 +62,7 @@ describe("MockRTC", () => {
         expect(message).to.equal('Goodbye'); // <-- We get our mock response!
 
         // Assert on the messages the mock peer received:
-        expect(mockPeer.getAllMessages()).to.deep.equal(['Hello']);
+        expect(await mockPeer.getAllMessages()).to.deep.equal(['Hello']);
     });
 });
 ```
