@@ -17,7 +17,8 @@ import {
     SendStepDefinition,
     WaitForChannelStepDefinition,
     WaitForDurationStepDefinition,
-    WaitForMessageStepDefinition
+    WaitForMessageStepDefinition,
+    WaitForTrackStepDefinition
 } from './handler-step-definitions';
 
 export interface HandlerStep extends HandlerStepDefinition {
@@ -80,6 +81,17 @@ export class WaitForMessageStep extends WaitForMessageStepDefinition {
 
             connection.on('channel-open', listenForMessage);
             connection.channels.forEach(listenForMessage);
+        });
+    }
+
+}
+
+export class WaitForTrackStep extends WaitForTrackStepDefinition {
+
+    async handle(connection: MockRTCConnection): Promise<void> {
+        await new Promise<void>((resolve) => {
+            if (connection.remoteMediaTracks.length) resolve();
+            else connection.once('remote-track-open', () => resolve());
         });
     }
 
@@ -196,6 +208,7 @@ export class DynamicProxyStep extends DynamicProxyStepDefinition {
 export const StepLookup: typeof StepDefinitionLookup = {
     'wait-for-duration': WaitForDurationStep,
     'wait-for-channel': WaitForChannelStep,
+    'wait-for-track': WaitForTrackStep,
     'wait-for-message': WaitForMessageStep,
     'send-message': SendStep,
     'close-connection': CloseStep,

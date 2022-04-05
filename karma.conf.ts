@@ -64,8 +64,19 @@ module.exports = function(config: any) {
         logLevel: config.LOG_INFO,
 
         browsers: HEADFUL
-            ? ['Chrome']
-            : ['ChromeHeadless'],
+            ? ['ChromeWithFakeMedia']
+            : ['ChromeHeadlessWithFakeMedia'],
+
+        customLaunchers: {
+            ChromeHeadlessWithFakeMedia: {
+                base: 'ChromeHeadless',
+                flags: ['--use-fake-ui-for-media-stream', '--use-fake-device-for-media-stream']
+            },
+            ChromeWithFakeMedia: {
+                base: 'Chrome',
+                flags: ['--use-fake-ui-for-media-stream']
+            }
+        },
 
         autoWatch: CONTINUOUS,
         singleRun: !CONTINUOUS,

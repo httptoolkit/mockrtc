@@ -44,6 +44,12 @@ export class WaitForMessageStepDefinition extends Serializable implements Handle
 
 }
 
+export class WaitForTrackStepDefinition extends Serializable implements HandlerStepDefinition {
+
+    readonly type = 'wait-for-track';
+
+}
+
 export class SendStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'send-message';
@@ -115,6 +121,7 @@ export class DynamicProxyStepDefinition extends Serializable implements HandlerS
 export const StepDefinitionLookup = {
     'wait-for-duration': WaitForDurationStepDefinition,
     'wait-for-channel': WaitForChannelStepDefinition,
+    'wait-for-track': WaitForTrackStepDefinition,
     'wait-for-message': WaitForMessageStepDefinition,
     'send-message': SendStepDefinition,
     'close-connection': CloseStepDefinition,

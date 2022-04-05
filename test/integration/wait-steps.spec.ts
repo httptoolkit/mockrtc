@@ -98,6 +98,40 @@ describe("Wait steps", function () {
         expect(receivedRealChannelMessages).to.deep.equal(['delayed message']);
     });
 
+    it("should be able to wait for the addition of a media track", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForTrack()
+            .thenSend('after-media message');
+
+        const localConnection = new RTCPeerConnection();
+
+        const receivedMessages: string[] = [];
+        localConnection.createDataChannel('message-channel')
+            .addEventListener('message', ({ data }) => { receivedMessages.push(data) });
+
+        const localOffer = await localConnection.createOffer();
+        await localConnection.setLocalDescription(localOffer);
+        const { answer, session } = await mockPeer.answerOffer(await localOffer);
+        await localConnection.setRemoteDescription(answer);
+
+        await waitForState(localConnection, 'connected');
+        await delay(100);
+        expect(localConnection.connectionState).to.equal('connected');
+        expect(receivedMessages).to.deep.equal([]);
+
+        // Add media tracks and renegotiate:
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream.getTracks().forEach((track) => localConnection.addTrack(track, stream));
+
+        const updatedOffer = await localConnection.createOffer();
+        localConnection.setLocalDescription(updatedOffer);
+        const updatedAnswer = await session.answerOffer(updatedOffer);
+        await localConnection.setRemoteDescription(updatedAnswer);
+
+        await delay(100);
+        expect(receivedMessages).to.deep.equal(['after-media message']);
+    });
+
     it("should be able to wait for a message on any channel", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessage()

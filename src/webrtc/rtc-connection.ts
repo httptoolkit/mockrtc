@@ -9,6 +9,7 @@ import * as NodeDataChannel from 'node-datachannel';
 import { MockRTCSessionAPI } from '../mockrtc-peer';
 
 import { DataChannelStream } from './datachannel-stream';
+import { MediaTrackStream } from './mediatrack-stream';
 
 /**
  * An RTC connection is a single connection. This base class defines the raw connection management and
@@ -43,11 +44,34 @@ export class RTCConnection extends EventEmitter {
             .map(channel => channel.stream);
     }
 
+    private readonly trackedMediaTracks: Array<{ stream: MediaTrackStream, isLocal: boolean }> = [];
+
+    get mediaTracks(): ReadonlyArray<MediaTrackStream> {
+        return this.trackedMediaTracks
+            .map(track => track.stream);
+    }
+
+    get localMediaTracks(): ReadonlyArray<MediaTrackStream> {
+        return this.trackedMediaTracks
+            .filter(track => track.isLocal)
+            .map(track => track.stream);
+    }
+
+    get remoteMediaTracks(): ReadonlyArray<MediaTrackStream> {
+        return this.trackedMediaTracks
+            .filter(track => !track.isLocal)
+            .map(track => track.stream);
+    }
+
     constructor() {
         super();
 
         this.rawConn!.onDataChannel((channel) => {
             this.trackNewChannel(channel, { isLocal: false });
+        });
+
+        (this.rawConn! as any).onTrack((track: NodeDataChannel.Track) => { // Issue with node-dc types
+            this.trackNewMediaTrack(track, { isLocal: false });
         });
 
         // Important to remember that only node-dc only allows one listener per event. To handle that,
@@ -90,6 +114,31 @@ export class RTCConnection extends EventEmitter {
         }
 
         return channelStream;
+    }
+
+    protected trackNewMediaTrack(track: NodeDataChannel.Track, options: { isLocal: boolean }) {
+        const trackStream = new MediaTrackStream(track);
+        this.trackedMediaTracks.push({ stream: trackStream, isLocal: options.isLocal });
+
+        trackStream.on('close', () => {
+            const trackIndex = this.trackedMediaTracks.findIndex(c => c.stream === trackStream);
+            if (trackIndex !== -1) {
+                this.trackedChannels.splice(trackIndex, 1);
+            }
+        });
+
+        trackStream.on('error', (error) => {
+            console.error('Media track error:', error);
+        });
+
+        this.emit('track-open', trackStream);
+        if (options.isLocal) {
+            this.emit('local-track-open', trackStream);
+        } else {
+            this.emit('remote-track-open', trackStream);
+        }
+
+        return trackStream;
     }
 
     setRemoteDescription(description: RTCSessionDescriptionInit) {
