@@ -7,7 +7,8 @@ import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "./mockrtc";
 import { MockRTCPeer } from "./mockrtc-peer";
 import { MockRTCServerPeer } from "./mockrtc-server-peer";
 import { MockRTCHandlerBuilder } from "./handling/handler-builder";
-import { HandlerStep } from "./handling/handler-steps";
+import { HandlerStepDefinition } from "./handling/handler-step-definitions";
+import { StepLookup } from "./handling/handler-steps";
 
 export class MockRTCServer implements MockRTC {
 
@@ -28,7 +29,13 @@ export class MockRTCServer implements MockRTC {
         return new MockRTCHandlerBuilder(this.buildPeerFromData);
     }
 
-    buildPeerFromData = async (handlerSteps: HandlerStep[]): Promise<MockRTCServerPeer> => {
+    buildPeerFromData = async (handlerStepDefinitions: HandlerStepDefinition[]): Promise<MockRTCServerPeer> => {
+        const handlerSteps = handlerStepDefinitions.map((definition) => {
+            return Object.assign(
+                Object.create(StepLookup[definition.type].prototype),
+                definition
+            );
+        });
         const peer = new MockRTCServerPeer(handlerSteps, this.options);
         this._activePeers.push(peer);
         return peer;

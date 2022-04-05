@@ -3,25 +3,28 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ClientServerChannel, Serializable } from 'mockttp/dist/util/serialization';
+import { ClientServerChannel } from 'mockttp/dist/util/serialization';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
-import { MockRTCConnection } from '../webrtc/mockrtc-connection';
+import type { MockRTCConnection } from '../webrtc/mockrtc-connection';
 import { RTCConnection } from '../webrtc/rtc-connection';
+import {
+    StepDefinitionLookup,
+    CloseStepDefinition,
+    DynamicProxyStepDefinition,
+    EchoStepDefinition,
+    HandlerStepDefinition,
+    PeerProxyStepDefinition,
+    SendStepDefinition,
+    WaitForChannelStepDefinition,
+    WaitForDurationStepDefinition,
+    WaitForMessageStepDefinition
+} from './handler-step-definitions';
 
-export interface HandlerStep extends Serializable {
-    readonly type: keyof typeof StepLookup;
+export interface HandlerStep extends HandlerStepDefinition {
     handle(connection: MockRTCConnection): Promise<void>;
 }
 
-export class WaitForDurationStep extends Serializable implements HandlerStep {
-
-    readonly type = 'wait-for-duration';
-
-    constructor(
-        private durationMs: number
-    ) {
-        super();
-    }
+export class WaitForDurationStep extends WaitForDurationStepDefinition {
 
     async handle(): Promise<void> {
         return new Promise<void>((resolve) => setTimeout(resolve, this.durationMs));
@@ -29,15 +32,7 @@ export class WaitForDurationStep extends Serializable implements HandlerStep {
 
 }
 
-export class WaitForChannelStep extends Serializable implements HandlerStep {
-
-    readonly type = 'wait-for-channel';
-
-    constructor(
-        private channelLabel?: string
-    ) {
-        super();
-    }
+export class WaitForChannelStep extends WaitForChannelStepDefinition {
 
     private matchesChannel(channel: DataChannelStream) {
         return this.channelLabel === undefined || this.channelLabel === channel.label;
@@ -59,15 +54,7 @@ export class WaitForChannelStep extends Serializable implements HandlerStep {
 
 }
 
-export class WaitForMessageStep extends Serializable implements HandlerStep {
-
-    readonly type = 'wait-for-message';
-
-    constructor(
-        private channelLabel?: string
-    ) {
-        super();
-    }
+export class WaitForMessageStep extends WaitForMessageStepDefinition {
 
     private matchesChannel(channel: DataChannelStream) {
         return this.channelLabel === undefined || this.channelLabel === channel.label;
@@ -98,16 +85,7 @@ export class WaitForMessageStep extends Serializable implements HandlerStep {
 
 }
 
-export class SendStep extends Serializable implements HandlerStep {
-
-    readonly type = 'send-message';
-
-    constructor(
-        private channelLabel: string | undefined,
-        private message: string | Buffer
-    ) {
-        super();
-    }
+export class SendStep extends SendStepDefinition {
 
     private matchesChannel(channel: DataChannelStream) {
         return this.channelLabel === undefined || this.channelLabel === channel.label;
@@ -130,9 +108,7 @@ export class SendStep extends Serializable implements HandlerStep {
 
 }
 
-export class CloseStep extends Serializable implements HandlerStep {
-
-    readonly type = 'close-connection';
+export class CloseStep extends CloseStepDefinition {
 
     async handle(connection: MockRTCConnection): Promise<void> {
         await connection.close();
@@ -140,9 +116,7 @@ export class CloseStep extends Serializable implements HandlerStep {
 
 }
 
-export class EchoStep extends Serializable implements HandlerStep {
-
-    readonly type = 'echo-channels';
+export class EchoStep extends EchoStepDefinition {
 
     async handle(connection: MockRTCConnection): Promise<void> {
         const listenForMessage = (channel: DataChannelStream) => {
@@ -158,31 +132,9 @@ export class EchoStep extends Serializable implements HandlerStep {
 
 }
 
-export class PeerProxyStep extends Serializable implements HandlerStep {
-
-    readonly type = 'peer-proxy';
-
-    private getAnswer: (offer: RTCSessionDescriptionInit) => Promise<RTCSessionDescriptionInit>;
+export class PeerProxyStep extends PeerProxyStepDefinition {
 
     private externalConnections: RTCConnection[] = [];
-
-    constructor(
-        connectionTarget:
-            | RTCPeerConnection
-            | ((offer: RTCSessionDescriptionInit) => Promise<RTCSessionDescriptionInit>)
-    ) {
-        super();
-        if (connectionTarget instanceof Function) {
-            this.getAnswer = connectionTarget;
-        } else {
-            this.getAnswer = async (offer: RTCSessionDescriptionInit) => {
-                await connectionTarget.setRemoteDescription(offer);
-                const answer = await connectionTarget.createAnswer();
-                await connectionTarget.setLocalDescription(answer);
-                return answer;
-            };
-        }
-    }
 
     async handle(connection: MockRTCConnection) {
         const externalConn = new RTCConnection();
@@ -224,15 +176,9 @@ export class PeerProxyStep extends Serializable implements HandlerStep {
 
 }
 
-export class DynamicProxyStep extends Serializable implements HandlerStep {
-
-    readonly type = 'dynamic-proxy';
+export class DynamicProxyStep extends DynamicProxyStepDefinition {
 
     private externalConnections: RTCConnection[] = [];
-
-    constructor() {
-        super();
-    }
 
     async handle(connection: MockRTCConnection) {
         await connection.proxyTrafficToExternalConnection();
@@ -247,7 +193,7 @@ export class DynamicProxyStep extends Serializable implements HandlerStep {
 
 }
 
-export const StepLookup = {
+export const StepLookup: typeof StepDefinitionLookup = {
     'wait-for-duration': WaitForDurationStep,
     'wait-for-channel': WaitForChannelStep,
     'wait-for-message': WaitForMessageStep,

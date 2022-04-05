@@ -33,7 +33,7 @@ export class MockRTCClient implements MockRTC {
         return new MockRTCHandlerBuilder(this.buildPeerFromData);
     }
 
-    private buildPeerFromData = async (handlerSteps: HandlerStep[]): Promise<MockRTCPeer> => {
+    private buildPeerFromData = async (handlerSteps: HandlerStepDefinition[]): Promise<MockRTCPeer> => {
         const { adminStream } = this.adminClient;
 
         const peerData = await this.adminClient.sendQuery<

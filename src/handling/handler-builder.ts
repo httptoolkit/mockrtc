@@ -4,16 +4,16 @@
  */
 
 import {
-    type HandlerStep,
-    PeerProxyStep,
-    SendStep,
-    DynamicProxyStep,
-    WaitForChannelStep,
-    WaitForMessageStep,
-    WaitForDurationStep,
-    CloseStep,
-    EchoStep
-} from "./handler-steps";
+    type HandlerStepDefinition,
+    PeerProxyStepDefinition,
+    SendStepDefinition,
+    DynamicProxyStepDefinition,
+    WaitForChannelStepDefinition,
+    WaitForMessageStepDefinition,
+    WaitForDurationStepDefinition,
+    CloseStepDefinition,
+    EchoStepDefinition
+} from "./handler-step-definitions";
 
 /**
  * The builder logic for composing RTC handling behaviour for both mock peers and rules,
@@ -22,17 +22,17 @@ import {
  */
 export class MockRTCHandlerBuilder<R> {
 
-    private handlerSteps: HandlerStep[] = [];
+    private handlerSteps: HandlerStepDefinition[] = [];
 
     constructor(
-        private buildCallback: (handlerSteps: HandlerStep[]) => Promise<R>
+        private buildCallback: (handlerSteps: HandlerStepDefinition[]) => Promise<R>
     ) {}
 
     /**
      * Wait for a given duration, in milliseconds
      */
     sleep(duration: number): this {
-        this.handlerSteps.push(new WaitForDurationStep(duration));
+        this.handlerSteps.push(new WaitForDurationStepDefinition(duration));
         return this;
     }
 
@@ -40,7 +40,7 @@ export class MockRTCHandlerBuilder<R> {
      * Wait until the remote client has opened at least one DataChannel.
      */
     waitForChannel(channelLabel?: string): this {
-        this.handlerSteps.push(new WaitForChannelStep(channelLabel));
+        this.handlerSteps.push(new WaitForChannelStepDefinition(channelLabel));
         return this;
     }
 
@@ -51,7 +51,7 @@ export class MockRTCHandlerBuilder<R> {
      * previous steps.
      */
     waitForMessage(): this {
-        this.handlerSteps.push(new WaitForMessageStep());
+        this.handlerSteps.push(new WaitForMessageStepDefinition());
         return this;
     }
 
@@ -62,7 +62,7 @@ export class MockRTCHandlerBuilder<R> {
      * previous steps.
      */
     waitForMessageOnChannel(channelLabel: string): this {
-        this.handlerSteps.push(new WaitForMessageStep(channelLabel));
+        this.handlerSteps.push(new WaitForMessageStepDefinition(channelLabel));
         return this;
     }
 
@@ -71,10 +71,10 @@ export class MockRTCHandlerBuilder<R> {
     send(...args: [string | undefined, string | Buffer] | [string | Buffer]): this {
         if (args[1] !== undefined) {
             const [channel, message] = args as [string, string | Buffer];
-            this.handlerSteps.push(new SendStep(channel, message));
+            this.handlerSteps.push(new SendStepDefinition(channel, message));
         } else {
             const [message] = args as [string | Buffer];
-            this.handlerSteps.push(new SendStep(undefined, message));
+            this.handlerSteps.push(new SendStepDefinition(undefined, message));
         }
         return this;
     }
@@ -87,22 +87,22 @@ export class MockRTCHandlerBuilder<R> {
     }
 
     thenEcho(): Promise<R> {
-        this.handlerSteps.push(new EchoStep());
+        this.handlerSteps.push(new EchoStepDefinition());
         return this.buildCallback(this.handlerSteps);
     }
 
     thenClose(): Promise<R> {
-        this.handlerSteps.push(new CloseStep());
+        this.handlerSteps.push(new CloseStepDefinition());
         return this.buildCallback(this.handlerSteps);
     }
 
     thenForwardTo(peer: RTCPeerConnection): Promise<R> {
-        this.handlerSteps.push(new PeerProxyStep(peer));
+        this.handlerSteps.push(new PeerProxyStepDefinition(peer));
         return this.buildCallback(this.handlerSteps);
     }
 
     thenForwardDynamically(): Promise<R> {
-        this.handlerSteps.push(new DynamicProxyStep());
+        this.handlerSteps.push(new DynamicProxyStepDefinition());
         return this.buildCallback(this.handlerSteps);
     }
 
