@@ -13,7 +13,8 @@ import {
     WaitForDurationStepDefinition,
     CloseStepDefinition,
     EchoStepDefinition,
-    WaitForTrackStepDefinition
+    WaitForTrackStepDefinition,
+    WaitForMediaStepDefinition
 } from "./handler-step-definitions";
 
 /**
@@ -61,6 +62,16 @@ export class MockRTCHandlerBuilder<R> {
      */
     waitForMessage(): this {
         this.handlerSteps.push(new WaitForMessageStepDefinition());
+        return this;
+    }
+
+    /**
+     * Wait until the remote client next sends media on a media track.
+     *
+     * This waits for new media, ignoring any media already consumed by previous steps.
+     */
+    waitForMedia(): this {
+        this.handlerSteps.push(new WaitForMediaStepDefinition());
         return this;
     }
 

@@ -101,7 +101,7 @@ describe("Wait steps", function () {
     it("should be able to wait for the addition of a media track", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForTrack()
-            .thenSend('after-media message');
+            .thenSend('after-track message');
 
         const localConnection = new RTCPeerConnection();
 
@@ -116,7 +116,42 @@ describe("Wait steps", function () {
 
         await waitForState(localConnection, 'connected');
         await delay(100);
-        expect(localConnection.connectionState).to.equal('connected');
+        expect(receivedMessages).to.deep.equal([]);
+
+        // Add (listen only) media tracks and renegotiate:
+        const updatedOffer = await localConnection.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true
+        });
+        localConnection.setLocalDescription(updatedOffer);
+        const updatedAnswer = await session.answerOffer(updatedOffer);
+        await localConnection.setRemoteDescription(updatedAnswer);
+
+        await delay(100);
+        expect(receivedMessages).to.deep.equal(['after-track message']);
+    });
+
+    it("should be able to wait for media data", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForMedia()
+            .thenSend('after-track message');
+
+        const localConnection = new RTCPeerConnection();
+
+        const receivedMessages: string[] = [];
+        localConnection.createDataChannel('message-channel')
+            .addEventListener('message', ({ data }) => { receivedMessages.push(data) });
+
+        const localOffer = await localConnection.createOffer({
+            offerToReceiveAudio: true,
+            offerToReceiveVideo: true
+        });
+        await localConnection.setLocalDescription(localOffer);
+        const { answer, session } = await mockPeer.answerOffer(await localOffer);
+        await localConnection.setRemoteDescription(answer);
+
+        await waitForState(localConnection, 'connected');
+        await delay(100);
         expect(receivedMessages).to.deep.equal([]);
 
         // Add media tracks and renegotiate:
@@ -128,8 +163,8 @@ describe("Wait steps", function () {
         const updatedAnswer = await session.answerOffer(updatedOffer);
         await localConnection.setRemoteDescription(updatedAnswer);
 
-        await delay(100);
-        expect(receivedMessages).to.deep.equal(['after-media message']);
+        await delay(1000);
+        expect(receivedMessages).to.deep.equal(['after-track message']);
     });
 
     it("should be able to wait for a message on any channel", async () => {

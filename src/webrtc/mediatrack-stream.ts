@@ -24,14 +24,9 @@ export class MediaTrackStream extends stream.Duplex {
             allowHalfOpen?: boolean;
         } = {}
     ) {
-        const direction = rawTrack.direction();
         super({
             allowHalfOpen: false, // Default to autoclose on end().
             ...streamOptions,
-            ...{
-                readable: direction === Direction.SendRecv || direction === Direction.RecvOnly,
-                writable: direction === Direction.SendRecv || direction === Direction.SendOnly
-            }
         });
 
         rawTrack.onMessage((msg) => {

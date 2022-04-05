@@ -5,6 +5,7 @@
 
 import { ClientServerChannel } from 'mockttp/dist/util/serialization';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
+import type { MediaTrackStream } from '../webrtc/mediatrack-stream';
 import type { MockRTCConnection } from '../webrtc/mockrtc-connection';
 import { RTCConnection } from '../webrtc/rtc-connection';
 import {
@@ -17,6 +18,7 @@ import {
     SendStepDefinition,
     WaitForChannelStepDefinition,
     WaitForDurationStepDefinition,
+    WaitForMediaStepDefinition,
     WaitForMessageStepDefinition,
     WaitForTrackStepDefinition
 } from './handler-step-definitions';
@@ -92,6 +94,31 @@ export class WaitForTrackStep extends WaitForTrackStepDefinition {
         await new Promise<void>((resolve) => {
             if (connection.remoteMediaTracks.length) resolve();
             else connection.once('remote-track-open', () => resolve());
+        });
+    }
+
+}
+
+export class WaitForMediaStep extends WaitForMediaStepDefinition {
+
+    async handle(connection: MockRTCConnection): Promise<void> {
+        return new Promise<void>((resolve) => {
+            const messageReceived = () => {
+                connection.removeListener('track-open', listenForData);
+                connection.mediaTracks.forEach((track) => {
+                    track.removeListener('data', messageReceived);
+                    track.pause();
+                });
+
+                resolve();
+            };
+
+            const listenForData = (track: MediaTrackStream) => {
+                track.once('data', messageReceived);
+            }
+
+            connection.on('track-open', listenForData);
+            connection.mediaTracks.forEach(listenForData);
         });
     }
 
@@ -209,6 +236,7 @@ export const StepLookup: typeof StepDefinitionLookup = {
     'wait-for-duration': WaitForDurationStep,
     'wait-for-channel': WaitForChannelStep,
     'wait-for-track': WaitForTrackStep,
+    'wait-for-media': WaitForMediaStep,
     'wait-for-message': WaitForMessageStep,
     'send-message': SendStep,
     'close-connection': CloseStep,
