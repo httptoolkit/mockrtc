@@ -31,8 +31,8 @@ describe("Wait steps", function () {
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         await waitForState(localConnection, 'connected');
 
@@ -111,8 +111,8 @@ describe("Wait steps", function () {
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         await waitForState(localConnection, 'connected');
 
@@ -138,8 +138,8 @@ describe("Wait steps", function () {
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         await waitForState(localConnection, 'connected');
 

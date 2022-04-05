@@ -4,7 +4,6 @@
  */
 
 import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
-import { MockRTCPeer } from "../mockrtc-peer";
 import { MockRTCServerPeer } from "./mockrtc-server-peer";
 import { MockRTCHandlerBuilder } from "../handling/handler-builder";
 import { HandlerStepDefinition } from "../handling/handler-step-definitions";
@@ -19,10 +18,11 @@ export class MockRTCServer implements MockRTC {
     async start(): Promise<void> {}
     async stop(): Promise<void> {
         await Promise.all(
-            this._activePeers.map(peer =>
+            this.activePeers.map(peer =>
                 peer.close()
             )
         );
+        this._activePeers = {};
     }
 
     buildPeer(): MockRTCPeerBuilder {
@@ -37,13 +37,17 @@ export class MockRTCServer implements MockRTC {
             );
         });
         const peer = new MockRTCServerPeer(handlerSteps, this.options);
-        this._activePeers.push(peer);
+        this._activePeers[peer.peerId] = peer;
         return peer;
     }
 
-    private _activePeers: MockRTCServerPeer[] = [];
-    get activePeers(): Readonly<MockRTCPeer[]> {
-        return [...this._activePeers];
+    private _activePeers: { [id: string]: MockRTCServerPeer } = {};
+    get activePeers(): Readonly<MockRTCServerPeer[]> {
+        return Object.values(this._activePeers);
+    }
+
+    getPeer(id: string): MockRTCServerPeer {
+        return this._activePeers[id];
     }
 
 }

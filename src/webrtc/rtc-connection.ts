@@ -3,8 +3,10 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import * as NodeDataChannel from 'node-datachannel';
+import { MockRTCSessionAPI } from '../mockrtc-peer';
 
 import { DataChannelStream } from './datachannel-stream';
 
@@ -14,6 +16,8 @@ import { DataChannelStream } from './datachannel-stream';
  * logic to support control channels, proxying and other MockRTC-specific additions.
  */
 export class RTCConnection extends EventEmitter {
+
+    readonly id = randomUUID();
 
     // Set to null when the connection is closed, as otherwise calling any method (including checking
     // the connection state) will segfault the process.
@@ -146,6 +150,21 @@ export class RTCConnection extends EventEmitter {
             }
         });
     }
+
+    readonly sessionApi: MockRTCSessionAPI = {
+        createOffer: async (): Promise<RTCSessionDescriptionInit> => {
+            return this.getLocalDescription();
+        },
+
+        completeOffer: async (answer: RTCSessionDescriptionInit): Promise<void> => {
+            this.setRemoteDescription(answer);
+        },
+
+        answerOffer: (offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> => {
+            this.setRemoteDescription(offer);
+            return this.getLocalDescription();
+        }
+    };
 
     async close() {
         if (!this.rawConn) return; // Already closed

@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import type { MockRTCExternalAnswerParams, MockRTCExternalOfferParams, MockRTCOfferParams } from "./mockrtc";
+import type {
+    MockRTCExternalAnswerParams,
+    MockRTCExternalOfferParams,
+    MockRTCOfferParams
+} from "./mockrtc-peer";
 import type { MockRTCPeer } from "./mockrtc-peer";
 
 import { MOCKRTC_CONTROL_CHANNEL } from "./webrtc/control-channel";
@@ -109,7 +113,9 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
 
             // Start mock answer generation async, so it's ready/waitable in
             // setRemoteDescription if it's not complete by then.
-            internalAnswer = realOffer.then((offer) => mockPeer.answerOffer(offer));
+            internalAnswer = realOffer
+                .then((offer) => mockPeer.answerOffer(offer))
+                .then(({ answer }) => answer);
             await _setLocalDescription(await realOffer);
         } else {
             selectedExternalAnswer = externalAnswers[localDescription.sdp!];

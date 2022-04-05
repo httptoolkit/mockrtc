@@ -27,8 +27,8 @@ describe("MockRTC smoke test:", function () {
         await localConnection.setLocalDescription(localOffer);
 
         // Get the remote details for the mock peer:
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         // Once the connection is open, message the peer
         dataChannel.onopen = () => {

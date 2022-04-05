@@ -34,17 +34,3 @@ export interface MockRTC {
     stop(): Promise<void>;
 
 }
-
-export interface MockRTCOfferParams {
-    offer: RTCSessionDescriptionInit;
-    setAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
-}
-
-export interface MockRTCExternalOfferParams extends MockRTCOfferParams {
-    id: string;
-}
-
-export interface MockRTCExternalAnswerParams {
-    id: string;
-    answer: RTCSessionDescriptionInit;
-}

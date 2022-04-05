@@ -26,8 +26,8 @@ describe("Echo steps", function () {
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         let messages: Array<any> = [];
         dataChannel1.addEventListener('message', (event) => messages.push("1: " + event.data));

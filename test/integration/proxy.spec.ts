@@ -45,8 +45,8 @@ describe("When proxying WebRTC traffic", () => {
         localPeer.setLocalDescription(localOffer);
 
         // Get the remote details for the mock peer:
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localPeer.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localPeer.setRemoteDescription(answer);
 
         await waitForChannelOpen(dataChannel);
 

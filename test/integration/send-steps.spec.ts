@@ -28,8 +28,8 @@ describe("Send steps", function () {
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         // Wait for a response:
         let messages: Array<any> = [];
@@ -57,8 +57,8 @@ describe("Send steps", function () {
 
         const localOffer = await localConnection.createOffer();
         await localConnection.setLocalDescription(localOffer);
-        const mockAnswer = await mockPeer.answerOffer(localOffer);
-        await localConnection.setRemoteDescription(mockAnswer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
 
         // Wait for a response:
         let messages: Array<any> = [];

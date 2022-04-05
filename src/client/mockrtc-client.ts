@@ -37,13 +37,13 @@ export class MockRTCClient implements MockRTC {
         const { adminStream } = this.adminClient;
 
         const peerData = await this.adminClient.sendQuery<
-            { createPeer: { id: string } },
-            { id: string }
+            { createPeer: { peerId: string } },
+            { peerId: string }
         >({
             query: gql`
                 mutation CreatePeer($peerData: RTCHandlerData!) {
                     createPeer(data: $peerData) {
-                        id
+                        peerId
                     }
                 }
             `,
@@ -55,9 +55,9 @@ export class MockRTCClient implements MockRTC {
             transformResponse: ({ createPeer }) => createPeer
         });
 
-        const { id } = peerData;
+        const { peerId } = peerData;
 
-        return new MockRTCRemotePeer(id, this.adminClient);
+        return new MockRTCRemotePeer(peerId, this.adminClient);
     }
 
     async start(): Promise<void> {
