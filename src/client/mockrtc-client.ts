@@ -7,13 +7,13 @@ import gql from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 import { serialize } from 'mockttp/dist/util/serialization';
 
-import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "./mockrtc";
+import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
 
-import { MockRTCAdminPlugin } from "./mockrtc-admin-plugin";
-import type { MockRTCPeer } from './mockrtc-peer';
+import type { MockRTCAdminPlugin } from "../server/mockrtc-admin-plugin";
+import type { MockRTCPeer } from '../mockrtc-peer';
 import { MockRTCRemotePeer } from './mockrtc-remote-peer';
-import { MockRTCHandlerBuilder } from './handling/handler-builder';
-import { HandlerStep } from './handling/handler-steps';
+import { MockRTCHandlerBuilder } from '../handling/handler-builder';
+import { HandlerStepDefinition } from '../handling/handler-step-definitions';
 
 export type MockRTCClientOptions =
     PluggableAdmin.AdminClientOptions &

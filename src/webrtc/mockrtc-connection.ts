@@ -5,7 +5,7 @@
 
 import * as NodeDataChannel from 'node-datachannel';
 
-import { MockRTCControLMessage, MOCKRTC_CONTROL_CHANNEL } from '../control-channel';
+import { MockRTCControlMessage, MOCKRTC_CONTROL_CHANNEL } from './control-channel';
 
 import { DataChannelStream } from './datachannel-stream';
 import { RTCConnection } from './rtc-connection';
@@ -40,7 +40,7 @@ export class MockRTCConnection extends RTCConnection {
 
             this.controlChannel.on('data', (msg) => {
                 try {
-                    const controlMessage = JSON.parse(msg) as MockRTCControLMessage;
+                    const controlMessage = JSON.parse(msg) as MockRTCControlMessage;
 
                     if (controlMessage.type === 'attach-external') {
                         if (this.externalConnection) {

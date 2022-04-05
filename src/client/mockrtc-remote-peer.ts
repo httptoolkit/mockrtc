@@ -10,8 +10,8 @@ import {
     MockRTCOfferParams,
     MockRTCExternalOfferParams,
     MockRTCExternalAnswerParams
-} from "./mockrtc";
-import type { MockRTCPeer } from "./mockrtc-peer";
+} from "../mockrtc";
+import type { MockRTCPeer } from "../mockrtc-peer";
 
 export class MockRTCRemotePeer implements MockRTCPeer {
 

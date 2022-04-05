@@ -5,13 +5,13 @@
 
 import { randomUUID } from 'crypto';
 
-import { MockRTCExternalAnswerParams, MockRTCExternalOfferParams, MockRTCOfferParams } from "./mockrtc";
-import { MockRTCPeer, MockRTCPeerOptions } from './mockrtc-peer';
-import { HandlerStep } from './handling/handler-steps';
+import { MockRTCExternalAnswerParams, MockRTCExternalOfferParams, MockRTCOfferParams } from "../mockrtc";
+import { MockRTCPeer, MockRTCPeerOptions } from '../mockrtc-peer';
+import { HandlerStep } from '../handling/handler-steps';
 
-import { RTCConnection } from './webrtc/rtc-connection';
-import { MockRTCConnection } from './webrtc/mockrtc-connection';
-import { DataChannelStream } from './webrtc/datachannel-stream';
+import { RTCConnection } from '../webrtc/rtc-connection';
+import { MockRTCConnection } from '../webrtc/mockrtc-connection';
+import { DataChannelStream } from '../webrtc/datachannel-stream';
 
 export class MockRTCServerPeer implements MockRTCPeer {
 

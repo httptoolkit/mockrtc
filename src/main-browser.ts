@@ -10,7 +10,7 @@ import {
     MockRTCExternalOfferParams,
     MockRTCExternalAnswerParams
 } from "./mockrtc";
-import { MockRTCClient, MockRTCClientOptions } from "./mockrtc-client";
+import { MockRTCClient, MockRTCClientOptions } from "./client/mockrtc-client";
 
 export type {
     MockRTC,
@@ -22,7 +22,7 @@ export type {
 
 export type { MockRTCPeer } from './mockrtc-peer';
 
-export { MOCKRTC_CONTROL_CHANNEL } from './control-channel';
+export { MOCKRTC_CONTROL_CHANNEL } from './webrtc/control-channel';
 export { hookWebRTCPeer } from "./webrtc-hooks";
 
 export function getRemote(options: MockRTCClientOptions = {}): MockRTC {

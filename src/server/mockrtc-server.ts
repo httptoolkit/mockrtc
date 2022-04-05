@@ -3,12 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "./mockrtc";
-import { MockRTCPeer } from "./mockrtc-peer";
+import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
+import { MockRTCPeer } from "../mockrtc-peer";
 import { MockRTCServerPeer } from "./mockrtc-server-peer";
-import { MockRTCHandlerBuilder } from "./handling/handler-builder";
-import { HandlerStepDefinition } from "./handling/handler-step-definitions";
-import { StepLookup } from "./handling/handler-steps";
+import { MockRTCHandlerBuilder } from "../handling/handler-builder";
+import { HandlerStepDefinition } from "../handling/handler-step-definitions";
+import { StepLookup } from "../handling/handler-steps";
 
 export class MockRTCServer implements MockRTC {
 

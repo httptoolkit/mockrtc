@@ -10,8 +10,8 @@ import {
     MockRTCExternalOfferParams,
     MockRTCExternalAnswerParams
 } from "./mockrtc";
-import { MockRTCServer } from "./mockrtc-server";
-import { MockRTCAdminServer } from "./mockrtc-admin-server";
+import { MockRTCServer } from "./server/mockrtc-server";
+import { MockRTCAdminServer } from "./server/mockrtc-admin-server";
 
 export type {
     MockRTC,
@@ -25,8 +25,8 @@ export type { MockRTCPeer } from './mockrtc-peer';
 
 export {
     MOCKRTC_CONTROL_CHANNEL,
-    type MockRTCControLMessage
-} from './control-channel';
+    type MockRTCControlMessage
+} from './webrtc/control-channel';
 export { hookWebRTCPeer } from "./webrtc-hooks";
 
 export function getLocal(): MockRTC {

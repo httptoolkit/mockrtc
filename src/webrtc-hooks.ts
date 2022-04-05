@@ -6,7 +6,7 @@
 import type { MockRTCExternalAnswerParams, MockRTCExternalOfferParams, MockRTCOfferParams } from "./mockrtc";
 import type { MockRTCPeer } from "./mockrtc-peer";
 
-import { MOCKRTC_CONTROL_CHANNEL } from "./control-channel";
+import { MOCKRTC_CONTROL_CHANNEL } from "./webrtc/control-channel";
 
 export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // Anything that creates signalling data (createOffer/createAnswer) needs to be hooked to

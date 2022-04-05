@@ -8,8 +8,8 @@ import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 import { deserialize, SerializedValue } from 'mockttp/dist/util/serialization';
 
-import { HandlerStep, StepLookup } from './handling/handler-steps';
-import { MockRTCOfferParams, MockRTCOptions } from './mockrtc';
+import { HandlerStep, StepLookup } from '../handling/handler-steps';
+import { MockRTCOfferParams, MockRTCOptions } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 
 interface ExternalRTCSessionDescriptionInit {
