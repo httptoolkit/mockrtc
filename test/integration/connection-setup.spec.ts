@@ -64,8 +64,6 @@ describe("When connecting, MockRTC", function () {
         localConnection.setLocalDescription(updatedOffer);
 
         const updatedAnswer = await session.answerOffer(updatedOffer);
-        // Workaround for https://github.com/paullouisageneau/libdatachannel/issues/584
-        updatedAnswer.sdp = updatedAnswer.sdp?.replace('setup:active', 'setup:passive');
         await localConnection.setRemoteDescription(updatedAnswer);
     });
 
