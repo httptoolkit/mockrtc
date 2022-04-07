@@ -90,7 +90,7 @@ export class MediaTrackStream extends stream.Duplex {
         return this.rawTrack.direction();
     }
 
-    get id() {
+    get mid() {
         return this.rawTrack.mid();
     }
 

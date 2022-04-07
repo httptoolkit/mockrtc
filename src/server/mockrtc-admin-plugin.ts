@@ -11,6 +11,7 @@ import { deserialize, SerializedValue } from 'mockttp/dist/util/serialization';
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
+import { OfferOptions } from '../mockrtc-peer';
 
 export interface SessionData {
     id: string;
@@ -36,13 +37,12 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         extend type Mutation {
             createPeer(data: RTCHandlerData!): MockedPeer!
 
-            createOffer(peerId: ID!, sessionId: ID): Session!
-            createExternalOffer(peerId: ID!): Session!
+            createOffer(peerId: ID!, sessionId: ID, options: Raw): Session!
+            createExternalOffer(peerId: ID!, options: Raw): Session!
             completeOffer(peerId: ID!, sessionId: ID!, answer: SessionDescriptionInput!): Void
 
             answerOffer(peerId: ID!, sessionId: ID, offer: SessionDescriptionInput!): Session!
             answerExternalOffer(peerId: ID!, offer: SessionDescriptionInput!): Session!
-            answerRenegotiationOffer(sessionId: ID!, offer: SessionDescriptionInput!): Session!
         }
 
         input RTCHandlerData {
@@ -87,9 +87,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         )
                     );
                 },
-                createOffer: async (__: any, { peerId, sessionId }: {
+                createOffer: async (__: any, { peerId, sessionId, options }: {
                     peerId: string,
-                    sessionId?: string
+                    sessionId?: string,
+                    options?: OfferOptions
                 }): Promise<SessionData> => {
                     const peer = this.mockRTCServer.getPeer(peerId);
                     if (!peer) throw new Error("Id matches no active peer");
@@ -98,21 +99,25 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         const session = peer.getSessionApi(sessionId);
                         return {
                             id: sessionId,
-                            description: await session.createOffer()
+                            description: await session.createOffer(options)
                         };
                     } else {
-                        const offerParams = await peer.createOffer();
+                        const offerParams = await peer.createOffer(options);
                         return { id: offerParams._sessionId, description: offerParams.offer };
                     }
                 },
-                createExternalOffer: async (__: any, { peerId }: {
-                    peerId: string
+                createExternalOffer: async (__: any, { peerId, options }: {
+                    peerId: string,
+                    options?: OfferOptions
                 }): Promise<SessionData> => {
                     const peer = this.mockRTCServer.getPeer(peerId);
                     if (!peer) throw new Error("Id matches no active peer");
 
-                    const offerParams = await peer.createExternalOffer();
-                    return { id: offerParams.id, description: offerParams.offer };
+                    const offerParams = await peer.createExternalOffer(options);
+                    return {
+                        id: offerParams.id,
+                        description: offerParams.offer
+                    };
                 },
                 completeOffer: async (__: any, { peerId, sessionId, answer } : {
                     peerId: string,
@@ -136,7 +141,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         return { id: sessionId, description: answer };
                     } else {
                         const answerParams = await peer.answerOffer(offer);
-                        return { id: answerParams._sessionId, description: answerParams.answer };
+                        return {
+                            id: answerParams._sessionId,
+                            description: answerParams.answer
+                        };
                     }
                 },
                 answerExternalOffer: async (__: any, { peerId, offer } : {
@@ -147,7 +155,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     if (!peer) throw new Error("Id matches no active peer");
 
                     const answerParams = await peer.answerExternalOffer(offer);
-                    return { id: answerParams.id, description: answerParams.answer };
+                    return {
+                        id: answerParams.id,
+                        description: answerParams.answer
+                    };
                 }
             },
             Query: {

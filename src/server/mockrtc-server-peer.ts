@@ -4,6 +4,8 @@
  */
 
 import { randomUUID } from 'crypto';
+import * as SDP from 'sdp-transform';
+import * as NodeDataChannel from 'node-datachannel';
 
 import {
     MockRTCPeer,
@@ -12,7 +14,8 @@ import {
     MockRTCAnswerParams,
     MockRTCOfferParams,
     MockRTCExternalAnswerParams,
-    MockRTCExternalOfferParams
+    MockRTCExternalOfferParams,
+    OfferOptions
 } from "../mockrtc-peer";
 import { HandlerStep } from '../handling/handler-steps';
 
@@ -49,14 +52,14 @@ export class MockRTCServerPeer implements MockRTCPeer {
         return externalConn;
     }
 
-    async createExternalOffer(): Promise<MockRTCExternalOfferParams> {
+    async createExternalOffer(options: OfferOptions = {}): Promise<MockRTCExternalOfferParams> {
         const externalConn = new RTCConnection();
         this.unassignedExternalConnections[externalConn.id] = externalConn;
         this.trackConnection(externalConn);
 
         return {
             id: externalConn.id,
-            offer: await externalConn.getLocalDescription(),
+            offer: await externalConn.sessionApi.createOffer(options),
             setAnswer: async (answer: RTCSessionDescriptionInit) => {
                 externalConn.sessionApi.completeOffer(answer);
                 return externalConn.sessionApi;
@@ -66,15 +69,12 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
     async answerExternalOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCExternalAnswerParams> {
         const externalConn = new RTCConnection();
-        const externalConnId = randomUUID();
-        this.unassignedExternalConnections[externalConnId] = externalConn;
+        this.unassignedExternalConnections[externalConn.id] = externalConn;
         this.trackConnection(externalConn);
 
-        externalConn.setRemoteDescription(offer);
-
         return {
-            id: externalConnId,
-            answer: await externalConn.getLocalDescription()
+            id: externalConn.id,
+            answer: await externalConn.sessionApi.answerOffer(offer),
         };
     }
 
@@ -101,11 +101,12 @@ export class MockRTCServerPeer implements MockRTCPeer {
         return conn;
     }
 
-    async createOffer(): Promise<MockRTCOfferParams & { _sessionId: string }> {
+    async createOffer(options: OfferOptions = {}): Promise<MockRTCOfferParams & { _sessionId: string }> {
         const conn = this.createConnection();
+
         return {
             _sessionId: conn.id,
-            offer: await conn.sessionApi.createOffer(),
+            offer: await conn.sessionApi.createOffer(options),
             setAnswer: async (answer) => {
                 conn.sessionApi.completeOffer(answer);
                 return conn.sessionApi;
@@ -117,10 +118,9 @@ export class MockRTCServerPeer implements MockRTCPeer {
         MockRTCAnswerParams & { _sessionId: string }
     > {
         const conn = this.createConnection();
-        const answer = await conn.sessionApi.answerOffer(offer);
         return {
             _sessionId: conn.id,
-            answer,
+            answer: await conn.sessionApi.answerOffer(offer),
             session: conn.sessionApi
         };
     }

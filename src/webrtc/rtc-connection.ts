@@ -5,8 +5,10 @@
 
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
+import * as SDP from 'sdp-transform';
 import * as NodeDataChannel from 'node-datachannel';
-import { MockRTCSessionAPI } from '../mockrtc-peer';
+
+import { MockRTCSessionAPI, OfferOptions } from '../mockrtc-peer';
 
 import { DataChannelStream } from './datachannel-stream';
 import { MediaTrackStream } from './mediatrack-stream';
@@ -178,8 +180,104 @@ export class RTCConnection extends EventEmitter {
         if (!this.rawConn) throw new Error("Connection was closed while building local description");
 
         const sessionDescription = this.rawConn.localDescription() as RTCSessionDescriptionInit;
-        setupChannel?.close();
+        setupChannel?.close(); // Close the temporary setup channel, if we created one
         return sessionDescription;
+    }
+
+    async getMirroredLocalOffer(
+        sdpToMirror: string
+    ): Promise<RTCSessionDescriptionInit> {
+        if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
+
+        const offerToMirror = SDP.parse(sdpToMirror);
+
+        const mediaStreamsToMirror = offerToMirror.media.filter(media => media.type !== 'application');
+        const shouldMirrorDataStream = offerToMirror.media.some(media => media.type === 'application');
+
+        mediaStreamsToMirror.forEach((mediaToMirror) => {
+            // Skip media tracks that we already have
+            if (this.mediaTracks.find(({ mid }) => mid === mediaToMirror.mid!)) return;
+
+            const mid = mediaToMirror.mid!.toString();
+            const direction = sdpDirectionToNDCDirection(mediaToMirror.direction);
+
+            const media = mediaToMirror.type === 'video'
+                ? new NodeDataChannel.Video(mid, direction)
+                : new NodeDataChannel.Audio(mid, direction)
+
+            // Copy SSRC data (awkward translation between per-attr and full-value structures)
+            mediaToMirror.ssrcs?.forEach((ssrc) => {
+                media.addSSRC(
+                    parseInt(ssrc.id.toString(), 10),
+                    mediaToMirror.ssrcs!.find(attr => attr.attribute === 'cname')?.value,
+                    mediaToMirror.ssrcs!.find(attr => attr.attribute === 'msid')?.value
+                );
+            });
+
+            this.rawConn!.addTrack(media);
+        });
+
+        let setupChannel: NodeDataChannel.DataChannel | undefined;
+        const channelRequiredForDescription = this.rawConn.gatheringState() === 'new' &&
+            !mediaStreamsToMirror.length;
+        if (shouldMirrorDataStream || channelRequiredForDescription) {
+            // See getLocalDescription() above: if we want a description and we have no media, we
+            // need to make a stub channel to allow us to negotiate _something_.
+            // In addition, we might actually have data channels to mirror. In that case, we need
+            // to create a temporary data channel to force that negotiation (which will be closed again
+            // shortly, so that it never actually gets created).
+            setupChannel = this.rawConn.createDataChannel('mockrtc.setup-channel');
+        }
+        this.rawConn.setLocalDescription(NodeDataChannel.DescriptionType.Offer);
+        await new Promise<void>((resolve) => {
+            this.rawConn!.onGatheringStateChange((state) => {
+                if (state === 'complete') resolve();
+            });
+
+            // Handle race conditions where gathering has already completed
+            if (this.rawConn!.gatheringState() === 'complete') resolve();
+        });
+
+        if (!this.rawConn) throw new Error("Connection was closed while building local description");
+
+        const sessionDescription = this.rawConn.localDescription();
+        setupChannel?.close(); // Close the temporary setup channel, if we created one
+
+        // There's a few additional changes we have to make, which require mutating the SDP manually:
+        const createdSDP = SDP.parse(sessionDescription.sdp!);
+        createdSDP.msidSemantic = offerToMirror.msidSemantic;
+
+        const createdMediaStreams = createdSDP.media.filter(m => m.type !== 'application');
+        createdMediaStreams.forEach((media) => {
+            const mediaToMirror = offerToMirror.media
+                .find((offeredMedia) => offeredMedia.mid === media.mid);
+            if (!mediaToMirror) {
+                throw new Error(`Unexpected mid ${media.mid} in external offer`);
+            }
+
+            if (media.type !== mediaToMirror.type) {
+                throw new Error(`Unexpected ${media.type} stream with mid ${media.mid} - can't mirror`);
+            }
+
+            // Copy all the semantic parameters of the RTP & RTCP streams themselves,
+            // but don't copy the fingerprint or similar:
+            media.msid = mediaToMirror.msid;
+            media.protocol = mediaToMirror.protocol;
+            media.ext = mediaToMirror.ext;
+            media.payloads = mediaToMirror.payloads;
+            media.rtp = mediaToMirror.rtp;
+            media.fmtp = mediaToMirror.fmtp;
+            media.rtcp = mediaToMirror.rtcp;
+            media.rtcpFb = mediaToMirror.rtcpFb;
+            media.ssrcGroups = mediaToMirror.ssrcGroups;
+
+            // Although we do set the SSRC info in libdatachannel, as it's used internally, it doesn't
+            // support all the attributes that may be included, we copy the raw SDP across here too:
+            media.ssrcs = mediaToMirror.ssrcs;
+        });
+
+        sessionDescription.sdp = SDP.write(createdSDP);
+        return sessionDescription as RTCSessionDescriptionInit;
     }
 
     waitUntilConnected() {
@@ -201,8 +299,12 @@ export class RTCConnection extends EventEmitter {
     }
 
     readonly sessionApi: MockRTCSessionAPI = {
-        createOffer: async (): Promise<RTCSessionDescriptionInit> => {
-            return this.getLocalDescription();
+        createOffer: async (options: OfferOptions = {}): Promise<RTCSessionDescriptionInit> => {
+            if (options.mirrorSdp) {
+                return this.getMirroredLocalOffer(options.mirrorSdp);
+            } else {
+                return this.getLocalDescription();
+            }
         },
 
         completeOffer: async (answer: RTCSessionDescriptionInit): Promise<void> => {
@@ -227,3 +329,15 @@ export class RTCConnection extends EventEmitter {
     }
 
 }
+
+const sdpDirectionToNDCDirection = (direction: SDP.SharedAttributes['direction']): NodeDataChannel.Direction => {
+    if (direction === 'inactive') return NodeDataChannel.Direction.Inactive;
+    else if (direction?.length === 8) {
+        return direction[0].toUpperCase() +
+            direction.slice(1, 4) +
+            direction[4].toUpperCase() +
+            direction.slice(5) as NodeDataChannel.Direction;
+    } else {
+        return NodeDataChannel.Direction.Unknown;
+    }
+};

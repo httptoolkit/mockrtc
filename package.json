@@ -11,7 +11,9 @@
   "bin": {
     "mockrtc": "./dist/admin-bin.js"
   },
-  "sideEffects": ["./test/**/*.spec.ts"],
+  "sideEffects": [
+    "./test/**/*.spec.ts"
+  ],
   "directories": {
     "test": "test"
   },
@@ -44,6 +46,7 @@
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
     "@types/chai": "^4.3.0",
+    "@types/dom-mediacapture-transform": "^0.1.2",
     "@types/mocha": "^9.1.0",
     "buffer": "^6.0.3",
     "chai": "^4.3.6",
@@ -62,9 +65,11 @@
     "util": "^0.12.4"
   },
   "dependencies": {
+    "@types/sdp-transform": "^2.4.5",
     "graphql": "^15.8.0",
     "graphql-tag": "^2.12.6",
     "mockttp": "^2.7.0",
-    "node-datachannel": "^0.2.3"
+    "node-datachannel": "^0.2.4",
+    "sdp-transform": "^2.14.1"
   }
 }

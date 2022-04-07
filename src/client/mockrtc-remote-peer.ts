@@ -12,7 +12,8 @@ import {
     MockRTCExternalOfferParams,
     MockRTCExternalAnswerParams,
     MockRTCAnswerParams,
-    MockRTCSessionAPI
+    MockRTCSessionAPI,
+    OfferOptions
 } from "../mockrtc-peer";
 import type { SessionData } from '../server/mockrtc-admin-plugin';
 
@@ -23,14 +24,14 @@ export class MockRTCRemotePeer implements MockRTCPeer {
         private adminClient: PluggableAdmin.AdminClient<{}>
     ) {}
 
-    createOffer(): Promise<MockRTCOfferParams> {
+    createOffer(options?: OfferOptions): Promise<MockRTCOfferParams> {
         return this.adminClient.sendQuery<
             { createOffer: SessionData },
             MockRTCOfferParams
         >({
             query: gql`
-                mutation GetPeerRTCOffer($peerId: ID!) {
-                    createOffer(peerId: $peerId) {
+                mutation GetPeerRTCOffer($peerId: ID!, $options: Raw) {
+                    createOffer(peerId: $peerId, options: $options) {
                         id
                         description {
                             type
@@ -39,7 +40,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                     }
                 }
             `,
-            variables: { peerId: this.peerId },
+            variables: { peerId: this.peerId, options },
             transformResponse: ({ createOffer }) => ({
                 offer: createOffer.description,
                 setAnswer: (answer) => this.completeOffer(createOffer.id, answer)
@@ -47,14 +48,14 @@ export class MockRTCRemotePeer implements MockRTCPeer {
         });
     }
 
-    createExternalOffer(): Promise<MockRTCExternalOfferParams> {
+    createExternalOffer(options?: OfferOptions): Promise<MockRTCExternalOfferParams> {
         return this.adminClient.sendQuery<
             { createExternalOffer: SessionData },
             MockRTCExternalOfferParams
         >({
             query: gql`
-                mutation GetPeerRTCExternalOffer($peerId: ID!) {
-                    createExternalOffer(peerId: $peerId) {
+                mutation GetPeerRTCExternalOffer($peerId: ID!, $options: Raw) {
+                    createExternalOffer(peerId: $peerId, options: $options) {
                         id
                         description {
                             type
@@ -63,7 +64,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                     }
                 }
             `,
-            variables: { peerId: this.peerId },
+            variables: { peerId: this.peerId, options },
             transformResponse: ({ createExternalOffer }) => ({
                 id: createExternalOffer.id,
                 offer: createExternalOffer.description,
@@ -200,14 +201,14 @@ class RemoteSessionApi implements MockRTCSessionAPI {
         private sessionId: string
     ) {}
 
-    createOffer(): Promise<RTCSessionDescriptionInit> {
+    createOffer(options?: OfferOptions): Promise<RTCSessionDescriptionInit> {
         return this.adminClient.sendQuery<
             { createOffer: SessionData },
             RTCSessionDescriptionInit
         >({
             query: gql`
-                mutation GetPeerRTCSessionOffer($peerId: ID!, $sessionId: ID!) {
-                    createOffer(peerId: $peerId, sessionId: $sessionId) {
+                mutation GetPeerRTCSessionOffer($peerId: ID!, $sessionId: ID!, $options: Raw) {
+                    createOffer(peerId: $peerId, sessionId: $sessionId, options: $options) {
                         description {
                             type
                             sdp
@@ -215,7 +216,7 @@ class RemoteSessionApi implements MockRTCSessionAPI {
                     }
                 }
             `,
-            variables: { peerId: this.peerId, sessionId: this.sessionId },
+            variables: { peerId: this.peerId, sessionId: this.sessionId, options },
             transformResponse: ({ createOffer }) => createOffer.description
         });
     }
