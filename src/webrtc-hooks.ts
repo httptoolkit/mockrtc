@@ -12,6 +12,8 @@ import type { MockRTCPeer } from "./mockrtc-peer";
 
 import { MOCKRTC_CONTROL_CHANNEL } from "./webrtc/control-channel";
 
+type OfferPairParams = MockRTCExternalOfferParams & { realOffer: RTCSessionDescriptionInit };
+
 export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // Anything that creates signalling data (createOffer/createAnswer) needs to be hooked to
     // return the params for the external mock peer.
@@ -23,37 +25,33 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     const _setLocalDescription = conn.setLocalDescription.bind(conn);
     const _setRemoteDescription = conn.setRemoteDescription.bind(conn);
 
-    let externalOffers: {
-        [sdp: string]: MockRTCExternalOfferParams
-    } = {};
-    let selectedExternalOffer: MockRTCExternalOfferParams | undefined;
-
-    let externalAnswers: {
-        [sdp: string]: MockRTCExternalAnswerParams
-    } = {};
-    let selectedExternalAnswer: MockRTCExternalAnswerParams | undefined;
+    let externalOffers: { [sdp: string]: OfferPairParams } = {};
+    let externalAnswers: { [sdp: string]: MockRTCExternalAnswerParams } = {};
+    let selectedExternalDescription: OfferPairParams | MockRTCExternalAnswerParams | undefined;
 
     let mockOffer: MockRTCOfferParams | undefined;
 
     let internalAnswer: Promise<RTCSessionDescriptionInit> | undefined;
 
-    conn.addEventListener('connectionstatechange', async () => {
-        if (conn.connectionState === 'connected') {
-            const controlChannel = conn.createDataChannel(MOCKRTC_CONTROL_CHANNEL);
-            await new Promise<void>((resolve) => controlChannel.onopen = () => resolve());
-            controlChannel.send(JSON.stringify({
-                type: 'attach-external',
-                id: selectedExternalOffer
-                    ? selectedExternalOffer.id
-                    : selectedExternalAnswer!.id
-            }));
-        }
+    // We create a control channel to communicate with MockRTC once the connection is set up.
+    // That's created immediately, so its in the initial SDP, to avoid later negotation.
+    const controlChannel = conn.createDataChannel(MOCKRTC_CONTROL_CHANNEL);
+    new Promise<void>((resolve) => {
+        controlChannel.onopen = () => resolve()
+    }).then(() => {
+        controlChannel.send(JSON.stringify({
+            type: 'attach-external',
+            id: selectedExternalDescription!.id
+        }));
     });
 
-    conn.createOffer = (async () => {
-        const externalOfferParams = await mockPeer.createExternalOffer();
+    conn.createOffer = (async (options: RTCOfferOptions) => {
+        const realOffer = await _createOffer(options);
+        const externalOfferParams = await mockPeer.createExternalOffer({
+            mirrorSDP: realOffer.sdp!
+        });
         const externalOffer = externalOfferParams.offer;
-        externalOffers[externalOffer.sdp!] = externalOfferParams;
+        externalOffers[externalOffer.sdp!] = { ...externalOfferParams, realOffer };
         return externalOffer;
     }) as any;
 
@@ -108,17 +106,16 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
         // connect us to the mock peer instead:
         if (localDescription.type === 'offer') {
             pendingLocalDescription = localDescription;
-            selectedExternalOffer = externalOffers[localDescription.sdp!];
-            const realOffer = _createOffer();
+            selectedExternalDescription = externalOffers[localDescription.sdp!];
+            const { realOffer } = selectedExternalDescription;
 
             // Start mock answer generation async, so it's ready/waitable in
             // setRemoteDescription if it's not complete by then.
-            internalAnswer = realOffer
-                .then((offer) => mockPeer.answerOffer(offer))
+            internalAnswer = mockPeer.answerOffer(realOffer)
                 .then(({ answer }) => answer);
             await _setLocalDescription(await realOffer);
         } else {
-            selectedExternalAnswer = externalAnswers[localDescription.sdp!];
+            selectedExternalDescription = externalAnswers[localDescription.sdp!];
             const realAnswer = await _createAnswer();
             mockOffer!.setAnswer(realAnswer);
             await _setLocalDescription(realAnswer);
@@ -134,11 +131,14 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
         if (remoteDescription.type === 'offer') {
             // We have an offer! Remember it, so we can createAnswer shortly.
             pendingRemoteDescription = remoteDescription;
-            mockOffer = await mockPeer.createOffer();
+            mockOffer = await mockPeer.createOffer({
+                mirrorSDP: remoteDescription.sdp,
+                addDataStream: true
+            });
             await _setRemoteDescription(mockOffer.offer);
         } else {
             // We have an answer - we must've sent an offer, complete & use that.
-            await selectedExternalOffer!.setAnswer(remoteDescription);
+            await (selectedExternalDescription as OfferPairParams).setAnswer(remoteDescription);
             await _setRemoteDescription(await internalAnswer!);
 
             currentLocalDescription = pendingLocalDescription;

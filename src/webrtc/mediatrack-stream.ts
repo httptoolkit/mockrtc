@@ -94,4 +94,8 @@ export class MediaTrackStream extends stream.Duplex {
         return this.rawTrack.mid();
     }
 
+    get type() {
+        return this.rawTrack.type();
+    }
+
 }

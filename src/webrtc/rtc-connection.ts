@@ -185,7 +185,8 @@ export class RTCConnection extends EventEmitter {
     }
 
     async getMirroredLocalOffer(
-        sdpToMirror: string
+        sdpToMirror: string,
+        addDataStream: boolean
     ): Promise<RTCSessionDescriptionInit> {
         if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
 
@@ -214,13 +215,14 @@ export class RTCConnection extends EventEmitter {
                 );
             });
 
-            this.rawConn!.addTrack(media);
+            const track = this.rawConn!.addTrack(media);
+            this.trackNewMediaTrack(track, { isLocal: true });
         });
 
         let setupChannel: NodeDataChannel.DataChannel | undefined;
         const channelRequiredForDescription = this.rawConn.gatheringState() === 'new' &&
             !mediaStreamsToMirror.length;
-        if (shouldMirrorDataStream || channelRequiredForDescription) {
+        if (shouldMirrorDataStream || channelRequiredForDescription || addDataStream) {
             // See getLocalDescription() above: if we want a description and we have no media, we
             // need to make a stub channel to allow us to negotiate _something_.
             // In addition, we might actually have data channels to mirror. In that case, we need
@@ -300,8 +302,8 @@ export class RTCConnection extends EventEmitter {
 
     readonly sessionApi: MockRTCSessionAPI = {
         createOffer: async (options: OfferOptions = {}): Promise<RTCSessionDescriptionInit> => {
-            if (options.mirrorSdp) {
-                return this.getMirroredLocalOffer(options.mirrorSdp);
+            if (options.mirrorSDP) {
+                return this.getMirroredLocalOffer(options.mirrorSDP, !!options.addDataStream);
             } else {
                 return this.getLocalDescription();
             }

@@ -113,7 +113,7 @@ describe("When connecting, MockRTC", function () {
         })();
         const originalSdp = SDP.parse(rawSdpToMirror);
 
-        const { offer, setAnswer } = await mockPeer.createOffer({ mirrorSdp: rawSdpToMirror });
+        const { offer, setAnswer } = await mockPeer.createOffer({ mirrorSDP: rawSdpToMirror });
 
         const localConnection = new RTCPeerConnection();
         await localConnection.setRemoteDescription(offer);
@@ -127,12 +127,13 @@ describe("When connecting, MockRTC", function () {
         // The remote description we accepted should match the originally mirrored SDP:
         const remoteDescription = localConnection.currentRemoteDescription;
         const remoteMedia = SDP.parse(remoteDescription!.sdp).media;
+
         expect(remoteMedia.map(m => [
             m.mid, m.type, m.protocol, m.direction
         ])).to.deep.equal([
-            [0, 'application', 'UDP/DTLS/SCTP', undefined], // Id changed due to libdatachannel limitations
             [1, 'audio', 'UDP/TLS/RTP/SAVPF', 'sendrecv'],
-            [2, 'video', 'UDP/TLS/RTP/SAVPF', 'recvonly']
+            [2, 'video', 'UDP/TLS/RTP/SAVPF', 'recvonly'],
+            [0, 'application', 'UDP/DTLS/SCTP', undefined] // Id changed due to libdatachannel limitations
         ]);
 
         // Check each individual media field. These are the fields that will be passed through when
@@ -164,9 +165,9 @@ describe("When connecting, MockRTC", function () {
         expect(localMedia.map(m => [
             m.mid, m.type, m.protocol, m.direction
         ])).to.deep.equal([
-            [0, 'application', 'UDP/DTLS/SCTP', undefined],
             [1, 'audio', 'UDP/TLS/RTP/SAVPF', 'recvonly'], // Only receive - no local audio to send
-            [2, 'video', 'UDP/TLS/RTP/SAVPF', 'inactive'] // Inactive - no video to send & remote is recvonly
+            [2, 'video', 'UDP/TLS/RTP/SAVPF', 'inactive'], // Inactive - no video to send & remote is recvonly
+            [0, 'application', 'UDP/DTLS/SCTP', undefined]
         ]);
     });
 

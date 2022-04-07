@@ -3,11 +3,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as Sdp from 'sdp-transform';
+
 import {
     MockRTC,
     expect,
     waitForChannelOpen,
-    waitForChannelClose
+    waitForChannelClose,
+    waitForState
 } from '../test-setup';
 
 describe("When proxying WebRTC traffic", () => {
@@ -379,6 +382,108 @@ describe("When proxying WebRTC traffic", () => {
             'local message 2',
             'local message 3'
         ]);
+    });
+
+    it("should be able to transparently forward offered media through a hooked connection", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .thenForwardDynamically();
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        // One real peer:
+        const remoteConn = new RTCPeerConnection();
+
+        // One hooked peer:
+        const localConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+
+        // Both connections offer to send media:
+        remoteConn.addTrack(stream.getTracks()[0], stream);
+        localConn.addTrack(stream.getTracks()[0], stream);
+
+        // Turn incoming tracks into readable streams of frames:
+        const mediaStreamPromise = Promise.all([remoteConn, localConn].map((conn) => {
+            return new Promise<ReadableStream<VideoFrame>>((resolve) => {
+                conn.addEventListener('track', ({ track }) => {
+                    const streamProcessor = new MediaStreamTrackProcessor({
+                        track: track as MediaStreamVideoTrack
+                    });
+                    resolve(streamProcessor.readable);
+                });
+            });
+        }));
+
+        // Set up the connection
+        const localOffer = await localConn.createOffer(); // Hooked
+        localConn.setLocalDescription(localOffer); // Hooked
+        remoteConn.setRemoteDescription(localOffer);
+        const remoteAnswer = await remoteConn.createAnswer();
+        remoteConn.setLocalDescription(remoteAnswer);
+        localConn.setRemoteDescription(remoteAnswer); // Hooked
+
+        await waitForState(remoteConn, 'connected');
+
+        // Extract the first frame from each, once they arrive:
+        const [remoteMedia, localMedia] = await mediaStreamPromise;
+        const { value: remoteFrame } = await remoteMedia!.getReader().read();
+        const { value: localFrame } = await localMedia!.getReader().read();
+
+        // Check both peers receive video - using sizes from fake media when running headlessly:
+        expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+        expect(remoteFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+    });
+
+    it("should be able to transparently forward answered media through a hooked connection", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .thenForwardDynamically();
+
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        // One real peer:
+        const remoteConn = new RTCPeerConnection();
+
+        // One hooked peer:
+        const localConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+
+        // Both connections offer to send media:
+        remoteConn.addTrack(stream.getTracks()[0], stream);
+        localConn.addTrack(stream.getTracks()[0], stream);
+
+        // Turn incoming tracks into readable streams of frames:
+        const mediaStreamPromise = Promise.all([remoteConn, localConn].map((conn) => {
+            return new Promise<ReadableStream<VideoFrame>>((resolve) => {
+                conn.addEventListener('track', ({ track }) => {
+                    const streamProcessor = new MediaStreamTrackProcessor({
+                        track: track as MediaStreamVideoTrack
+                    });
+                    resolve(streamProcessor.readable);
+                });
+            });
+        }));
+
+        // Set up the connection
+        const remoteOffer = await remoteConn.createOffer();
+        remoteConn.setLocalDescription(remoteOffer);
+        localConn.setRemoteDescription(remoteOffer); // Hooked
+        const localAnswer = await localConn.createAnswer(); // Hooked
+        localConn.setLocalDescription(localAnswer); // Hooked
+        remoteConn.setRemoteDescription(localAnswer);
+
+        await waitForState(remoteConn, 'connected');
+
+        // Extract the first frame from each, once they arrive:
+        const [remoteMedia, localMedia] = await mediaStreamPromise;
+        const { value: remoteFrame } = await remoteMedia!.getReader().read();
+        const { value: localFrame } = await localMedia!.getReader().read();
+
+        // Check both peers receive video - using sizes from fake media when running headlessly:
+        expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+        expect(remoteFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
 });

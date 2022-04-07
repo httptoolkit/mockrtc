@@ -69,7 +69,7 @@
     "graphql": "^15.8.0",
     "graphql-tag": "^2.12.6",
     "mockttp": "^2.7.0",
-    "node-datachannel": "^0.2.4",
+    "node-datachannel": "^0.3.0",
     "sdp-transform": "^2.14.1"
   }
 }

@@ -60,7 +60,18 @@ export interface OfferOptions {
      * A raw SDP string that should be mirrored (best efforts) where possible to
      * create an equivalent offer, including the same media with the same params.
      */
-    mirrorSdp?: string;
+    mirrorSDP?: string;
+
+    /**
+     * When using mirrorSDP, for SDP that only defines video/audio media we will
+     * receive an offer with no data stream attached. This can be a problem for
+     * proxied connections, which need a data stream to hook up the external
+     * connection later. If addDataStream is set to true, a data stream will always
+     * be created even if not present in the mirrored SDP.
+     *
+     * This option has no effect if mirrorSDP is not set.
+     */
+    addDataStream?: boolean;
 }
 
 export interface MockRTCExternalOfferParams {

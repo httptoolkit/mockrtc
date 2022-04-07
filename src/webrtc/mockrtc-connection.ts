@@ -8,6 +8,7 @@ import * as NodeDataChannel from 'node-datachannel';
 import { MockRTCControlMessage, MOCKRTC_CONTROL_CHANNEL } from './control-channel';
 
 import { DataChannelStream } from './datachannel-stream';
+import { MediaTrackStream } from './mediatrack-stream';
 import { RTCConnection } from './rtc-connection';
 
 export class MockRTCConnection extends RTCConnection {
@@ -87,18 +88,32 @@ export class MockRTCConnection extends RTCConnection {
     }
 
     proxyTrafficTo(externalConnection: RTCConnection) {
-        // When proxying traffic, you effectively have two connections between four peers: a remote mocked peer,
-        // a local mocking peer (connected by this connection), a local external peer and a remote external peer
-        // (connected by externalConnection). This code forwards between the local mocking peer & local external peer.
+        /**
+         * When proxying traffic, you effectively have four peers, each with a connection endpoint:
+         * - The incoming RTCPeerConnection that we're mocking ('mocked')
+         * - This MockRTC connection, with an associated MockRTCPeer that it will actually connect to ('mock')
+         * - A MockRTC external connection that will connect to the remote peer ('external')
+         * - The original remote peer that we're connecting to ('remote')
+         *
+         * Once the proxy is set up, the the connection structure works like so:
+         * MOCKED <--> MOCK <--> EXTERNAL <--> REMOTE
+         *
+         * Here we connect the mock & external connections together, proxying all behaviours between the two
+         * so that from this point forwards every event on one is reflected on the other.
+         * Note that this isn't necessarily the initialization of either connection: the remote peer could
+         * have been connected for a while (sending data with no response), and the mocked peer could have
+         * been fully interacting with steps before this point.
+         */
 
-        // Forward any existing mocked channels to the external connection:
+
+        // Mirror connection closure:
+        this.on('connection-closed', () => externalConnection.close());
+        externalConnection.on('connection-closed', () => this.close());
+
+        /// --- Data channels: --- ///
+
+        // Forward *all* existing mocked channels to the external connection:
         this.channels.forEach((channel: DataChannelStream) => { // All channels, in case a previous step created one
-            const mirrorChannelStream = externalConnection.createDataChannel(channel.label);
-            channel.pipe(mirrorChannelStream).pipe(channel);
-        });
-
-        // If our mocked peer opens new channels, forward them to the extenal connection:
-        this.addListener('remote-channel-open', (channel: DataChannelStream) => {
             const mirrorChannelStream = externalConnection.createDataChannel(channel.label);
             channel.pipe(mirrorChannelStream).pipe(channel);
         });
@@ -110,14 +125,31 @@ export class MockRTCConnection extends RTCConnection {
             channel.pipe(mirrorChannelStream).pipe(channel);
         });
 
-        // If their remote external peer opens incoming connections, open them on this connection too:
-        externalConnection.on('remote-channel-open', (incomingChannel: DataChannelStream) => {
-            const mirrorChannelStream = this.createDataChannel(incomingChannel.label);
-            incomingChannel.pipe(mirrorChannelStream).pipe(incomingChannel);
+        // If any new channels open in future, mirror them to the other peer:
+        [[this, externalConnection], [externalConnection, this]].forEach(([connA, connB]) => {
+            connA.on('remote-channel-open', (incomingChannel: DataChannelStream) => {
+                const mirrorChannelStream = connB.createDataChannel(incomingChannel.label);
+                incomingChannel.pipe(mirrorChannelStream).pipe(incomingChannel);
+            });
         });
 
-        this.on('connection-closed', () => externalConnection.close());
-        externalConnection.on('connection-closed', () => this.close());
+        /// --- Media tracks: --- ///
+
+        // Note that while data channels will *not* have been negotiated before this point, so
+        // we can always assume that mock data channels need mirroring, media tracks are negotiated
+        // in the SDP, not in-band, and so any media track could already exist on the other side.
+
+        // For each track on the mocked connection, proxy it to the corresponding remote track:
+        this.mediaTracks.forEach((track: MediaTrackStream) => {
+            const externalStream = externalConnection.mediaTracks.find(({ mid }) => mid === track.mid);
+            if (externalStream) {
+                track.pipe(externalStream).pipe(track);
+            } else {
+                // A mismatch in media streams means the remote & mocked peer negotiation isn't in sync!
+                // For now we just reject this case - later we should try to prompt a renegotiation.
+                throw new Error(`Mock has ${track.type} ${track.mid} but external does not`);
+            }
+        });
     }
 
 }
