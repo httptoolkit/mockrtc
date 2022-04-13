@@ -126,14 +126,21 @@ export class MockRTCRemotePeer implements MockRTCPeer {
         });
     }
 
-    async answerExternalOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCExternalAnswerParams> {
+    async answerExternalOffer(
+        offer: RTCSessionDescriptionInit,
+        options?: AnswerOptions
+    ): Promise<MockRTCExternalAnswerParams> {
         return this.adminClient.sendQuery<
             { answerExternalOffer: SessionData },
             MockRTCExternalAnswerParams
         >({
             query: gql`
-                mutation GetPeerRTCExternalAnswer($peerId: ID!, $offer: SessionDescriptionInput!) {
-                    answerExternalOffer(peerId: $peerId, offer: $offer) {
+                mutation GetPeerRTCExternalAnswer(
+                    $peerId: ID!,
+                    $offer: SessionDescriptionInput!,
+                    $options: Raw
+                ) {
+                    answerExternalOffer(peerId: $peerId, offer: $offer, options: $options) {
                         id
                         description {
                             type
@@ -142,7 +149,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                     }
                 }
             `,
-            variables: { peerId: this.peerId, offer },
+            variables: { peerId: this.peerId, offer, options },
             transformResponse: ({ answerExternalOffer }) => ({
                 id: answerExternalOffer.id,
                 answer: answerExternalOffer.description

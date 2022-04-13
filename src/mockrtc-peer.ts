@@ -29,7 +29,10 @@ export interface MockRTCPeer {
 
     // For proxy usage:
     createExternalOffer(options?: OfferOptions): Promise<MockRTCExternalOfferParams>;
-    answerExternalOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCExternalAnswerParams>;
+    answerExternalOffer(
+        offer: RTCSessionDescriptionInit,
+        options?: AnswerOptions
+    ): Promise<MockRTCExternalAnswerParams>;
 
     // For querying seen data
     getAllMessages(): Promise<Array<string | Buffer>>;

@@ -68,14 +68,17 @@ export class MockRTCServerPeer implements MockRTCPeer {
         };
     }
 
-    async answerExternalOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCExternalAnswerParams> {
+    async answerExternalOffer(
+        offer: RTCSessionDescriptionInit,
+        options?: AnswerOptions
+    ): Promise<MockRTCExternalAnswerParams> {
         const externalConn = new RTCConnection();
         this.unassignedExternalConnections[externalConn.id] = externalConn;
         this.trackConnection(externalConn);
 
         return {
             id: externalConn.id,
-            answer: await externalConn.sessionApi.answerOffer(offer),
+            answer: await externalConn.sessionApi.answerOffer(offer, options)
         };
     }
 

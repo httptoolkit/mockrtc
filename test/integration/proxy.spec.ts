@@ -425,4 +425,69 @@ describe("When proxying WebRTC traffic", () => {
         expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
+    it("should be able to transparently forward media when hooking both ends of a perfect negotiation", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .thenForwardDynamically();
+
+        const stream1 = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream2 = await navigator.mediaDevices.getUserMedia({ video: true });
+
+        // Two hooked peers:
+        const remoteConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCPeer(remoteConn, mockPeer);
+        const localConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+
+        // A fake synchronous signalling channel:
+        const signaler1 = { send: (msg: any) => signaler2.onmessage(msg), onmessage: (msg: any) => {} };
+        const signaler2 = { send: (msg: any) => signaler1.onmessage(msg), onmessage: (msg: any) => {} };
+
+        // Do perfect negotiation in parallel to connect our two peers:
+        setupPerfectNegotiation(localConn, true, signaler1); // Polite
+        setTimeout(() => {
+            // Add a tiny delay to deal with https://bugs.chromium.org/p/chromium/issues/detail?id=1315611
+            setupPerfectNegotiation(remoteConn, false, signaler2); // Impolite
+        }, 1);
+
+        // Both peers send user media as a video stream:
+        ([
+            [localConn, stream1, 'local'],
+            [remoteConn, stream2, 'remote']
+        ] as const).forEach(([conn, stream, name]) => {
+            const track = stream.getTracks()[0];
+            conn.addTrack(track, stream);
+        });
+
+        // Turn incoming tracks into readable streams of frames:
+        const mediaStreamPromise = Promise.all([
+            localConn,
+            remoteConn
+        ].map((conn, i) => {
+            return new Promise<ReadableStream<VideoFrame>>((resolve) => {
+                conn.addEventListener('track', ({ track }) => {
+                    const streamProcessor = new MediaStreamTrackProcessor({
+                        track: track as MediaStreamVideoTrack
+                    });
+                    resolve(streamProcessor.readable);
+                });
+            });
+        }));
+
+        await waitForState(remoteConn, 'connected');
+
+        // Extract the first frame from each, once they arrive:
+        const [
+            localMedia,
+            remoteMedia
+        ] = await mediaStreamPromise;
+        const { value: remoteFrame } = await remoteMedia!.getReader().read();
+        const { value: localFrame } = await localMedia!.getReader().read();
+
+        // Check both peers receive video - using sizes from fake media when running headlessly:
+        expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+        expect(remoteFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+    });
+
 });

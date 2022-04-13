@@ -42,7 +42,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             completeOffer(peerId: ID!, sessionId: ID!, answer: SessionDescriptionInput!): Void
 
             answerOffer(peerId: ID!, sessionId: ID, offer: SessionDescriptionInput!, options: Raw): Session!
-            answerExternalOffer(peerId: ID!, offer: SessionDescriptionInput!): Session!
+            answerExternalOffer(peerId: ID!, offer: SessionDescriptionInput!, options: Raw): Session!
         }
 
         input RTCHandlerData {
@@ -148,14 +148,15 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         };
                     }
                 },
-                answerExternalOffer: async (__: any, { peerId, offer } : {
+                answerExternalOffer: async (__: any, { peerId, offer, options } : {
                     peerId: string,
-                    offer: RTCSessionDescriptionInit
+                    offer: RTCSessionDescriptionInit,
+                    options?: AnswerOptions
                 }): Promise<SessionData> => {
                     const peer = this.mockRTCServer.getPeer(peerId);
                     if (!peer) throw new Error("Id matches no active peer");
 
-                    const answerParams = await peer.answerExternalOffer(offer);
+                    const answerParams = await peer.answerExternalOffer(offer, options);
                     return {
                         id: answerParams.id,
                         description: answerParams.answer
