@@ -207,12 +207,28 @@ export class RTCConnection extends EventEmitter {
                 : new NodeDataChannel.Audio(mid, direction)
 
             // Copy SSRC data (awkward translation between per-attr and full-value structures)
-            mediaToMirror.ssrcs?.forEach((ssrc) => {
-                media.addSSRC(
-                    parseInt(ssrc.id.toString(), 10),
-                    mediaToMirror.ssrcs!.find(attr => attr.attribute === 'cname')?.value,
-                    mediaToMirror.ssrcs!.find(attr => attr.attribute === 'msid')?.value
-                );
+            const ssrcs = mediaToMirror.ssrcs?.reduce((ssrcs, kv) => {
+                ssrcs[kv.id] ||= {};
+                ssrcs[kv.id][kv.attribute] = kv.value;
+                return ssrcs;
+            }, {} as { [id: string]: { [attr: string]: string | undefined } }) ?? {};
+
+            Object.keys(ssrcs).forEach((id) => {
+                const ssrcAttrs = ssrcs[id];
+                const [msid, trackId] = ssrcAttrs.msid?.split(' ') ?? [];
+                if (!msid) {
+                    media.addSSRC(
+                        parseInt(id, 10),
+                        ssrcAttrs['cname']
+                    );
+                } else {
+                    media.addSSRC(
+                        parseInt(id, 10),
+                        ssrcAttrs['cname'],
+                        msid,
+                        trackId
+                    );
+                }
             });
 
             const track = this.rawConn!.addTrack(media);
