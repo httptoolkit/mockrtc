@@ -8,7 +8,7 @@ import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
 import * as NodeDataChannel from 'node-datachannel';
 
-import { MockRTCSessionAPI, OfferOptions } from '../mockrtc-peer';
+import { AnswerOptions, MockRTCSessionAPI, OfferOptions } from '../mockrtc-peer';
 
 import { DataChannelStream } from './datachannel-stream';
 import { MediaTrackStream } from './mediatrack-stream';
@@ -230,6 +230,7 @@ export class RTCConnection extends EventEmitter {
             // shortly, so that it never actually gets created).
             setupChannel = this.rawConn.createDataChannel('mockrtc.setup-channel');
         }
+
         this.rawConn.setLocalDescription(NodeDataChannel.DescriptionType.Offer);
         await new Promise<void>((resolve) => {
             this.rawConn!.onGatheringStateChange((state) => {
@@ -240,46 +241,27 @@ export class RTCConnection extends EventEmitter {
             if (this.rawConn!.gatheringState() === 'complete') resolve();
         });
 
-        if (!this.rawConn) throw new Error("Connection was closed while building local description");
+        if (!this.rawConn) throw new Error("Connection was closed while building the local description");
 
-        const sessionDescription = this.rawConn.localDescription();
+        const localDesc = this.rawConn.localDescription();
         setupChannel?.close(); // Close the temporary setup channel, if we created one
 
-        // There's a few additional changes we have to make, which require mutating the SDP manually:
-        const createdSDP = SDP.parse(sessionDescription.sdp!);
-        createdSDP.msidSemantic = offerToMirror.msidSemantic;
+        const offerSDP = SDP.parse(localDesc.sdp);
+        mirrorMediaParams(offerToMirror, offerSDP);
+        localDesc.sdp = SDP.write(offerSDP);
 
-        const createdMediaStreams = createdSDP.media.filter(m => m.type !== 'application');
-        createdMediaStreams.forEach((media) => {
-            const mediaToMirror = offerToMirror.media
-                .find((offeredMedia) => offeredMedia.mid === media.mid);
-            if (!mediaToMirror) {
-                throw new Error(`Unexpected mid ${media.mid} in external offer`);
-            }
+        return localDesc as RTCSessionDescriptionInit;
+    }
 
-            if (media.type !== mediaToMirror.type) {
-                throw new Error(`Unexpected ${media.type} stream with mid ${media.mid} - can't mirror`);
-            }
+    async getMirroredLocalAnswer(sdpToMirror: string): Promise<RTCSessionDescriptionInit> {
+        const localDesc = this.rawConn!.localDescription();
 
-            // Copy all the semantic parameters of the RTP & RTCP streams themselves,
-            // but don't copy the fingerprint or similar:
-            media.msid = mediaToMirror.msid;
-            media.protocol = mediaToMirror.protocol;
-            media.ext = mediaToMirror.ext;
-            media.payloads = mediaToMirror.payloads;
-            media.rtp = mediaToMirror.rtp;
-            media.fmtp = mediaToMirror.fmtp;
-            media.rtcp = mediaToMirror.rtcp;
-            media.rtcpFb = mediaToMirror.rtcpFb;
-            media.ssrcGroups = mediaToMirror.ssrcGroups;
+        const answerToMirror = SDP.parse(sdpToMirror);
+        const answerSDP = SDP.parse(localDesc.sdp!);
+        mirrorMediaParams(answerToMirror, answerSDP);
 
-            // Although we do set the SSRC info in libdatachannel, as it's used internally, it doesn't
-            // support all the attributes that may be included, we copy the raw SDP across here too:
-            media.ssrcs = mediaToMirror.ssrcs;
-        });
-
-        sessionDescription.sdp = SDP.write(createdSDP);
-        return sessionDescription as RTCSessionDescriptionInit;
+        localDesc.sdp = SDP.write(answerSDP);
+        return localDesc as RTCSessionDescriptionInit;
     }
 
     waitUntilConnected() {
@@ -313,9 +295,17 @@ export class RTCConnection extends EventEmitter {
             this.setRemoteDescription(answer);
         },
 
-        answerOffer: (offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> => {
+        answerOffer: async (
+            offer: RTCSessionDescriptionInit,
+            options: AnswerOptions = {}
+        ): Promise<RTCSessionDescriptionInit> => {
             this.setRemoteDescription(offer);
-            return this.getLocalDescription();
+
+            if (options.mirrorSDP) {
+                return this.getMirroredLocalAnswer(options.mirrorSDP);
+            } else {
+                return this.getLocalDescription();
+            }
         }
     };
 
@@ -332,7 +322,7 @@ export class RTCConnection extends EventEmitter {
 
 }
 
-const sdpDirectionToNDCDirection = (direction: SDP.SharedAttributes['direction']): NodeDataChannel.Direction => {
+function sdpDirectionToNDCDirection(direction: SDP.SharedAttributes['direction']): NodeDataChannel.Direction {
     if (direction === 'inactive') return NodeDataChannel.Direction.Inactive;
     else if (direction?.length === 8) {
         return direction[0].toUpperCase() +
@@ -343,3 +333,56 @@ const sdpDirectionToNDCDirection = (direction: SDP.SharedAttributes['direction']
         return NodeDataChannel.Direction.Unknown;
     }
 };
+
+/**
+ * Takes two parsed descriptions (typically a real description we want to mock, and our own current
+ * self-generated description) and modifies the target description sure that the media params for
+ * each stream in the source description match.
+ *
+ * In theory, this should guarantee that RTP packets generated by the source and forwarded through
+ * the target's connection can be interpreted by somebody connected to the target.
+ */
+function mirrorMediaParams(source: SDP.SessionDescription, target: SDP.SessionDescription) {
+    target.msidSemantic = source.msidSemantic;
+
+    const sourceMediaStreams = source.media.filter(m => m.type !== 'application');
+    sourceMediaStreams.forEach((sourceMedia) => {
+        const targetMedia = target.media
+            .find((targetMedia) => targetMedia.mid === sourceMedia.mid);
+        if (!targetMedia) {
+            throw new Error(
+                `Missing mid ${sourceMedia.mid} in target when mirroring media params`
+            );
+        }
+
+        if (sourceMedia.type !== targetMedia.type) {
+            throw new Error(
+                `Unexpected media type (${
+                    targetMedia.type
+                }) for mid ${
+                    targetMedia.mid
+                } when mirroring media params`
+            );
+        }
+
+        // Copy all the semantic parameters of the RTP & RTCP streams themselves, so that RTP packets
+        // can be forwarded correctly, but without copying the fingerprint or similar, so we can still
+        // act as a MitM to intercept the packets:
+        targetMedia.msid = sourceMedia.msid;
+        targetMedia.protocol = sourceMedia.protocol;
+        targetMedia.ext = sourceMedia.ext;
+        targetMedia.payloads = sourceMedia.payloads;
+        targetMedia.rtp = sourceMedia.rtp;
+        targetMedia.fmtp = sourceMedia.fmtp;
+        targetMedia.rtcp = sourceMedia.rtcp;
+        targetMedia.rtcpFb = sourceMedia.rtcpFb;
+        targetMedia.ssrcGroups = sourceMedia.ssrcGroups;
+
+        // SSRC info is especially important here: this is used to map RTP SSRCs to track mids, so if
+        // this is incorrect, the recipient track will not receive the data we're sending.
+        // Although in some cases we do already have some SSRC info here, for offers where we've already
+        // defined the tracks ourselves, libdatachannel doesn't support all params and it's best to copy
+        // the full definition itself directly to make sure they match:
+        targetMedia.ssrcs = sourceMedia.ssrcs;
+    });
+}

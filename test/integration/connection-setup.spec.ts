@@ -139,21 +139,21 @@ describe("When connecting, MockRTC", function () {
         // Check each individual media field. These are the fields that will be passed through when
         // proxying (i.e. they're not linked to a specific peer, unlike the fingerprint etc).
         ['video', 'audio'].forEach((media) => {
-            const originalAudio = originalSdp.media.find(({ type }) => type === media)!;
-            const remoteAgreedAudio = remoteMedia.find(({ type }) => type === media)!;
+            const originalMedia = originalSdp.media.find(({ type }) => type === media)!;
+            const remoteAgreedMedia = remoteMedia.find(({ type }) => type === media)!;
             ([
                 'msid',
                 'protocol',
                 'ext',
                 'payloads',
-                'ssrcs',
+                'ssrcs', // <-- Especially important, SSRC->mid is how both peers map RTP to track
                 'ssrcGroups',
                 'rtp',
                 'fmtp',
                 'rtcp',
                 'rtcpFb'
             ] as const).forEach((field) => {
-                expect(remoteAgreedAudio[field]).to.deep.equal(originalAudio[field],
+                expect(remoteAgreedMedia[field]).to.deep.equal(originalMedia[field],
                     `Failed to mirror ${media} ${field}`
                 );
             });
@@ -169,6 +169,66 @@ describe("When connecting, MockRTC", function () {
             [2, 'video', 'UDP/TLS/RTP/SAVPF', 'inactive'], // Inactive - no video to send & remote is recvonly
             [0, 'application', 'UDP/DTLS/SCTP', undefined]
         ]);
+    });
+
+    it("should be able to create a mock answer that mirrors an existing SDP", async () => {
+        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+
+        const localConnection = new RTCPeerConnection();
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const tracks = stream.getTracks();
+        localConnection.addTrack(tracks[0]);
+
+        const localOffer = await localConnection.createOffer();
+        await localConnection.setLocalDescription(localOffer);
+
+        const rawSdpToMirror = await (async () => {
+            // Wrapped in a function for clarity that this is separate, just for SDP setup:
+            const demoConn = new RTCPeerConnection();
+            demoConn.setRemoteDescription(localOffer);
+            demoConn.addTrack(tracks[0]);
+            return (await demoConn.createAnswer()).sdp!;
+        })();
+        const originalSdp = SDP.parse(rawSdpToMirror);
+
+        const { answer } = await mockPeer.answerOffer(localOffer, {
+            mirrorSDP: rawSdpToMirror
+        });
+        localConnection.setRemoteDescription(answer);
+
+        // Wait until the connection opens successfully:
+        await waitForState(localConnection, 'connected');
+
+        // The remote description we accepted should match the originally mirrored SDP:
+        const remoteDescription = localConnection.currentRemoteDescription;
+        const remoteMedia = SDP.parse(remoteDescription!.sdp).media;
+
+        expect(remoteMedia.map(m => [
+            m.mid, m.type, m.protocol, m.direction
+        ])).to.deep.equal([
+            [0, 'video', 'UDP/TLS/RTP/SAVPF', 'sendrecv']
+        ]);
+
+        // Check that the video has correct data in the fields that will be passed through when
+        // proxying (i.e. they're not linked to a specific peer, unlike the fingerprint etc).
+        const originalVideo = originalSdp.media[0];
+        const remoteAgreedVideo = remoteMedia[0];
+        ([
+            'msid',
+            'protocol',
+            'ext',
+            'payloads',
+            'ssrcs', // <-- Especially important, SSRC->mid is how both peers map RTP to track
+            'ssrcGroups',
+            'rtp',
+            'fmtp',
+            'rtcp',
+            'rtcpFb'
+        ] as const).forEach((field) => {
+            expect(remoteAgreedVideo[field]).to.deep.equal(originalVideo[field],
+                `Failed to mirror video ${field}`
+            );
+        });
     });
 
 });

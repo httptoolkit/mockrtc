@@ -13,7 +13,8 @@ import {
     MockRTCExternalAnswerParams,
     MockRTCAnswerParams,
     MockRTCSessionAPI,
-    OfferOptions
+    OfferOptions,
+    AnswerOptions
 } from "../mockrtc-peer";
 import type { SessionData } from '../server/mockrtc-admin-plugin';
 
@@ -94,14 +95,21 @@ export class MockRTCRemotePeer implements MockRTCPeer {
         return new RemoteSessionApi(this.adminClient, this.peerId, sessionId);
     }
 
-    async answerOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCAnswerParams> {
+    async answerOffer(
+        offer: RTCSessionDescriptionInit,
+        options?: AnswerOptions
+    ): Promise<MockRTCAnswerParams> {
         return this.adminClient.sendQuery<
             { answerOffer: SessionData },
             MockRTCAnswerParams
         >({
             query: gql`
-                mutation GetPeerRTCAnswer($peerId: ID!, $offer: SessionDescriptionInput!) {
-                    answerOffer(peerId: $peerId, offer: $offer) {
+                mutation GetPeerRTCAnswer(
+                    $peerId: ID!,
+                    $offer: SessionDescriptionInput!,
+                    $options: Raw
+                ) {
+                    answerOffer(peerId: $peerId, offer: $offer, options: $options) {
                         id
                         description {
                             type
@@ -110,7 +118,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                     }
                 }
             `,
-            variables: { peerId: this.peerId, offer },
+            variables: { peerId: this.peerId, offer, options },
             transformResponse: ({ answerOffer }) => ({
                 answer: answerOffer.description,
                 session: new RemoteSessionApi(this.adminClient, this.peerId, answerOffer.id)
@@ -240,7 +248,10 @@ class RemoteSessionApi implements MockRTCSessionAPI {
         });
     }
 
-    answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit> {
+    answerOffer(
+        offer: RTCSessionDescriptionInit,
+        options?: AnswerOptions
+    ): Promise<RTCSessionDescriptionInit> {
         return this.adminClient.sendQuery<
             { answerOffer: SessionData },
             RTCSessionDescriptionInit
@@ -249,9 +260,10 @@ class RemoteSessionApi implements MockRTCSessionAPI {
                 mutation GetPeerRTCAnswer(
                     $peerId: ID!,
                     $sessionId: ID!,
-                    $offer: SessionDescriptionInput!
+                    $offer: SessionDescriptionInput!,
+                    $options: Raw
                 ) {
-                    answerOffer(peerId: $peerId, sessionId: $sessionId, offer: $offer) {
+                    answerOffer(peerId: $peerId, sessionId: $sessionId, offer: $offer, options: $options) {
                         description {
                             type
                             sdp
@@ -262,7 +274,8 @@ class RemoteSessionApi implements MockRTCSessionAPI {
             variables: {
                 peerId: this.peerId,
                 sessionId: this.sessionId,
-                offer
+                offer,
+                options
             },
             transformResponse: ({ answerOffer }) => answerOffer.description
         });

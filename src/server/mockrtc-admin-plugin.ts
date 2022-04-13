@@ -11,7 +11,7 @@ import { deserialize, SerializedValue } from 'mockttp/dist/util/serialization';
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
-import { OfferOptions } from '../mockrtc-peer';
+import { AnswerOptions, OfferOptions } from '../mockrtc-peer';
 
 export interface SessionData {
     id: string;
@@ -41,7 +41,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             createExternalOffer(peerId: ID!, options: Raw): Session!
             completeOffer(peerId: ID!, sessionId: ID!, answer: SessionDescriptionInput!): Void
 
-            answerOffer(peerId: ID!, sessionId: ID, offer: SessionDescriptionInput!): Session!
+            answerOffer(peerId: ID!, sessionId: ID, offer: SessionDescriptionInput!, options: Raw): Session!
             answerExternalOffer(peerId: ID!, offer: SessionDescriptionInput!): Session!
         }
 
@@ -127,20 +127,21 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     const session = this.mockRTCServer.getPeer(peerId).getSessionApi(sessionId);
                     await session.completeOffer(answer);
                 },
-                answerOffer: async (__: any, { peerId, sessionId, offer } : {
+                answerOffer: async (__: any, { peerId, sessionId, offer, options } : {
                     peerId: string,
                     sessionId?: string,
-                    offer: RTCSessionDescriptionInit
+                    offer: RTCSessionDescriptionInit,
+                    options?: AnswerOptions
                 }): Promise<SessionData> => {
                     const peer = this.mockRTCServer.getPeer(peerId);
                     if (!peer) throw new Error("Id matches no active peer");
 
                     if (sessionId) {
                         const session = peer.getSessionApi(sessionId);
-                        const answer = await session.answerOffer(offer);
+                        const answer = await session.answerOffer(offer, options);
                         return { id: sessionId, description: answer };
                     } else {
-                        const answerParams = await peer.answerOffer(offer);
+                        const answerParams = await peer.answerOffer(offer, options);
                         return {
                             id: answerParams._sessionId,
                             description: answerParams.answer

@@ -15,7 +15,8 @@ import {
     MockRTCOfferParams,
     MockRTCExternalAnswerParams,
     MockRTCExternalOfferParams,
-    OfferOptions
+    OfferOptions,
+    AnswerOptions
 } from "../mockrtc-peer";
 import { HandlerStep } from '../handling/handler-steps';
 
@@ -114,13 +115,13 @@ export class MockRTCServerPeer implements MockRTCPeer {
         }
     }
 
-    async answerOffer(offer: RTCSessionDescriptionInit): Promise<
+    async answerOffer(offer: RTCSessionDescriptionInit, options: AnswerOptions = {}): Promise<
         MockRTCAnswerParams & { _sessionId: string }
     > {
         const conn = this.createConnection();
         return {
             _sessionId: conn.id,
-            answer: await conn.sessionApi.answerOffer(offer),
+            answer: await conn.sessionApi.answerOffer(offer, options),
             session: conn.sessionApi
         };
     }

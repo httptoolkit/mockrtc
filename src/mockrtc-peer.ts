@@ -22,7 +22,10 @@ export interface MockRTCPeer {
 
     // For direct usage:
     createOffer(options?: OfferOptions): Promise<MockRTCOfferParams>;
-    answerOffer(offer: RTCSessionDescriptionInit): Promise<MockRTCAnswerParams>;
+    answerOffer(
+        offer: RTCSessionDescriptionInit,
+        options?: AnswerOptions
+    ): Promise<MockRTCAnswerParams>;
 
     // For proxy usage:
     createExternalOffer(options?: OfferOptions): Promise<MockRTCExternalOfferParams>;
@@ -42,7 +45,7 @@ export interface MockRTCSessionAPI {
     createOffer(options?: OfferOptions): Promise<RTCSessionDescriptionInit>;
     completeOffer(answer: RTCSessionDescriptionInit): Promise<void>;
 
-    answerOffer(offer: RTCSessionDescriptionInit): Promise<RTCSessionDescriptionInit>;
+    answerOffer(offer: RTCSessionDescriptionInit, options?: AnswerOptions): Promise<RTCSessionDescriptionInit>;
 }
 
 export interface MockRTCOfferParams {
@@ -72,6 +75,14 @@ export interface OfferOptions {
      * This option has no effect if mirrorSDP is not set.
      */
     addDataStream?: boolean;
+}
+
+export interface AnswerOptions {
+    /**
+     * A raw SDP string that should be mirrored (best efforts) where possible to
+     * create an equivalent answer, including the same media params.
+     */
+    mirrorSDP?: string;
 }
 
 export interface MockRTCExternalOfferParams {
