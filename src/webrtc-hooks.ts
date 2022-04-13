@@ -15,21 +15,51 @@ import { MOCKRTC_CONTROL_CHANNEL } from "./webrtc/control-channel";
 type OfferPairParams = MockRTCExternalOfferParams & { realOffer: RTCSessionDescriptionInit };
 type AnswerPairParams = MockRTCExternalAnswerParams & { realAnswer: RTCSessionDescriptionInit };
 
+/**
+ * In this file, we define hooks which can automatically wrap an RTCPeerConnection so that the
+ * normal calls to initialize a connection instead proxy the connection through MockRTC.
+ *
+ * This is quite complicated and confusing! There's four connection endpoints to be aware of:
+ * - The original RTCPeerConnection that's being hooked here to connect to a mock ('internal')
+ * - A MockRTC connection with an associated MockRTCPeer that it will actually connect to ('mock')
+ * - The original remote peer that we're connecting to ('remote')
+ * - A MockRTC external connection that will connect to the remote peer ('external')
+ *
+ * The connection structure works like so:
+ * INTERNAL <--> MOCK <-?-> EXTERNAL <--> REMOTE
+ *
+ * Internal+Mock and External+Remote are connected via real WebRTC connections. Mock+External are
+ * connected within MockRTC once mockConnection.proxyTrafficTo(externalConnection) is called,
+ * which happens if/when a proxy step is reached (i.e. this depends on the configuration of the
+ * mock peer).
+ *
+ * Note that in extra complicated cases, both peers might be hooked, in which case REMOTE is
+ * actually the EXTERNAL for a second mirrored structure. We can mostly ignore this as it's
+ * handled implicitly.
+ */
+
 export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // Anything that creates signalling data (createOffer/createAnswer) needs to be hooked to
-    // return the params for the external mock peer.
-    // Anything that sets params needs to be hooked to send to & set those params on the external
-    // mock peer, create new params, signal those to the local mock peer.
+    // return the params for the external connected.
+    // Anything that sets params (setLocal/RemoteDescription) needs to be hooked to send those
+    // params to the external connection, create new equivalent mock params for the mock connection
+    // and give those to the internal connection.
 
     const _createOffer = conn.createOffer.bind(conn);
     const _createAnswer = conn.createAnswer.bind(conn);
     const _setLocalDescription = conn.setLocalDescription.bind(conn);
     const _setRemoteDescription = conn.setRemoteDescription.bind(conn);
 
+    // The offers/answers we've generated, and the params needed to use them later:
     let pendingCreatedOffers: { [sdp: string]: OfferPairParams } = {};
     let pendingCreatedAnswers: { [sdp: string]: AnswerPairParams } = {};
+
+    // The offer/answer we generated that we're actually using, once one is selected:
     let selectedDescription: OfferPairParams | AnswerPairParams | undefined;
 
+    // A mirrored offer from the mock conn to the internal conn, mirroring an incoming offer we
+    // received from the remote conn. This is stored so that when we pick an answer it can be
+    // completed, and so that createAnswer can wait until generation is complete before running.
     let mockOffer: Promise<MockRTCOfferParams> | undefined;
 
     // We create a control channel to communicate with MockRTC once the connection is set up.
@@ -65,35 +95,6 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
         pendingCreatedAnswers[externalAnswer.sdp!] = { ...pendingAnswerParams, realAnswer };
         return externalAnswer;
     }) as any;
-
-    // Mock various props that expose the connection description:
-    let pendingLocalDescription: RTCSessionDescriptionInit | null = null;
-    Object.defineProperty(conn, 'pendingLocalDescription', {
-        get: () => pendingLocalDescription
-    });
-
-    let currentLocalDescription: RTCSessionDescriptionInit | null = null;
-    Object.defineProperty(conn, 'currentLocalDescription', {
-        get: () => currentLocalDescription
-    });
-
-    Object.defineProperty(conn, 'localDescription', {
-        get: () => conn.pendingLocalDescription ?? conn.currentLocalDescription
-    });
-
-    let pendingRemoteDescription: RTCSessionDescriptionInit | null = null;
-    Object.defineProperty(conn, 'pendingRemoteDescription', {
-        get: () => pendingRemoteDescription
-    });
-
-    let currentRemoteDescription: RTCSessionDescriptionInit | null = null;
-    Object.defineProperty(conn, 'currentRemoteDescription', {
-        get: () => currentRemoteDescription
-    });
-
-    Object.defineProperty(conn, 'remoteDescription', {
-        get: () => conn.pendingRemoteDescription ?? conn.currentRemoteDescription
-    });
 
     // Mock all mutations of the connection description:
     conn.setLocalDescription = (async (localDescription: RTCSessionDescriptionInit) => {
@@ -150,7 +151,7 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
             await Promise.all([
                 // Complete the external <-> remote connection:
                 setAnswer(remoteDescription),
-                // Complete the mocked <-> mock connection:
+                // Complete the internal <-> mock connection:
                 mockPeer.answerOffer(realOffer, {
                     mirrorSDP: remoteDescription.sdp
                 }).then(({ answer }) => _setRemoteDescription(answer))
@@ -163,8 +164,42 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
         }
     }) as any;
 
+    // Mock various props that expose the connection description:
+    let pendingLocalDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'pendingLocalDescription', {
+        get: () => pendingLocalDescription
+    });
+
+    let currentLocalDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'currentLocalDescription', {
+        get: () => currentLocalDescription
+    });
+
+    Object.defineProperty(conn, 'localDescription', {
+        get: () => conn.pendingLocalDescription ?? conn.currentLocalDescription
+    });
+
+    let pendingRemoteDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'pendingRemoteDescription', {
+        get: () => pendingRemoteDescription
+    });
+
+    let currentRemoteDescription: RTCSessionDescriptionInit | null = null;
+    Object.defineProperty(conn, 'currentRemoteDescription', {
+        get: () => currentRemoteDescription
+    });
+
+    Object.defineProperty(conn, 'remoteDescription', {
+        get: () => conn.pendingRemoteDescription ?? conn.currentRemoteDescription
+    });
+
     Object.defineProperty(conn, 'onicecandidate', {
         get: () => {},
         set: () => {} // Ignore this completely - never call the callback
     });
+
+    // For now we ignore incoming ice candidates. They're really intended for the external connection,
+    // not us, but also they're rarely necessary since we should be using local connections and MockRTC
+    // itself always waits rather than trickling candidates.
+    conn.addIceCandidate = () => Promise.resolve();
 }
