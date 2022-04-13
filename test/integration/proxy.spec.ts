@@ -10,7 +10,8 @@ import {
     expect,
     waitForChannelOpen,
     waitForChannelClose,
-    waitForState
+    waitForState,
+    setupPerfectNegotiation
 } from '../test-setup';
 
 describe("When proxying WebRTC traffic", () => {
@@ -263,68 +264,6 @@ describe("When proxying WebRTC traffic", () => {
             'local message 3'
         ]);
     });
-
-    function setupPerfectNegotiation(
-        peer: RTCPeerConnection,
-        polite: boolean,
-        signaler: { send: (msg: any) => void, onmessage: (msg: any) => void }
-    ) {
-        // Example almost verbatim from https://w3c.github.io/webrtc-pc/#perfect-negotiation-example
-
-        // keep track of some negotiation state to prevent races and errors
-        let makingOffer = false;
-        let ignoreOffer = false;
-        let isSettingRemoteAnswerPending = false;
-
-        // send any ice candidates to the other peer
-        peer.onicecandidate = ({candidate}) => signaler.send({candidate});
-
-        // let the "negotiationneeded" event trigger offer generation
-        peer.onnegotiationneeded = async () => {
-            try {
-                makingOffer = true;
-                await peer.setLocalDescription();
-                signaler.send({description: peer.localDescription});
-            } catch (err) {
-                console.error('onnegotiationneeded', err);
-            } finally {
-                makingOffer = false;
-            }
-        };
-
-        signaler.onmessage = async ({description, candidate}) => {
-            try {
-                if (description) {
-                    // An offer may come in while we are busy processing SRD(answer).
-                    // In this case, we will be in "stable" by the time the offer is processed
-                    // so it is safe to chain it on our Operations Chain now.
-                    const readyForOffer = !makingOffer &&
-                        (peer.signalingState == "stable" || isSettingRemoteAnswerPending);
-                    const offerCollision = description.type == "offer" && !readyForOffer;
-
-                    ignoreOffer = !polite && offerCollision;
-                    if (ignoreOffer) {
-                        return;
-                    }
-                    isSettingRemoteAnswerPending = description.type == "answer";
-                    await peer.setRemoteDescription(description); // SRD rolls back as needed
-                    isSettingRemoteAnswerPending = false;
-                    if (description.type == "offer") {
-                        await peer.setLocalDescription();
-                        signaler.send({description: peer.localDescription});
-                    }
-                } else if (candidate) {
-                    try {
-                        await peer.addIceCandidate(candidate);
-                    } catch (err) {
-                        if (!ignoreOffer) throw err; // Suppress ignored offer's candidates
-                    }
-                }
-            } catch (err) {
-                console.error('onmessage error', err);
-            }
-        }
-    }
 
     it("should be able to transparently forward messages when hooking both ends of a perfect negotiation", async () => {
         const mockPeer = await mockRTC.buildPeer()
