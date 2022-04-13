@@ -78,6 +78,24 @@ export class MediaTrackStream extends stream.Duplex {
         }
     }
 
+    _writev(chunks: Array<{ chunk: any; encoding: BufferEncoding; }>, callback: (error?: Error | null) => void) {
+        let sentOk: boolean;
+
+        try {
+            sentOk = this.rawTrack.sendMessageBinary(
+                Buffer.concat(chunks.map(c => c.chunk))
+            );
+        } catch (err: any) {
+            return callback(err);
+        }
+
+        if (sentOk) {
+            callback(null);
+        } else {
+            callback(new Error("Failed to write to media track"));
+        }
+    }
+
     _final(callback: (error: Error | null) => void) {
         if (!this.allowHalfOpen) this.destroy();
         callback(null);
