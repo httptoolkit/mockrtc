@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import {
+import type {
     MockRTC,
     MockRTCOptions,
 } from "./mockrtc";
@@ -16,14 +16,26 @@ export type {
 
 export type {
     MockRTCPeer,
+    MockRTCSession,
     MockRTCOfferParams,
+    MockRTCAnswerParams,
     MockRTCExternalOfferParams,
-    MockRTCExternalAnswerParams
+    MockRTCExternalAnswerParams,
+    OfferOptions,
+    AnswerOptions
 } from './mockrtc-peer';
 
 export { MOCKRTC_CONTROL_CHANNEL } from './webrtc/control-channel';
 export { hookWebRTCPeer } from "./webrtc-hooks";
 
+export function getLocal(): never {
+    throw new Error("Can't use MockRTC.getLocal() in a browser");
+}
+
 export function getRemote(options: MockRTCClientOptions = {}): MockRTC {
     return new MockRTCClient(options);
+}
+
+export function getAdminServer(): never {
+    throw new Error("Can't use MockRTC.getLocal() in a browser");
 }

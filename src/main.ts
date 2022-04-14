@@ -9,6 +9,7 @@ import {
 } from "./mockrtc";
 import { MockRTCServer } from "./server/mockrtc-server";
 import { MockRTCAdminServer } from "./server/mockrtc-admin-server";
+import { MockRTCClient, MockRTCClientOptions } from "./client/mockrtc-client";
 
 export type {
     MockRTC,
@@ -17,9 +18,13 @@ export type {
 
 export type {
     MockRTCPeer,
+    MockRTCSession,
     MockRTCOfferParams,
+    MockRTCAnswerParams,
     MockRTCExternalOfferParams,
-    MockRTCExternalAnswerParams
+    MockRTCExternalAnswerParams,
+    OfferOptions,
+    AnswerOptions
 } from './mockrtc-peer';
 
 export {
@@ -30,6 +35,10 @@ export { hookWebRTCPeer } from "./webrtc-hooks";
 
 export function getLocal(): MockRTC {
     return new MockRTCServer();
+}
+
+export function getRemote(options: MockRTCClientOptions = {}): MockRTC {
+    return new MockRTCClient(options);
 }
 
 export function getAdminServer(): MockRTCAdminServer {
