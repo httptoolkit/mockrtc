@@ -4,13 +4,11 @@
  */
 
 import { randomUUID } from 'crypto';
-import * as SDP from 'sdp-transform';
-import * as NodeDataChannel from 'node-datachannel';
 
 import {
     MockRTCPeer,
     MockRTCPeerOptions,
-    MockRTCSessionAPI,
+    MockRTCSession,
     MockRTCAnswerParams,
     MockRTCOfferParams,
     MockRTCExternalAnswerParams,
@@ -61,9 +59,9 @@ export class MockRTCServerPeer implements MockRTCPeer {
         return {
             id: externalConn.id,
             offer: await externalConn.sessionApi.createOffer(options),
+            session: externalConn.sessionApi,
             setAnswer: async (answer: RTCSessionDescriptionInit) => {
                 externalConn.sessionApi.completeOffer(answer);
-                return externalConn.sessionApi;
             }
         };
     }
@@ -78,7 +76,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
         return {
             id: externalConn.id,
-            answer: await externalConn.sessionApi.answerOffer(offer, options)
+            answer: await externalConn.sessionApi.answerOffer(offer, options),
+            session: externalConn.sessionApi
         };
     }
 
@@ -105,31 +104,27 @@ export class MockRTCServerPeer implements MockRTCPeer {
         return conn;
     }
 
-    async createOffer(options: OfferOptions = {}): Promise<MockRTCOfferParams & { _sessionId: string }> {
+    async createOffer(options: OfferOptions = {}): Promise<MockRTCOfferParams> {
         const conn = this.createConnection();
 
         return {
-            _sessionId: conn.id,
             offer: await conn.sessionApi.createOffer(options),
+            session: conn.sessionApi,
             setAnswer: async (answer) => {
                 conn.sessionApi.completeOffer(answer);
-                return conn.sessionApi;
             }
         }
     }
 
-    async answerOffer(offer: RTCSessionDescriptionInit, options: AnswerOptions = {}): Promise<
-        MockRTCAnswerParams & { _sessionId: string }
-    > {
+    async answerOffer(offer: RTCSessionDescriptionInit, options: AnswerOptions = {}): Promise<MockRTCAnswerParams> {
         const conn = this.createConnection();
         return {
-            _sessionId: conn.id,
             answer: await conn.sessionApi.answerOffer(offer, options),
             session: conn.sessionApi
         };
     }
 
-    getSessionApi(id: string): MockRTCSessionAPI {
+    getSession(id: string): MockRTCSession {
         return this.connections[id].sessionApi;
     }
 

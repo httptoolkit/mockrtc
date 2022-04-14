@@ -8,7 +8,7 @@ import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
 import * as NodeDataChannel from 'node-datachannel';
 
-import { AnswerOptions, MockRTCSessionAPI, OfferOptions } from '../mockrtc-peer';
+import { AnswerOptions, MockRTCSession, OfferOptions } from '../mockrtc-peer';
 
 import { DataChannelStream } from './datachannel-stream';
 import { MediaTrackStream } from './mediatrack-stream';
@@ -298,7 +298,9 @@ export class RTCConnection extends EventEmitter {
         });
     }
 
-    readonly sessionApi: MockRTCSessionAPI = {
+    readonly sessionApi: MockRTCSession = {
+        sessionId: this.id, // The session id is actually just the connection id, shhh don't tell anyone.
+
         createOffer: async (options: OfferOptions = {}): Promise<RTCSessionDescriptionInit> => {
             if (options.mirrorSDP) {
                 return this.getMirroredLocalOffer(options.mirrorSDP, !!options.addDataStream);

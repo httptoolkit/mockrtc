@@ -3,8 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as Sdp from 'sdp-transform';
-
 import {
     MockRTC,
     expect,

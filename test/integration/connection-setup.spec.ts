@@ -51,12 +51,12 @@ describe("When connecting, MockRTC", function () {
 
         const localConnection = new RTCPeerConnection();
 
-        const { offer, setAnswer } = await mockPeer.createOffer();
+        const { offer, setAnswer, session } = await mockPeer.createOffer();
         await localConnection.setRemoteDescription(offer);
 
         const localAnswer = await localConnection.createAnswer();
         await localConnection.setLocalDescription(localAnswer);
-        const session = await setAnswer(localAnswer);
+        await setAnswer(localAnswer);
 
         // Wait until the connection opens successfully:
         await waitForState(localConnection, 'connected');

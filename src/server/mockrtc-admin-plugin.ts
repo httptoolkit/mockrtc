@@ -96,14 +96,17 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     if (!peer) throw new Error("Id matches no active peer");
 
                     if (sessionId) {
-                        const session = peer.getSessionApi(sessionId);
+                        const session = peer.getSession(sessionId);
                         return {
                             id: sessionId,
                             description: await session.createOffer(options)
                         };
                     } else {
                         const offerParams = await peer.createOffer(options);
-                        return { id: offerParams._sessionId, description: offerParams.offer };
+                        return {
+                            id: offerParams.session.sessionId,
+                            description: offerParams.offer
+                        };
                     }
                 },
                 createExternalOffer: async (__: any, { peerId, options }: {
@@ -124,7 +127,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     sessionId: string,
                     answer: RTCSessionDescriptionInit
                 }): Promise<void> => {
-                    const session = this.mockRTCServer.getPeer(peerId).getSessionApi(sessionId);
+                    const session = this.mockRTCServer.getPeer(peerId).getSession(sessionId);
                     await session.completeOffer(answer);
                 },
                 answerOffer: async (__: any, { peerId, sessionId, offer, options } : {
@@ -137,13 +140,13 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     if (!peer) throw new Error("Id matches no active peer");
 
                     if (sessionId) {
-                        const session = peer.getSessionApi(sessionId);
+                        const session = peer.getSession(sessionId);
                         const answer = await session.answerOffer(offer, options);
                         return { id: sessionId, description: answer };
                     } else {
                         const answerParams = await peer.answerOffer(offer, options);
                         return {
-                            id: answerParams._sessionId,
+                            id: answerParams.session.sessionId,
                             description: answerParams.answer
                         };
                     }

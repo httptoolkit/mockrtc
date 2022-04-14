@@ -34,6 +34,9 @@ export interface MockRTCPeer {
         options?: AnswerOptions
     ): Promise<MockRTCExternalAnswerParams>;
 
+    // For advanced use cases, where you need to look up sessions dynamically:
+    getSession(id: string): MockRTCSession;
+
     // For querying seen data
     getAllMessages(): Promise<Array<string | Buffer>>;
     getMessagesOnChannel(channelName: string): Promise<Array<string | Buffer>>;
@@ -44,7 +47,15 @@ export interface MockRTCPeer {
  * for renegotiation of an existing session, while persisting the same connection
  * and ongoing handling process.
  */
-export interface MockRTCSessionAPI {
+export interface MockRTCSession {
+    /**
+     * For most use cases explicitly using the session ID isn't necessary.
+     *
+     * For some advanced use cases though, it's more convenient to store session ids and use
+     * peer.getSession, rather than using the session property from the setup methods directly.
+     */
+    readonly sessionId: string;
+
     createOffer(options?: OfferOptions): Promise<RTCSessionDescriptionInit>;
     completeOffer(answer: RTCSessionDescriptionInit): Promise<void>;
 
@@ -53,12 +64,13 @@ export interface MockRTCSessionAPI {
 
 export interface MockRTCOfferParams {
     offer: RTCSessionDescriptionInit;
-    setAnswer: (answer: RTCSessionDescriptionInit) => Promise<MockRTCSessionAPI>;
+    setAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
+    session: MockRTCSession;
 }
 
 export interface MockRTCAnswerParams {
     answer: RTCSessionDescriptionInit;
-    session: MockRTCSessionAPI;
+    session: MockRTCSession;
 }
 
 export interface OfferOptions {
@@ -91,10 +103,12 @@ export interface AnswerOptions {
 export interface MockRTCExternalOfferParams {
     id: string; // Used for external attach control messages
     offer: RTCSessionDescriptionInit;
-    setAnswer: (answer: RTCSessionDescriptionInit) => Promise<MockRTCSessionAPI>;
+    setAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
+    session: MockRTCSession;
 }
 
 export interface MockRTCExternalAnswerParams {
     id: string; // Used for external attach control messagesz
     answer: RTCSessionDescriptionInit;
+    session: MockRTCSession;
 }

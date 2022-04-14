@@ -12,7 +12,7 @@ import {
     MockRTCExternalOfferParams,
     MockRTCExternalAnswerParams,
     MockRTCAnswerParams,
-    MockRTCSessionAPI,
+    MockRTCSession,
     OfferOptions,
     AnswerOptions
 } from "../mockrtc-peer";
@@ -42,10 +42,14 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                 }
             `,
             variables: { peerId: this.peerId, options },
-            transformResponse: ({ createOffer }) => ({
-                offer: createOffer.description,
-                setAnswer: (answer) => this.completeOffer(createOffer.id, answer)
-            })
+            transformResponse: ({ createOffer }) => {
+                const session = this.getSession(createOffer.id);
+                return {
+                    offer: createOffer.description,
+                    session,
+                    setAnswer: session.completeOffer.bind(session)
+                };
+            }
         });
     }
 
@@ -66,33 +70,16 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                 }
             `,
             variables: { peerId: this.peerId, options },
-            transformResponse: ({ createExternalOffer }) => ({
-                id: createExternalOffer.id,
-                offer: createExternalOffer.description,
-                setAnswer: (answer) => this.completeOffer(createExternalOffer.id, answer)
-            })
-        });
-    }
-
-    private completeOffer = async (sessionId: string, answer: RTCSessionDescriptionInit) => {
-        await this.adminClient.sendQuery<void>({
-            query: gql`
-                mutation CompletePeerRTCOffer(
-                    $peerId: ID!,
-                    $sessionId: ID!,
-                    $answer: SessionDescriptionInput!
-                ) {
-                    completeOffer(peerId: $peerId, sessionId: $sessionId, answer: $answer)
-                }
-            `,
-            variables: {
-                peerId: this.peerId,
-                sessionId,
-                answer: answer
+            transformResponse: ({ createExternalOffer }) => {
+                const session = this.getSession(createExternalOffer.id);
+                return {
+                    id: createExternalOffer.id,
+                    offer: createExternalOffer.description,
+                    session,
+                    setAnswer: session.completeOffer.bind(session)
+                };
             }
         });
-
-        return new RemoteSessionApi(this.adminClient, this.peerId, sessionId);
     }
 
     async answerOffer(
@@ -121,7 +108,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
             variables: { peerId: this.peerId, offer, options },
             transformResponse: ({ answerOffer }) => ({
                 answer: answerOffer.description,
-                session: new RemoteSessionApi(this.adminClient, this.peerId, answerOffer.id)
+                session: this.getSession(answerOffer.id)
             })
         });
     }
@@ -150,11 +137,19 @@ export class MockRTCRemotePeer implements MockRTCPeer {
                 }
             `,
             variables: { peerId: this.peerId, offer, options },
-            transformResponse: ({ answerExternalOffer }) => ({
-                id: answerExternalOffer.id,
-                answer: answerExternalOffer.description
-            })
+            transformResponse: ({ answerExternalOffer }) => {
+                const session = this.getSession(answerExternalOffer.id);
+                return {
+                    id: answerExternalOffer.id,
+                    answer: answerExternalOffer.description,
+                    session
+                }
+            }
         });
+    }
+
+    getSession(sessionId: string): MockRTCSession {
+        return new RemoteSessionApi(this.adminClient, this.peerId, sessionId);
     }
 
     getAllMessages() {
@@ -209,11 +204,11 @@ export class MockRTCRemotePeer implements MockRTCPeer {
 
 }
 
-class RemoteSessionApi implements MockRTCSessionAPI {
+class RemoteSessionApi implements MockRTCSession {
     constructor(
         private adminClient: PluggableAdmin.AdminClient<{}>,
         private peerId: string,
-        private sessionId: string
+        public readonly sessionId: string
     ) {}
 
     createOffer(options?: OfferOptions): Promise<RTCSessionDescriptionInit> {
@@ -236,8 +231,8 @@ class RemoteSessionApi implements MockRTCSessionAPI {
         });
     }
 
-    async completeOffer(answer: RTCSessionDescriptionInit): Promise<void> {
-        await this.adminClient.sendQuery<void>({
+    completeOffer(answer: RTCSessionDescriptionInit): Promise<void> {
+        return this.adminClient.sendQuery<void>({
             query: gql`
                 mutation CompletePeerRTCOffer(
                     $peerId: ID!,
