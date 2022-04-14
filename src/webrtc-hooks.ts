@@ -38,6 +38,24 @@ type AnswerPairParams = MockRTCExternalAnswerParams & { realAnswer: RTCSessionDe
  * handled implicitly.
  */
 
+/**
+ * Hooks a given RTCPeerConnection so that all connections it creates are automatically proxied
+ * through the given MockRTCPeer.
+ *
+ * This allows you to capture traffic without modifying your WebRTC code: you can create
+ * offers/answers and signal them to a remote client as normal, and both the local and remote
+ * connections will connect to MockRTC instead.
+ *
+ * What happens once they connect depends on the configuration of the given peer. This mocked
+ * local connection will follow the steps defined by the peer, so may receive mocked messages
+ * injected there, or delays, or anything else. The remote peer will receive nothing until
+ * a proxy step is reached (if ever), at which point the local & remote peers will be able to
+ * talking directly, although all traffic will still be proxied through MockRTC for logging
+ * and analysis/validation elsewhere.
+ *
+ * It is possible to proxy both real peers in a connection, potentially with different mock
+ * peers so that they experience different behaviours during the connection.
+ */
 export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // Anything that creates signalling data (createOffer/createAnswer) needs to be hooked to
     // return the params for the external connected.
@@ -202,4 +220,22 @@ export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // not us, but also they're rarely necessary since we should be using local connections and MockRTC
     // itself always waits rather than trickling candidates.
     conn.addIceCandidate = () => Promise.resolve();
+}
+
+/**
+ * Modifies the global RTCPeerConnection constructor to hook all WebRTC connections
+ * created after this function is called, and redirect all their traffic to the
+ * provided MockRTCPeer.
+ */
+export function hookAllWebRTC(mockPeer: MockRTCPeer) {
+    // The original constructor
+    const _RTCPeerConnection = window.RTCPeerConnection;
+
+    window.RTCPeerConnection = function (this: RTCPeerConnection) {
+        const connection = new _RTCPeerConnection(...arguments);
+        hookWebRTCPeer(connection, mockPeer);
+        return connection;
+    } as any;
+
+    window.RTCPeerConnection.prototype = _RTCPeerConnection.prototype;
 }

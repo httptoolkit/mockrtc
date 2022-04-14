@@ -26,7 +26,10 @@ export type {
 } from './mockrtc-peer';
 
 export { MOCKRTC_CONTROL_CHANNEL } from './webrtc/control-channel';
-export { hookWebRTCPeer } from "./webrtc-hooks";
+export {
+    hookWebRTCPeer,
+    hookAllWebRTC
+} from "./webrtc-hooks";
 
 export function getLocal(): never {
     throw new Error("Can't use MockRTC.getLocal() in a browser");

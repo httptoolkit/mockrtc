@@ -31,7 +31,10 @@ export {
     MOCKRTC_CONTROL_CHANNEL,
     type MockRTCControlMessage
 } from './webrtc/control-channel';
-export { hookWebRTCPeer } from "./webrtc-hooks";
+export {
+    hookWebRTCPeer,
+    hookAllWebRTC
+} from "./webrtc-hooks";
 
 export function getLocal(): MockRTC {
     return new MockRTCServer();
