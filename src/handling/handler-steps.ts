@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ClientServerChannel } from 'mockttp/dist/util/serialization';
+import * as PluggableAdmin from 'mockttp/pluggable-admin';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
 import type { MediaTrackStream } from '../webrtc/mediatrack-stream';
 import type { MockRTCConnection } from '../webrtc/mockrtc-connection';
@@ -22,6 +22,8 @@ import {
     WaitForMessageStepDefinition,
     WaitForTrackStepDefinition
 } from './handler-step-definitions';
+
+type ClientServerChannel = PluggableAdmin.Serialization.ClientServerChannel;
 
 export interface HandlerStep extends HandlerStepDefinition {
     handle(connection: MockRTCConnection): Promise<void>;

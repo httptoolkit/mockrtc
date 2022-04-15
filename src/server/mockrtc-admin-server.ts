@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { PluggableAdmin } from 'mockttp';
+import * as PluggableAdmin from 'mockttp/pluggable-admin';
 import { MockRTCAdminPlugin } from './mockrtc-admin-plugin';
 
 export class MockRTCAdminServer extends PluggableAdmin.AdminServer<{ webrtc: MockRTCAdminPlugin }> {

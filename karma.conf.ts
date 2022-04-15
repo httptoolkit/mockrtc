@@ -8,7 +8,7 @@ const HEADFUL = process.env.HEADFUL_TEST === 'true';
 
 import * as ChildProcess from 'child_process';
 
-import { NodeModulesPolyfillPlugin } from './test/node-esbuild-polyfills';
+import { NodeModulesPolyfillPlugin } from '@esbuild-plugins/node-modules-polyfill';
 import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfill';
 
 if (CONTINUOUS) {
@@ -43,7 +43,6 @@ module.exports = function(config: any) {
         esbuild: {
             format: 'esm',
             target: 'esnext',
-            external: ['brotli-wasm'],
             plugins: [
                 NodeModulesPolyfillPlugin(),
                 NodeGlobalsPolyfillPlugin({

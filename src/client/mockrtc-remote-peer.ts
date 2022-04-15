@@ -4,7 +4,7 @@
  */
 
 import { gql } from 'graphql-tag';
-import { PluggableAdmin } from 'mockttp';
+import * as PluggableAdmin from 'mockttp/pluggable-admin';
 
 import {
     MockRTCPeer,

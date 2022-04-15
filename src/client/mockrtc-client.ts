@@ -4,8 +4,7 @@
  */
 
 import gql from 'graphql-tag';
-import { PluggableAdmin } from 'mockttp';
-import { serialize } from 'mockttp/dist/util/serialization';
+import * as PluggableAdmin from 'mockttp/pluggable-admin';
 
 import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
 
@@ -49,7 +48,7 @@ export class MockRTCClient implements MockRTC {
             `,
             variables: {
                 peerData: {
-                    steps: handlerSteps.map(step => serialize(step, adminStream))
+                    steps: handlerSteps.map(step => PluggableAdmin.Serialization.serialize(step, adminStream))
                 }
             },
             transformResponse: ({ createPeer }) => createPeer

@@ -3,7 +3,11 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { ClientServerChannel, Serializable } from 'mockttp/dist/util/serialization';
+import * as PluggableAdmin from 'mockttp/pluggable-admin';
+
+export type Serializable = PluggableAdmin.Serialization.Serializable;
+export const { Serializable } = PluggableAdmin.Serialization;
+type ClientServerChannel = PluggableAdmin.Serialization.ClientServerChannel;
 
 export interface HandlerStepDefinition extends Serializable {
     readonly type: keyof typeof StepDefinitionLookup;

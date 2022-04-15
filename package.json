@@ -45,6 +45,7 @@
   },
   "devDependencies": {
     "@esbuild-plugins/node-globals-polyfill": "^0.1.1",
+    "@esbuild-plugins/node-modules-polyfill": "^0.1.4",
     "@types/chai": "^4.3.0",
     "@types/dom-mediacapture-transform": "^0.1.2",
     "@types/mocha": "^9.1.0",
@@ -61,15 +62,20 @@
     "node-dev": "^7.1.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "ts-node": "^10.5.0",
-    "typescript": "^4.5.5",
+    "typescript": "^4.7.0-beta",
     "util": "^0.12.4"
   },
   "dependencies": {
     "@types/sdp-transform": "^2.4.5",
     "graphql": "^15.8.0",
     "graphql-tag": "^2.12.6",
-    "mockttp": "^2.7.0",
+    "mockttp": "^3.0.0",
     "node-datachannel": "^0.3.0",
     "sdp-transform": "^2.14.1"
+  },
+  "overrides": {
+    "ts-node": {
+      "typescript": "*"
+    }
   }
 }

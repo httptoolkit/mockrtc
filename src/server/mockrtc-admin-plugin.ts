@@ -5,13 +5,15 @@
 
 import * as stream from 'stream';
 import { gql } from 'graphql-tag';
-import { PluggableAdmin } from 'mockttp';
-import { deserialize, SerializedValue } from 'mockttp/dist/util/serialization';
+import * as PluggableAdmin from 'mockttp/pluggable-admin';
 
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 import { AnswerOptions, OfferOptions } from '../mockrtc-peer';
+
+const { deserialize } = PluggableAdmin.Serialization;
+type SerializedValue<T> = PluggableAdmin.Serialization.SerializedValue<T>;
 
 export interface SessionData {
     id: string;
