@@ -56,7 +56,7 @@ type AnswerPairParams = MockRTCExternalAnswerParams & { realAnswer: RTCSessionDe
  * It is possible to proxy both real peers in a connection, potentially with different mock
  * peers so that they experience different behaviours during the connection.
  */
-export function hookWebRTCPeer(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
+export function hookWebRTCConnection(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // Anything that creates signalling data (createOffer/createAnswer) needs to be hooked to
     // return the params for the external connected.
     // Anything that sets params (setLocal/RemoteDescription) needs to be hooked to send those
@@ -233,7 +233,7 @@ export function hookAllWebRTC(mockPeer: MockRTCPeer) {
 
     window.RTCPeerConnection = function (this: RTCPeerConnection) {
         const connection = new _RTCPeerConnection(...arguments);
-        hookWebRTCPeer(connection, mockPeer);
+        hookWebRTCConnection(connection, mockPeer);
         return connection;
     } as any;
 

@@ -72,7 +72,7 @@ describe("When proxying WebRTC traffic", () => {
         ]);
     });
 
-    it("should be able to transparently forward messages to dynamically provided peer sending offer", async () => {
+    it("should be able to transparently proxy messages to a dynamically provided peer, sending offer", async () => {
         const remoteConn = new RTCPeerConnection();
         const remotelyReceivedMessages: Array<string | Buffer> = [];
 
@@ -87,11 +87,11 @@ describe("When proxying WebRTC traffic", () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessage()
             .send('Injected message')
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         // Create a local data connection:
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer); // Automatically redirect traffic via mockPeer
+        MockRTC.hookWebRTCConnection(localConn, mockPeer); // Automatically redirect traffic via mockPeer
 
         const dataChannel = localConn.createDataChannel("dataChannel");
         const locallyReceivedMessages: Array<string | Buffer> = [];
@@ -132,7 +132,7 @@ describe("When proxying WebRTC traffic", () => {
         ]);
     });
 
-    it("should be able to transparently forward messages to dynamically provided peer receiving answer", async () => {
+    it("should be able to transparently proxy messages to dynamically provided peer, receiving answer", async () => {
         const remoteConn = new RTCPeerConnection();
         remoteConn.createDataChannel("empty-channel"); // We need to create at least one channel/track to get an offer
         const remotelyReceivedMessages: Array<string | Buffer> = [];
@@ -148,7 +148,7 @@ describe("When proxying WebRTC traffic", () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessage()
             .send('Injected message')
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         // Remote connection starts first, sending us a real offer:
         const remoteOffer = await remoteConn.createOffer();
@@ -156,7 +156,7 @@ describe("When proxying WebRTC traffic", () => {
 
         // Create a local data connection:
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer); // Automatically redirect traffic via mockPeer
+        MockRTC.hookWebRTCConnection(localConn, mockPeer); // Automatically redirect traffic via mockPeer
 
         const dataChannel = localConn.createDataChannel("dataChannel");
         const channelOpenPromise = new Promise<void>((resolve) => dataChannel.onopen = () => resolve());
@@ -193,14 +193,14 @@ describe("When proxying WebRTC traffic", () => {
         ]);
     });
 
-    it("should be able to transparently forward messages when hooking both ends of a connection", async () => {
+    it("should be able to transparently proxy messages when hooking both ends of a connection", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessage()
             .send('Injected message')
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         const remoteConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(remoteConn, mockPeer); // Automatically redirect traffic via mockPeer
+        MockRTC.hookWebRTCConnection(remoteConn, mockPeer); // Automatically redirect traffic via mockPeer
 
         const remotelyReceivedMessages: Array<string | Buffer> = [];
 
@@ -225,7 +225,7 @@ describe("When proxying WebRTC traffic", () => {
 
         // We create a local data connection too:
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer); // Automatically redirect traffic via mockPeer
+        MockRTC.hookWebRTCConnection(localConn, mockPeer); // Automatically redirect traffic via mockPeer
 
         const dataChannel = localConn.createDataChannel("localDataChannel");
         const channelOpenPromise = new Promise<void>((resolve) => dataChannel.onopen = () => resolve());
@@ -263,17 +263,17 @@ describe("When proxying WebRTC traffic", () => {
         ]);
     });
 
-    it("should be able to transparently forward messages when hooking both ends of a perfect negotiation", async () => {
+    it("should be able to transparently proxy messages when hooking both ends of a perfect negotiation", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .sleep(100)
             .send('Injected message')
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         // Two hooked peers:
         const remoteConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(remoteConn, mockPeer);
+        MockRTC.hookWebRTCConnection(remoteConn, mockPeer);
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+        MockRTC.hookWebRTCConnection(localConn, mockPeer);
 
         // A fake synchronous signalling channel:
         const signaler1 = { send: (msg: any) => signaler2.onmessage(msg), onmessage: (msg: any) => {} };
@@ -321,9 +321,9 @@ describe("When proxying WebRTC traffic", () => {
         ]);
     });
 
-    it("should be able to transparently forward offered media through a hooked connection", async () => {
+    it("should be able to transparently proxy offered media through a hooked connection", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
@@ -332,7 +332,7 @@ describe("When proxying WebRTC traffic", () => {
 
         // One hooked peer:
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+        MockRTC.hookWebRTCConnection(localConn, mockPeer);
 
         // Both connections offer to send media:
         remoteConn.addTrack(stream.getTracks()[0], stream);
@@ -372,9 +372,9 @@ describe("When proxying WebRTC traffic", () => {
         expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
-    it("should be able to transparently forward answered media through a hooked connection", async () => {
+    it("should be able to transparently proxy answered media through a hooked connection", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
@@ -383,7 +383,7 @@ describe("When proxying WebRTC traffic", () => {
 
         // One hooked peer:
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+        MockRTC.hookWebRTCConnection(localConn, mockPeer);
 
         // Both connections offer to send media:
         remoteConn.addTrack(stream.getTracks()[0], stream);
@@ -423,18 +423,18 @@ describe("When proxying WebRTC traffic", () => {
         expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
-    it("should be able to transparently forward media when hooking both ends of a perfect negotiation", async () => {
+    it("should be able to transparently proxy media when hooking both ends of a perfect negotiation", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .thenForwardDynamically();
+            .thenPassThrough();
 
         const stream1 = await navigator.mediaDevices.getUserMedia({ video: true });
         const stream2 = await navigator.mediaDevices.getUserMedia({ video: true });
 
         // Two hooked peers:
         const remoteConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(remoteConn, mockPeer);
+        MockRTC.hookWebRTCConnection(remoteConn, mockPeer);
         const localConn = new RTCPeerConnection();
-        MockRTC.hookWebRTCPeer(localConn, mockPeer);
+        MockRTC.hookWebRTCConnection(localConn, mockPeer);
 
         // A fake synchronous signalling channel:
         const signaler1 = { send: (msg: any) => signaler2.onmessage(msg), onmessage: (msg: any) => {} };

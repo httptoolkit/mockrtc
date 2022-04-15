@@ -38,6 +38,7 @@ describe("Echo steps", function () {
         const dataChannel2 = localConnection.createDataChannel("dataChannel2");
         dataChannel2.addEventListener('message', (event) => messages.push("2: " + event.data));
         await waitForChannelOpen(dataChannel2);
+        await delay(10); // Delay to guarantee ordering
         dataChannel2.send('Test message 2');
 
         await delay(10); // Delay to guarantee ordering

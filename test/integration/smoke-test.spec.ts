@@ -5,7 +5,8 @@
 
 import {
     MockRTC,
-    expect
+    expect,
+    delay
 } from '../test-setup';
 
 describe("MockRTC smoke test:", function () {
@@ -43,6 +44,54 @@ describe("MockRTC smoke test:", function () {
 
         // Assert on the messages the mock peer received:
         expect(await mockPeer.getAllMessages()).to.deep.equal(['Hello']);
+    });
+
+    it("should pass the README proxy example", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForMessage() // Wait for and drop the first datachannel message
+            .send('MockRTC injected message') // Send a message on every data channel
+            .thenPassThrough(); // Then proxy everything else
+
+        const localConn = new RTCPeerConnection();
+
+        // The magic:
+        MockRTC.hookWebRTCConnection(localConn, mockPeer);
+        // ^ This redirects all connA's traffic via the mock peer, no matter who it connects to.
+
+        // Normal WebRTC setup using real browser connections:
+        const localOffer = await localConn.createOffer();
+        const localDataChannel = localConn.createDataChannel("dataChannel");
+        localConn.setLocalDescription(localOffer);
+
+        const remoteConn = new RTCPeerConnection();
+        remoteConn.setRemoteDescription(localOffer);
+        const remoteAnswer = await remoteConn.createAnswer();
+        remoteConn.setLocalDescription(remoteAnswer);
+        localConn.setRemoteDescription(remoteAnswer);
+
+        const log: string[] = [];
+
+        localDataChannel.onopen = () => {
+            localDataChannel.addEventListener('message', ({ data }) => log.push(`LOCAL: ${data}`));
+            localDataChannel.send('local message 1');
+            localDataChannel.send('local message 2');
+        };
+
+        remoteConn.addEventListener('datachannel', async ({ channel }) => {
+            channel.addEventListener('message', ({ data }) => log.push(`REMOTE: ${data}`));
+            await delay(10); // Delay to guarantee ordering - skipped in README but that's OK
+            channel.send("remote message 1");
+            channel.send("remote message 2");
+        });
+
+        await delay(200);
+
+        expect(log).to.deep.equal([
+            'LOCAL: MockRTC injected message',
+            'REMOTE: local message 2',
+            'LOCAL: remote message 1',
+            'LOCAL: remote message 2'
+        ]);
     });
 
 });

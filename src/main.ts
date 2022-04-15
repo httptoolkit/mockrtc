@@ -32,7 +32,7 @@ export {
     type MockRTCControlMessage
 } from './webrtc/control-channel';
 export {
-    hookWebRTCPeer,
+    hookWebRTCConnection,
     hookAllWebRTC
 } from "./webrtc-hooks";
 

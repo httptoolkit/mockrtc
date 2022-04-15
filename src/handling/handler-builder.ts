@@ -121,7 +121,7 @@ export class MockRTCHandlerBuilder<R> {
         return this.buildCallback(this.handlerSteps);
     }
 
-    thenForwardDynamically(): Promise<R> {
+    thenPassThrough(): Promise<R> {
         this.handlerSteps.push(new DynamicProxyStepDefinition());
         return this.buildCallback(this.handlerSteps);
     }
