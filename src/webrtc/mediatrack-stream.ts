@@ -49,10 +49,7 @@ export class MediaTrackStream extends stream.Duplex {
         // Buffer all writes until the DataChannel opens
         if (!rawTrack.isOpen()) {
             this.cork();
-            rawTrack.onOpen(() => {
-                if (!rawTrack.isOpen()) return; // Workaround for https://github.com/paullouisageneau/libdatachannel/issues/596
-                this.uncork()
-            });
+            rawTrack.onOpen(() => this.uncork());
         }
     }
 

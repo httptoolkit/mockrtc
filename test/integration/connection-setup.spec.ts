@@ -104,8 +104,6 @@ describe("When connecting, MockRTC", function () {
         const rawSdpToMirror = await (async () => {
             // Wrapped in a function for clarity that this is separate, just for SDP setup:
             const demoConn = new RTCPeerConnection();
-            demoConn.createDataChannel('demo'); // Must come first due to libdatachannel bug
-            await demoConn.createOffer();
             const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             const tracks = stream.getTracks();
             demoConn.addTrack(tracks[0]);
@@ -131,9 +129,8 @@ describe("When connecting, MockRTC", function () {
         expect(remoteMedia.map(m => [
             m.mid, m.type, m.protocol, m.direction
         ])).to.deep.equal([
-            [1, 'audio', 'UDP/TLS/RTP/SAVPF', 'sendrecv'],
-            [2, 'video', 'UDP/TLS/RTP/SAVPF', 'recvonly'],
-            [0, 'application', 'UDP/DTLS/SCTP', undefined] // Id changed due to libdatachannel limitations
+            [0, 'audio', 'UDP/TLS/RTP/SAVPF', 'sendrecv'],
+            [1, 'video', 'UDP/TLS/RTP/SAVPF', 'recvonly']
         ]);
 
         // Check each individual media field. These are the fields that will be passed through when
@@ -165,9 +162,8 @@ describe("When connecting, MockRTC", function () {
         expect(localMedia.map(m => [
             m.mid, m.type, m.protocol, m.direction
         ])).to.deep.equal([
-            [1, 'audio', 'UDP/TLS/RTP/SAVPF', 'recvonly'], // Only receive - no local audio to send
-            [2, 'video', 'UDP/TLS/RTP/SAVPF', 'inactive'], // Inactive - no video to send & remote is recvonly
-            [0, 'application', 'UDP/DTLS/SCTP', undefined]
+            [0, 'audio', 'UDP/TLS/RTP/SAVPF', 'recvonly'], // Only receive - no local audio to send
+            [1, 'video', 'UDP/TLS/RTP/SAVPF', 'inactive'] // Inactive - no video to send & remote is recvonly
         ]);
     });
 

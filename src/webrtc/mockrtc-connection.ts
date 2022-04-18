@@ -144,7 +144,15 @@ export class MockRTCConnection extends RTCConnection {
         this.mediaTracks.forEach((track: MediaTrackStream) => {
             const externalStream = externalConnection.mediaTracks.find(({ mid }) => mid === track.mid);
             if (externalStream) {
-                track.pipe(externalStream).pipe(track);
+                if (externalStream.type === track.type) {
+                    track.pipe(externalStream).pipe(track);
+                } else {
+                    throw new Error(`Mock & external streams with mid ${track.mid} have mismatched types (${
+                        track.type
+                    }/${
+                        externalStream.type
+                    })`);
+                }
             } else {
                 // A mismatch in media streams means the external & mock peer negotiation isn't in sync!
                 // For now we just reject this case - later we should try to prompt a renegotiation.

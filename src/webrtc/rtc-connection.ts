@@ -72,7 +72,7 @@ export class RTCConnection extends EventEmitter {
             this.trackNewChannel(channel, { isLocal: false });
         });
 
-        (this.rawConn! as any).onTrack((track: NodeDataChannel.Track) => { // Issue with node-dc types
+        this.rawConn!.onTrack((track: NodeDataChannel.Track) => {
             this.trackNewMediaTrack(track, { isLocal: false });
         });
 
