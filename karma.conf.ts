@@ -55,10 +55,15 @@ module.exports = function(config: any) {
             'karma-chrome-launcher',
             'karma-chai',
             'karma-mocha',
-            'karma-spec-reporter',
+            'karma-mocha-reporter',
             'karma-esbuild'
         ],
-        reporters: ['spec'],
+
+        reporters: ['mocha'],
+        mochaReporter: {
+            showDiff: true
+        },
+
         port: 9876,
         logLevel: config.LOG_INFO,
 
