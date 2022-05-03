@@ -9,6 +9,14 @@ MockRTC lets you intercept, assert on and mock WebRTC peers. This makes it possi
 * Capture and inspect traffic between real WebRTC peers for debugging.
 * Create WebRTC proxy peers to automate message transformation, monitoring or logging.
 
+---
+
+:warning: _MockRTC is still new & rapidly developing!_ :warning:
+
+_Everything described here works today, but there's lots more to come, and some advanced WebRTC use cases may run into rough edges. If you hit any problems or missing features, please [open an issue](https://github.com/httptoolkit/mockrtc/issues/new)._
+
+---
+
 ## Example
 
 Let's write an automated test with MockRTC. To test WebRTC-based code, you will typically need to:
