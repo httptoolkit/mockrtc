@@ -69,10 +69,14 @@ export class RTCConnection extends EventEmitter {
         super();
 
         this.rawConn!.onDataChannel((channel) => {
+            if (!this.rawConn) return; // https://github.com/murat-dogan/node-datachannel/issues/103
+
             this.trackNewChannel(channel, { isLocal: false });
         });
 
         this.rawConn!.onTrack((track: NodeDataChannel.Track) => {
+            if (!this.rawConn) return; // https://github.com/murat-dogan/node-datachannel/issues/103
+
             this.trackNewMediaTrack(track, { isLocal: false });
         });
 
