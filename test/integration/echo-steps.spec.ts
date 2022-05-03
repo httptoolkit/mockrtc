@@ -17,7 +17,7 @@ describe("Echo steps", function () {
     beforeEach(() => mockRTC.start());
     afterEach(() => mockRTC.stop());
 
-    it("should be able to send a message on all data channels", async () => {
+    it("should be able to echo messages across multiple data channels", async () => {
         const mockPeer = await mockRTC.buildPeer()
             .thenEcho();
 
@@ -51,6 +51,38 @@ describe("Echo steps", function () {
             '2: Test message 2',
             '1: Test message 3',
         ]);
+    });
+
+    it("should be able to echo media", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .thenEcho();
+
+        // Create a connection to send & receive video:
+        const localConn = new RTCPeerConnection();
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        localConn.addTrack(stream.getTracks()[0], stream);
+
+        // Turn incoming tracks into readable streams of frames:
+        const mediaStreamPromise = new Promise<ReadableStream<VideoFrame>>((resolve) => {
+            localConn.addEventListener('track', ({ track }) => {
+                const streamProcessor = new MediaStreamTrackProcessor({
+                    track: track as MediaStreamVideoTrack
+                });
+                resolve(streamProcessor.readable);
+            });
+        });
+
+        // Complete the connection with the mock peer:
+        const localOffer = await localConn.createOffer({ offerToReceiveVideo: true });
+        await localConn.setLocalDescription(localOffer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConn.setRemoteDescription(answer);
+
+        // Check we receive the expected echoed video:
+        const localMedia = await mediaStreamPromise;
+        const { value: localFrame } = await localMedia!.getReader().read();
+        expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
 });

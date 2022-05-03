@@ -160,12 +160,14 @@ export class CloseStep extends CloseStepDefinition {
 export class EchoStep extends EchoStepDefinition {
 
     async handle(connection: MockRTCConnection): Promise<void> {
-        const listenForMessage = (channel: DataChannelStream) => {
-            channel.pipe(channel);
-        }
+        const echoContent = (stream: DataChannelStream | MediaTrackStream) => {
+            stream.pipe(stream);
+        };
 
-        connection.on('channel-open', listenForMessage);
-        connection.channels.forEach(listenForMessage);
+        connection.on('channel-open', echoContent);
+        connection.on('track-open', echoContent);
+        connection.channels.forEach(echoContent);
+        connection.mediaTracks.forEach(echoContent);
 
         // This step keeps running indefinitely, until the connection closes
         return new Promise<void>((resolve) => connection.on('connection-closed', resolve));
