@@ -37,10 +37,7 @@ export class MediaTrackStream extends stream.Duplex {
         });
 
         // When the DataChannel closes, the readable & writable ends close
-        rawTrack.onClosed(() => {
-            this.push(null);
-            this.destroy();
-        });
+        rawTrack.onClosed(() => this.close());
 
         rawTrack.onError((errMsg) => {
             this.destroy(new Error(`Media track error: ${errMsg}`));
@@ -53,6 +50,11 @@ export class MediaTrackStream extends stream.Duplex {
         }
     }
 
+    private close() {
+        this.push(null);
+        this.destroy();
+    }
+
     private _readActive = true;
     _read() {
         // Stop dropping messages, if the buffer filling up meant we were doing so before.
@@ -61,6 +63,13 @@ export class MediaTrackStream extends stream.Duplex {
 
     _write(chunk: Buffer, _encoding: string, callback: (error: Error | null) => void) {
         let sentOk: boolean;
+
+        if (this.rawTrack.isClosed()) {
+            // isClosed becomes true and writes start failing just before onClosed() fires, so here we
+            // drop pending writes as soon as we notice.
+            this.close();
+            return;
+        }
 
         try {
             sentOk = this.rawTrack.sendMessageBinary(chunk);
@@ -77,6 +86,13 @@ export class MediaTrackStream extends stream.Duplex {
 
     _writev(chunks: Array<{ chunk: any; encoding: BufferEncoding; }>, callback: (error?: Error | null) => void) {
         let sentOk: boolean;
+
+        if (this.rawTrack.isClosed()) {
+            // isClosed becomes true and writes start failing just before onClosed() fires, so here we
+            // drop pending writes as soon as we notice.
+            this.close();
+            return;
+        }
 
         try {
             sentOk = this.rawTrack.sendMessageBinary(
