@@ -263,7 +263,7 @@ export class RTCConnection extends EventEmitter {
 
         if (!this.rawConn) throw new Error("Connection was closed while building the local description");
 
-        const localDesc = this.rawConn.localDescription();
+        const localDesc = this.rawConn.localDescription()!;
         setupChannel?.close(); // Close the temporary setup channel, if we created one
 
         const offerSDP = SDP.parse(localDesc.sdp);
@@ -274,7 +274,7 @@ export class RTCConnection extends EventEmitter {
     }
 
     async getMirroredLocalAnswer(sdpToMirror: string): Promise<RTCSessionDescriptionInit> {
-        const localDesc = this.rawConn!.localDescription();
+        const localDesc = this.rawConn!.localDescription()!;
 
         const answerToMirror = SDP.parse(sdpToMirror);
         const answerSDP = SDP.parse(localDesc.sdp!);
