@@ -183,7 +183,10 @@ export class PeerProxyStep extends PeerProxyStepDefinition {
         const externalConn = new RTCConnection();
         this.externalConnections.push(externalConn);
 
-        const externalOffer = await externalConn.getLocalDescription();
+        // We mirror the internal peer's SDP as an offer to the given connection:
+        const externalOffer = await externalConn.getMirroredLocalOffer(
+            connection.getRemoteDescription()!.sdp!
+        );
         externalConn.setRemoteDescription(await this.getAnswer(externalOffer));
 
         connection.proxyTrafficTo(externalConn);

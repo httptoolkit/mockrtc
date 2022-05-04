@@ -20,10 +20,10 @@ describe("When proxying WebRTC traffic", () => {
     afterEach(() => mockRTC.stop());
 
     it("should be able to transparently forward messages to a configured peer", async () => {
-        const remotePeer = new RTCPeerConnection();
+        const remoteConn = new RTCPeerConnection();
         const remotelyReceivedMessages: Array<string | Buffer> = [];
 
-        remotePeer.addEventListener('datachannel', ({ channel }) => {
+        remoteConn.addEventListener('datachannel', ({ channel }) => {
             channel.addEventListener('message', ({ data }) => remotelyReceivedMessages.push(data));
             channel.send("remote message 1");
             channel.send("remote message 2");
@@ -34,21 +34,21 @@ describe("When proxying WebRTC traffic", () => {
         const mockPeer = await mockRTC.buildPeer()
             .waitForMessage()
             .send('Injected message')
-            .thenForwardTo(remotePeer);
+            .thenForwardTo(remoteConn);
 
         // Create a data connection:
-        const localPeer = new RTCPeerConnection();
+        const localConn = new RTCPeerConnection();
 
-        const dataChannel = localPeer.createDataChannel("dataChannel");
+        const dataChannel = localConn.createDataChannel("dataChannel");
         const locallyReceivedMessages: Array<string | Buffer> = [];
         dataChannel.addEventListener('message', ({ data }) => locallyReceivedMessages.push(data));
 
-        const localOffer = await localPeer.createOffer();
-        localPeer.setLocalDescription(localOffer);
+        const localOffer = await localConn.createOffer();
+        localConn.setLocalDescription(localOffer);
 
         // Get the remote details for the mock peer:
         const { answer } = await mockPeer.answerOffer(localOffer);
-        await localPeer.setRemoteDescription(answer);
+        await localConn.setRemoteDescription(answer);
 
         await waitForChannelOpen(dataChannel);
 
@@ -70,6 +70,41 @@ describe("When proxying WebRTC traffic", () => {
             'local message 2',
             'local message 3'
         ]);
+    });
+
+    it("should be able to transparently forward media to a configured peer", async () => {
+        const remoteConn = new RTCPeerConnection();
+
+        // Turn the remote's received tracks into readable streams of frames:
+        const receivedMediaStreamPromise = new Promise<ReadableStream<VideoFrame>>((resolve) => {
+            remoteConn.addEventListener('track', ({ track }) => {
+                const streamProcessor = new MediaStreamTrackProcessor({
+                    track: track as MediaStreamVideoTrack
+                });
+                resolve(streamProcessor.readable);
+            });
+        });
+
+        const mockPeer = await mockRTC.buildPeer()
+            .thenForwardTo(remoteConn);
+
+        // Create a data connection that will send video:
+        const localConn = new RTCPeerConnection();
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        localConn.addTrack(stream.getTracks()[0], stream);
+
+        const localOffer = await localConn.createOffer();
+        localConn.setLocalDescription(localOffer);
+
+        // Get the remote details for the mock peer:
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConn.setRemoteDescription(answer);
+
+        // Check we receive the expected echoed video in the remote peer:
+        const localMedia = await receivedMediaStreamPromise;
+        const { value: localFrame } = await localMedia!.getReader().read();
+        expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
     it("should be able to transparently proxy messages to a dynamically provided peer, sending offer", async () => {
