@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as PluggableAdmin from 'mockttp/pluggable-admin';
+import * as PluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 
 export type Serializable = PluggableAdmin.Serialization.Serializable;
 export const { Serializable } = PluggableAdmin.Serialization;

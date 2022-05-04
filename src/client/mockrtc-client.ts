@@ -4,7 +4,13 @@
  */
 
 import gql from 'graphql-tag';
-import * as PluggableAdmin from 'mockttp/pluggable-admin';
+
+// Long-term, it'd be great to use the 'official' export path of mockttp/pluggable-admin, but
+// if we do so, then TypeScript <4.7 doesn't understand it here or downstream, so we get errors.
+// We don't want to use the main-exported version to avoid bundling all of Mockttp in browsers.
+// For now we have to use the direct import. We can update once TS 4.7 is widely used.
+import * as BrowserPluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
+import type { PluggableAdmin } from 'mockttp';
 
 import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
 
@@ -25,7 +31,7 @@ export class MockRTCClient implements MockRTC {
     constructor(
         private options: MockRTCClientOptions = {}
     ) {
-        this.adminClient = new PluggableAdmin.AdminClient(options);
+        this.adminClient = new BrowserPluggableAdmin.AdminClient(options);
     }
 
     buildPeer(): MockRTCPeerBuilder {
@@ -48,7 +54,9 @@ export class MockRTCClient implements MockRTC {
             `,
             variables: {
                 peerData: {
-                    steps: handlerSteps.map(step => PluggableAdmin.Serialization.serialize(step, adminStream))
+                    steps: handlerSteps.map(step =>
+                        BrowserPluggableAdmin.Serialization.serialize(step, adminStream)
+                    )
                 }
             },
             transformResponse: ({ createPeer }) => createPeer

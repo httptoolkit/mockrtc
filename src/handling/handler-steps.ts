@@ -3,7 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as PluggableAdmin from 'mockttp/pluggable-admin';
+import { PluggableAdmin } from 'mockttp';
+
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
 import type { MediaTrackStream } from '../webrtc/mediatrack-stream';
 import type { MockRTCConnection } from '../webrtc/mockrtc-connection';

@@ -5,7 +5,7 @@
 
 import * as stream from 'stream';
 import { gql } from 'graphql-tag';
-import * as PluggableAdmin from 'mockttp/pluggable-admin';
+import { PluggableAdmin } from 'mockttp';
 
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions } from '../mockrtc';
