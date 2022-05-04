@@ -15,7 +15,7 @@ import { MOCKRTC_CONTROL_CHANNEL } from "./webrtc/control-channel";
 type OfferPairParams = MockRTCExternalOfferParams & { realOffer: RTCSessionDescriptionInit };
 type AnswerPairParams = MockRTCExternalAnswerParams & { realAnswer: RTCSessionDescriptionInit };
 
-/**
+/*
  * In this file, we define hooks which can automatically wrap an RTCPeerConnection so that the
  * normal calls to initialize a connection instead proxy the connection through MockRTC.
  *
@@ -55,6 +55,8 @@ type AnswerPairParams = MockRTCExternalAnswerParams & { realAnswer: RTCSessionDe
  *
  * It is possible to proxy both real peers in a connection, potentially with different mock
  * peers so that they experience different behaviours during the connection.
+ *
+ * @category API
  */
 export function hookWebRTCConnection(conn: RTCPeerConnection, mockPeer: MockRTCPeer) {
     // Anything that creates signalling data (createOffer/createAnswer) needs to be hooked to
@@ -226,6 +228,8 @@ export function hookWebRTCConnection(conn: RTCPeerConnection, mockPeer: MockRTCP
  * Modifies the global RTCPeerConnection constructor to hook all WebRTC connections
  * created after this function is called, and redirect all their traffic to the
  * provided MockRTCPeer.
+ *
+ * @category API
  */
 export function hookAllWebRTC(mockPeer: MockRTCPeer) {
     // The original constructor

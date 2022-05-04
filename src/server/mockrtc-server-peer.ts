@@ -37,7 +37,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
         private options: MockRTCPeerOptions = {}
     ) {}
 
-    trackConnection(conn: RTCConnection) {
+    private trackConnection(conn: RTCConnection) {
         this.connections[conn.id] = conn;
         conn.once('connection-closed', () => {
             delete this.connections[conn.id];

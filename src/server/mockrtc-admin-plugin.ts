@@ -6,6 +6,7 @@
 import * as stream from 'stream';
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
+import type { IResolvers } from "@graphql-tools/utils";
 
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions } from '../mockrtc';
@@ -77,7 +78,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         scalar HandlerStep
     `;
 
-    buildResolvers(adminStream: stream.Duplex, ruleParams: {}) {
+    buildResolvers(adminStream: stream.Duplex, ruleParams: {}): IResolvers {
         return {
             Mutation: {
                 createPeer: (__: any, { data: { steps } }: { data: {

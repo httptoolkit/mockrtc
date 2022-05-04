@@ -18,7 +18,9 @@
     "test": "test"
   },
   "scripts": {
-    "build": "tsc && chmod +x ./dist/admin-bin.js",
+    "build": "npm run build:src && npm run build:doc",
+    "build:src": "tsc && chmod +x ./dist/admin-bin.js",
+    "build:doc": "typedoc src/main.ts",
     "prepack": "npm run build",
     "test": "karma start",
     "test:dev": "CONTINUOUS_TEST=true npm run test",
@@ -64,6 +66,7 @@
     "node-dev": "^7.1.0",
     "rollup-plugin-node-polyfills": "^0.2.1",
     "ts-node": "^10.5.0",
+    "typedoc": "^0.23.0-beta.1",
     "typescript": "^4.6.4",
     "util": "^0.12.4"
   },

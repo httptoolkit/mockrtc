@@ -32,6 +32,8 @@ export class MockRTCHandlerBuilder<R> {
 
     /**
      * Wait for a given duration, in milliseconds
+     *
+     * @category Steps
      */
     sleep(duration: number): this {
         this.handlerSteps.push(new WaitForDurationStepDefinition(duration));
@@ -40,6 +42,8 @@ export class MockRTCHandlerBuilder<R> {
 
     /**
      * Wait until the remote client has created at least one DataChannel.
+     *
+     * @category Steps
      */
     waitForChannel(channelLabel?: string): this {
         this.handlerSteps.push(new WaitForChannelStepDefinition(channelLabel));
@@ -48,6 +52,8 @@ export class MockRTCHandlerBuilder<R> {
 
     /**
      * Wait until the remote client has created at least one media track
+     *
+     * @category Steps
      */
     waitForTrack(): this {
         this.handlerSteps.push(new WaitForTrackStepDefinition());
@@ -59,6 +65,8 @@ export class MockRTCHandlerBuilder<R> {
      *
      * This looks for new messages, ignoring any messages already consumed by
      * previous steps.
+     *
+     * @category Steps
      */
     waitForNextMessage(): this {
         this.handlerSteps.push(new WaitForMessageStepDefinition());
@@ -69,6 +77,8 @@ export class MockRTCHandlerBuilder<R> {
      * Wait until the remote client next sends media data on a media track.
      *
      * This waits for new media, ignoring any media already consumed by previous steps.
+     *
+     * @category Steps
      */
     waitForNextMedia(): this {
         this.handlerSteps.push(new WaitForMediaStepDefinition());
@@ -80,6 +90,8 @@ export class MockRTCHandlerBuilder<R> {
      *
      * This looks for new messages, ignoring any messages already consumed by
      * previous steps.
+     *
+    * @category Steps
      */
     waitForNextMessageOnChannel(channelLabel: string): this {
         this.handlerSteps.push(new WaitForMessageStepDefinition(channelLabel));
@@ -96,6 +108,8 @@ export class MockRTCHandlerBuilder<R> {
      *
      * If no matching channels are open, this is a no-op. Use `waitForChannel()`
      * to ensure the channels you're expecting are open first if necessary.
+     *
+    * @category Steps
      */
     send(message: string | Buffer): this;
     send(channel: string | undefined, message: string | Buffer): this;
@@ -116,6 +130,8 @@ export class MockRTCHandlerBuilder<R> {
      * This defines a final step, and will then create a mock peer from the full
      * set of steps you've defined, and return it wrapped in a promise. As soon
      * as the promise resolves the peer is ready to use.
+     *
+     * @category Final Steps
      */
     thenClose(): Promise<R> {
         this.handlerSteps.push(new CloseStepDefinition());
@@ -124,11 +140,14 @@ export class MockRTCHandlerBuilder<R> {
 
     /**
      * Send a message or buffer on the connection's data channels, then close the
-     * connection. This is equivalent to {@link .send()} then {@link .thenClose()}.
+     * connection. This is equivalent to {@link send `.send()`} then
+     * {@link thenClose `.thenClose()`}.
      *
      * This defines a final step, and will then create a mock peer from the full
      * set of steps you've defined, and return it wrapped in a promise. As soon
      * as the promise resolves the peer is ready to use.
+     *
+     * @category Final Steps
      */
     thenSend(message: string | Buffer): Promise<R>;
     thenSend(channel: string, message: string | Buffer): Promise<R>;
@@ -144,6 +163,8 @@ export class MockRTCHandlerBuilder<R> {
      * This defines a final step, and will then create a mock peer from the full
      * set of steps you've defined, and return it wrapped in a promise. As soon
      * as the promise resolves the peer is ready to use.
+     *
+     * @category Final Steps
      */
     thenEcho(): Promise<R> {
         this.handlerSteps.push(new EchoStepDefinition());
@@ -158,6 +179,8 @@ export class MockRTCHandlerBuilder<R> {
      * This defines a final step, and will then create a mock peer from the full
      * set of steps you've defined, and return it wrapped in a promise. As soon
      * as the promise resolves the peer is ready to use.
+     *
+     * @category Final Steps
      */
     thenForwardTo(peer: RTCPeerConnection): Promise<R> {
         this.handlerSteps.push(new PeerProxyStepDefinition(peer));
@@ -174,12 +197,15 @@ export class MockRTCHandlerBuilder<R> {
      * You can do that either by using {@link hookWebRTCConnection} or
      * {@link hookAllWebRTC} to hook your connection during normal setup to
      * automatically create an external offer to the real remote peer, or you can
-     * do so manually using {@link createExternalOffer} or {@link answerExternalOffer}
-     * and then passing the connection id as {@link https://github.com/httptoolkit/mockrtc/blob/d0604f3111e0438c52aa514d00cf04ac0718dfeb/src/webrtc-hooks.ts#L83-L93 here}
+     * do so manually using {@link MockRTCPeer.createExternalOffer} or
+     * {@link MockRTCPeer.answerExternalOffer} and then passing the connection
+     * id as {@link https://github.com/httptoolkit/mockrtc/blob/d0604f3111e0438c52aa514d00cf04ac0718dfeb/src/webrtc-hooks.ts#L83-L93 here}.
      *
      * This defines a final step, and will then create a mock peer from the full
      * set of steps you've defined, and return it wrapped in a promise. As soon
      * as the promise resolves the peer is ready to use.
+     *
+     * @category Final Steps
      */
     thenPassThrough(): Promise<R> {
         this.handlerSteps.push(new DynamicProxyStepDefinition());

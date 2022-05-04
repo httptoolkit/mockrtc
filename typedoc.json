@@ -1,0 +1,19 @@
+{
+    "name": "MockRTC API Reference",
+    "categorizeByGroup": false,
+    "categoryOrder": [
+        "API",
+        "Steps",
+        "Final Steps",
+        "*"
+    ],
+    "readme": "none",
+    "validation": {
+        "invalidLink": true
+    },
+    "treatWarningsAsErrors": true,
+    "excludePrivate": true,
+    "excludeProtected": true,
+    "excludeInternal": true,
+    "out": "typedoc/"
+}
