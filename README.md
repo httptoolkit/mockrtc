@@ -205,11 +205,11 @@ This works by creating two connections within MockRTC: a connection from your lo
 That means the connection structure for a proxied connection looks like this:
 
 ```mermaid
-graph LR
-    i[Our own local <br/>connection<br/>(internal)] ---
-    m[/MockRTC mock<br/>peer connection<br/>(mock)/] ---
-    e[/MockRTC external<br/>connection<br/>(external)/] ---
-    r[The target peer's<br/>connection<br/>(remote)]
+graph TD
+    i["Our own local  connection (internal)"] ---
+    m[/"MockRTC mock peer connection (mock)"/] ---
+    e[/"MockRTC external connection (external)"/] ---
+    r["The target peer's connection (remote)"]
 ```
 
 To set this up, you need to:
@@ -270,6 +270,8 @@ LOCAL: remote message 2
 ```
 
 Here you can see the local connection receives the injected message, then the mock peer drops the first message from the local connection (so "local message 1" never arrives) and then everything else is proxied like any real connection.
+
+If you wan to do this automatically for all WebRTC connections, you can also use the `WebRTC.hookAllWebRTC(mockPeer)` function, which will wrap the global `RTCPeerConnection` constructor to automatically apply this hook to every WebRTC connection when it's created, to redirect _all_ traffic through the given mock peer. Note that this only applies to new WebRTC connections, so this should be called before your first WebRTC connection is created.
 
 ---
 
