@@ -133,7 +133,7 @@ describe("Wait steps", function () {
 
     it("should be able to wait for media data", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMedia()
+            .waitForNextMedia()
             .thenSend('after-track message');
 
         const localConnection = new RTCPeerConnection();
@@ -169,7 +169,7 @@ describe("Wait steps", function () {
 
     it("should be able to wait for a message on any channel", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessage()
+            .waitForNextMessage()
             .thenSend('delayed message');
 
         const localConnection = new RTCPeerConnection();
@@ -195,7 +195,7 @@ describe("Wait steps", function () {
 
     it("should be able to wait for a message on a specific named channel", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessageOnChannel("message-channel")
+            .waitForNextMessageOnChannel("message-channel")
             .thenSend('delayed message');
 
         const localConnection = new RTCPeerConnection();

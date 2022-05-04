@@ -44,7 +44,7 @@ describe("MockRTC", () => {
         // Create a mock peer who sends 'Goodbye' after receiving its first message.
         const mockPeer = await mockRTC
           .buildPeer()
-          .waitForMessage()
+          .waitForNextMessage()
           .thenSend('Goodbye');
 
         // Create a real WebRTC connection and data channel:
@@ -225,7 +225,7 @@ That looks like this:
 
 ```javascript
 const mockPeer = await mockRTC.buildPeer()
-    .waitForMessage() // Wait for and drop the first datachannel message
+    .waitForNextMessage() // Wait for and drop the first datachannel message
     .send('Injected message') // Send a message on every data channel
     .thenPassThrough(); // Then proxy everything else
 

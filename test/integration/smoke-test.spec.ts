@@ -18,7 +18,10 @@ describe("MockRTC smoke test:", function () {
 
     it("should pass the README example test", async () => {
         // Create a mock peer who sends 'Goodbye' after receiving its first message.
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC
+            .buildPeer()
+            .waitForNextMessage()
+            .thenSend('Goodbye');
 
         // Create a data connection:
         const localConnection = new RTCPeerConnection();
@@ -48,7 +51,7 @@ describe("MockRTC smoke test:", function () {
 
     it("should pass the README proxy example", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessage() // Wait for and drop the first datachannel message
+            .waitForNextMessage() // Wait for and drop the first datachannel message
             .send('MockRTC injected message') // Send a message on every data channel
             .thenPassThrough(); // Then proxy everything else
 

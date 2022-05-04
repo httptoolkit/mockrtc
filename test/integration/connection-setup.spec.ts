@@ -15,7 +15,7 @@ describe("When connecting, MockRTC", function () {
     afterEach(() => mockRTC.stop());
 
     it("should be able create an offer and accept an answer", async () => {
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
 
         const localConnection = new RTCPeerConnection();
 
@@ -31,7 +31,7 @@ describe("When connecting, MockRTC", function () {
     });
 
     it("should be able to answer a real local offer", async () => {
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
 
         const localConnection = new RTCPeerConnection();
         localConnection.createDataChannel("dataChannel");
@@ -47,7 +47,7 @@ describe("When connecting, MockRTC", function () {
     });
 
     it("should be able to renegotiate after a mock offer was accepted", async () => {
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
 
         const localConnection = new RTCPeerConnection();
 
@@ -74,7 +74,7 @@ describe("When connecting, MockRTC", function () {
     });
 
     it("should be able to renegotiate after answering a local offer", async () => {
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
 
         const localConnection = new RTCPeerConnection();
         localConnection.createDataChannel("dataChannel");
@@ -99,7 +99,7 @@ describe("When connecting, MockRTC", function () {
     });
 
     it("should be able to create a mock offer that mirrors an existing SDP", async () => {
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
 
         const rawSdpToMirror = await (async () => {
             // Wrapped in a function for clarity that this is separate, just for SDP setup:
@@ -168,7 +168,7 @@ describe("When connecting, MockRTC", function () {
     });
 
     it("should be able to create a mock answer that mirrors an existing SDP", async () => {
-        const mockPeer = await mockRTC.buildPeer().waitForMessage().thenSend('Goodbye');
+        const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
 
         const localConnection = new RTCPeerConnection();
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });

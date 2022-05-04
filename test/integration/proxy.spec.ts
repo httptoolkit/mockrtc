@@ -32,7 +32,7 @@ describe("When proxying WebRTC traffic", () => {
         });
 
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessage()
+            .waitForNextMessage()
             .send('Injected message')
             .thenForwardTo(remoteConn);
 
@@ -66,7 +66,7 @@ describe("When proxying WebRTC traffic", () => {
         ]);
 
         expect(remotelyReceivedMessages).to.deep.equal([
-            // First message is captured by waitForMessage step
+            // First message is captured by waitForNextMessage step
             'local message 2',
             'local message 3'
         ]);
@@ -120,7 +120,7 @@ describe("When proxying WebRTC traffic", () => {
         });
 
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessage()
+            .waitForNextMessage()
             .send('Injected message')
             .thenPassThrough();
 
@@ -161,7 +161,7 @@ describe("When proxying WebRTC traffic", () => {
         ]);
 
         expect(remotelyReceivedMessages).to.deep.equal([
-            // First message is captured by waitForMessage step
+            // First message is captured by waitForNextMessage step
             'local message 2',
             'local message 3'
         ]);
@@ -181,7 +181,7 @@ describe("When proxying WebRTC traffic", () => {
         });
 
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessage()
+            .waitForNextMessage()
             .send('Injected message')
             .thenPassThrough();
 
@@ -222,7 +222,7 @@ describe("When proxying WebRTC traffic", () => {
         ]);
 
         expect(remotelyReceivedMessages).to.deep.equal([
-            // First message is captured by waitForMessage step
+            // First message is captured by waitForNextMessage step
             'local message 2',
             'local message 3'
         ]);
@@ -230,7 +230,7 @@ describe("When proxying WebRTC traffic", () => {
 
     it("should be able to transparently proxy messages when hooking both ends of a connection", async () => {
         const mockPeer = await mockRTC.buildPeer()
-            .waitForMessage()
+            .waitForNextMessage()
             .send('Injected message')
             .thenPassThrough();
 
@@ -242,7 +242,7 @@ describe("When proxying WebRTC traffic", () => {
         // Like localChannel, We have to create an outgoing channel for the wait & send step.
         remoteConn.createDataChannel("remote-channel").onopen = function () {
             this.addEventListener('message', ({ data }) => remotelyReceivedMessages.push(data));
-            this.send('remote message 1'); // Required on an outgoing channel to pass waitForMessage
+            this.send('remote message 1'); // Required on an outgoing channel to pass waitForNextMessage
         };
 
         // Remote listens for local's channel, sends replies, and closes
@@ -292,7 +292,7 @@ describe("When proxying WebRTC traffic", () => {
 
         expect(remotelyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by send step here too! Both peers are hooked
-            // Local message is eaten by waitForMessage
+            // Local message is eaten by waitForNextMessage
             'local message 2',
             'local message 3'
         ]);
