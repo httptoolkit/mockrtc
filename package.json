@@ -1,6 +1,6 @@
 {
   "name": "mockrtc",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Powerful friendly WebRTC mock peer & proxy",
   "main": "dist/main.js",
   "types": "dist/main.d.ts",
