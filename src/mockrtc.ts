@@ -6,7 +6,7 @@
 import type { MockRTCHandlerBuilder } from "./handling/handler-builder";
 import type { MockRTCPeer } from "./mockrtc-peer";
 
-export type MockRTCPeerBuilder = MockRTCHandlerBuilder<MockRTCPeer>;
+export interface MockRTCPeerBuilder extends MockRTCHandlerBuilder<MockRTCPeer> {}
 
 export interface MockRTCOptions {
     /**

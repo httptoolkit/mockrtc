@@ -166,7 +166,7 @@ mockRTC.start().then(() => {
 });
 ```
 
-For a full list of the behaviours available, see the [HandlerBuilder class](https://github.com/httptoolkit/mockrtc/blob/main/src/handling/handler-builder.ts).
+For a full list of the behaviours available, see the [reference documentation](https://httptoolkit.github.io/mockrtc/interfaces/MockRTCPeerBuilder.html).
 
 Once you have a peer configured, you can make explicit connections to it by generating an WebRTC offer, or providing a WebRTC offer yourself to get an answer. The offers & answers should be in the format of [RTCSessionDescriptions](https://developer.mozilla.org/en-US/docs/Web/API/RTCSessionDescription), as normally returned by `peerConn.createOffer()` in the browser WebRTC APIs.
 
@@ -277,7 +277,7 @@ If you wan to do this automatically for all WebRTC connections, you can also use
 
 Have more questions, issues or feature requests? [File an issue](https://github.com/httptoolkit/mockrtc/issues/new).
 
-You might also be interested in scrolling through MockRTC's [test suite](https://github.com/httptoolkit/mockrtc/tree/main/test/integration), which provides a wide set of examples for all functionality.
+You might also be interested in the [API reference documentation](https://httptoolkit.github.io/mockrtc/), or in scrolling through MockRTC's [test suite](https://github.com/httptoolkit/mockrtc/tree/main/test/integration), which provides a wide set of examples for all functionality.
 
 ---
 
