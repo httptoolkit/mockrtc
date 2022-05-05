@@ -1,4 +1,4 @@
-# MockRTC [![Build Status](https://github.com/httptoolkit/mockrtc/workflows/CI/badge.svg)](https://github.com/httptoolkit/mockrtc/actions) [![Available on NPM](https://img.shields.io/npm/v/mockrtc.svg)](https://npmjs.com/package/mockrtc)
+# MockRTC [![Build Status](https://github.com/httptoolkit/mockrtc/workflows/CI/badge.svg)](https://github.com/httptoolkit/mockrtc/actions) [![Available on NPM](https://img.shields.io/npm/v/mockrtc.svg?)](https://npmjs.com/package/mockrtc)
 
 > _Part of [HTTP Toolkit](https://httptoolkit.tech): powerful tools for building, testing & debugging HTTP(S), WebSockets and WebRTC_
 
