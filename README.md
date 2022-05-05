@@ -273,11 +273,15 @@ Here you can see the local connection receives the injected message, then the mo
 
 If you wan to do this automatically for all WebRTC connections, you can also use the `WebRTC.hookAllWebRTC(mockPeer)` function, which will wrap the global `RTCPeerConnection` constructor to automatically apply this hook to every WebRTC connection when it's created, to redirect _all_ traffic through the given mock peer. Note that this only applies to new WebRTC connections, so this should be called before your first WebRTC connection is created.
 
+### API Reference Docs
+
+For more details, see the [MockRTC reference docs](https://httptoolkit.github.io/mockrtc/).
+
 ---
 
 Have more questions, issues or feature requests? [File an issue](https://github.com/httptoolkit/mockrtc/issues/new).
 
-You might also be interested in the [API reference documentation](https://httptoolkit.github.io/mockrtc/), or in scrolling through MockRTC's [test suite](https://github.com/httptoolkit/mockrtc/tree/main/test/integration), which provides a wide set of examples for all functionality.
+You might also be interested in scrolling through MockRTC's [test suite](https://github.com/httptoolkit/mockrtc/tree/main/test/integration), which provides a wide set of examples for all functionality.
 
 ---
 
