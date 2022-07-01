@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import gql from 'graphql-tag';
 
 // Long-term, it'd be great to use the 'official' export path of mockttp/pluggable-admin, but
 // if we do so, then TypeScript <4.7 doesn't understand it here or downstream, so we get errors.
@@ -19,6 +18,7 @@ import type { MockRTCPeer } from '../mockrtc-peer';
 import { MockRTCRemotePeer } from './mockrtc-remote-peer';
 import { MockRTCHandlerBuilder } from '../handling/handler-builder';
 import { HandlerStepDefinition } from '../handling/handler-step-definitions';
+import { MockRTCAdminRequestBuilder } from './mockrtc-admin-request-builder';
 
 export type MockRTCClientOptions =
     PluggableAdmin.AdminClientOptions &
@@ -27,11 +27,13 @@ export type MockRTCClientOptions =
 export class MockRTCClient implements MockRTC {
 
     private adminClient: PluggableAdmin.AdminClient<{ webrtc: MockRTCAdminPlugin }>;
+    private requestBuilder: MockRTCAdminRequestBuilder;
 
     constructor(
         private options: MockRTCClientOptions = {}
     ) {
         this.adminClient = new BrowserPluggableAdmin.AdminClient(options);
+        this.requestBuilder = new MockRTCAdminRequestBuilder();
     }
 
     buildPeer(): MockRTCPeerBuilder {
@@ -41,26 +43,9 @@ export class MockRTCClient implements MockRTC {
     private buildPeerFromData = async (handlerSteps: HandlerStepDefinition[]): Promise<MockRTCPeer> => {
         const { adminStream } = this.adminClient;
 
-        const peerData = await this.adminClient.sendQuery<
-            { createPeer: { peerId: string } },
-            { peerId: string }
-        >({
-            query: gql`
-                mutation CreatePeer($peerData: RTCHandlerData!) {
-                    createPeer(data: $peerData) {
-                        peerId
-                    }
-                }
-            `,
-            variables: {
-                peerData: {
-                    steps: handlerSteps.map(step =>
-                        BrowserPluggableAdmin.Serialization.serialize(step, adminStream)
-                    )
-                }
-            },
-            transformResponse: ({ createPeer }) => createPeer
-        });
+        const peerData = await this.adminClient.sendQuery(
+            this.requestBuilder.buildCreatePeerQuery(handlerSteps, adminStream)
+        );
 
         const { peerId } = peerData;
 
