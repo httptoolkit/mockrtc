@@ -11,12 +11,19 @@ import { StepLookup } from "../handling/handler-steps";
 
 export class MockRTCServer implements MockRTC {
 
+    private debug: boolean = false;
+
     constructor(
         private options: MockRTCOptions = {}
-    ) {}
+    ) {
+        this.debug = !!options.debug;
+    }
 
-    async start(): Promise<void> {}
+    async start(): Promise<void> {
+        if (this.debug) console.log("Starting MockRTC mock session");
+    }
     async stop(): Promise<void> {
+        if (this.debug) console.log("Stopping MockRTC mock session");
         await Promise.all(
             this.activePeers.map(peer =>
                 peer.close()
@@ -38,6 +45,9 @@ export class MockRTCServer implements MockRTC {
         });
         const peer = new MockRTCServerPeer(handlerSteps, this.options);
         this._activePeers[peer.peerId] = peer;
+        if (this.debug) console.log(
+            `Built MockRTC peer ${peer.peerId} with steps: ${handlerStepDefinitions.map(d => d.type).join(', ')}`
+        );
         return peer;
     }
 

@@ -4,6 +4,7 @@
  */
 
 export interface MockRTCPeerOptions {
+    debug?: boolean;
     recordMessages?: boolean;
 }
 

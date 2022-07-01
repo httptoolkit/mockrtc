@@ -26,6 +26,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
     readonly peerId = randomUUID();
 
+    private debug: boolean = false;
+
     // A list of all currently open connections managed by this peer
     private readonly connections: { [id: string]: RTCConnection } = {};
 
@@ -35,7 +37,9 @@ export class MockRTCServerPeer implements MockRTCPeer {
     constructor(
         private handlerSteps: HandlerStep[],
         private options: MockRTCPeerOptions = {}
-    ) {}
+    ) {
+        this.debug = !!options.debug;
+    }
 
     private trackConnection(conn: RTCConnection) {
         this.connections[conn.id] = conn;
@@ -52,6 +56,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
     }
 
     async createExternalOffer(options: OfferOptions = {}): Promise<MockRTCExternalOfferParams> {
+        if (this.debug) console.log(`Creating external peer offer for ${this.peerId}`);
+
         const externalConn = new RTCConnection();
         this.unassignedExternalConnections[externalConn.id] = externalConn;
         this.trackConnection(externalConn);
@@ -61,6 +67,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
             offer: await externalConn.sessionApi.createOffer(options),
             session: externalConn.sessionApi,
             setAnswer: async (answer: RTCSessionDescriptionInit) => {
+                if (this.debug) console.log(`Accepting answer for external peer offer for ${this.peerId}`);
                 externalConn.sessionApi.completeOffer(answer);
             }
         };
@@ -70,6 +77,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
         offer: RTCSessionDescriptionInit,
         options?: AnswerOptions
     ): Promise<MockRTCExternalAnswerParams> {
+        if (this.debug) console.log(`Answering offer with external peer for ${this.peerId}`);
+
         const externalConn = new RTCConnection();
         this.unassignedExternalConnections[externalConn.id] = externalConn;
         this.trackConnection(externalConn);
@@ -105,6 +114,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
     }
 
     async createOffer(options: OfferOptions = {}): Promise<MockRTCOfferParams> {
+        if (this.debug) console.log(`Creating mock offer for ${this.peerId}`);
+
         const conn = this.createConnection();
 
         return {
@@ -117,6 +128,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
     }
 
     async answerOffer(offer: RTCSessionDescriptionInit, options: AnswerOptions = {}): Promise<MockRTCAnswerParams> {
+        if (this.debug) console.log(`Answering offer for mocking for ${this.peerId}`);
+
         const conn = this.createConnection();
         return {
             answer: await conn.sessionApi.answerOffer(offer, options),
