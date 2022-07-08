@@ -46,7 +46,7 @@ export type MockRTCEventData = {
             remoteSdp: RTCSessionDescriptionInit;
         }
     },
-    "data-channel-open": {
+    "data-channel-opened": {
         peerId: string;
         sessionId: string;
         channelId: number;
@@ -65,6 +65,11 @@ export type MockRTCEventData = {
         channelId: number;
         content: Buffer;
         isBinary: boolean;
+    },
+    "data-channel-closed": {
+        peerId: string;
+        sessionId: string;
+        channelId: number;
     }
 };
 

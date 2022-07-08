@@ -82,7 +82,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         channelId: channelStream.id,
                     };
 
-                    this.eventEmitter.emit('data-channel-open', {
+                    this.eventEmitter.emit('data-channel-opened', {
                         ...channelEventParams,
                         channelLabel: channelStream.label
                     });
@@ -103,6 +103,10 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
                     channelStream.on('read-data', emitMessage('received'));
                     channelStream.on('wrote-data', emitMessage('sent'));
+
+                    channelStream.on('close', () =>
+                        this.eventEmitter.emit('data-channel-closed', { ...channelEventParams })
+                    );
                 }
 
                 conn.on('channel-open', emitChannelEvents);

@@ -78,8 +78,8 @@ export class MockRTCAdminRequestBuilder {
                     }
                 }
             }`,
-            'data-channel-open': gql`subscription OnDataChannelOpen {
-                dataChannelOpen {
+            'data-channel-opened': gql`subscription OnDataChannelOpen {
+                dataChannelOpened {
                     peerId
                     sessionId
                     channelId
@@ -102,6 +102,13 @@ export class MockRTCAdminRequestBuilder {
                     channelId
                     content
                     isBinary
+                }
+            }`,
+            'data-channel-closed': gql`subscription OnDataChannelClose {
+                dataChannelClosed {
+                    peerId
+                    sessionId
+                    channelId
                 }
             }`
         }[event];

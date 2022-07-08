@@ -170,9 +170,9 @@ describe("MockRTC event subscriptions", function () {
     describe("for data channels", function () {
 
         it("fires an event when a data channel is created", async () => {
-            const eventPromise = getDeferred<MockRTCEventData['data-channel-open']>();
+            const eventPromise = getDeferred<MockRTCEventData['data-channel-opened']>();
 
-            mockRTC.on('data-channel-open', (channel) => eventPromise.resolve(channel));
+            mockRTC.on('data-channel-opened', (channel) => eventPromise.resolve(channel));
 
             const mockPeer = await mockRTC.buildPeer()
                 .waitForChannel()
@@ -251,6 +251,31 @@ describe("MockRTC event subscriptions", function () {
 
             expect(messageEvent.isBinary).to.equal(true);
             expect(messageEvent.content.toString()).to.equal('Technically binary message from client');
+        });
+
+        it("fires an event when a data channel is closed", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['data-channel-closed']>();
+
+            mockRTC.on('data-channel-closed', (channel) => eventPromise.resolve(channel));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .waitForChannel()
+                .thenClose();
+
+            const localConnection = new RTCPeerConnection();
+            const dataChannel = localConnection.createDataChannel("test-channel");
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerOffer(localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            dataChannel.addEventListener('open', () => dataChannel.close());
+
+            const channelEvent = await eventPromise;
+            expect(channelEvent.peerId).to.equal(mockPeer.peerId);
+            expect(channelEvent.sessionId).not.to.equal(undefined);
+            expect(channelEvent.channelId).to.equal(1);
         });
 
     });
