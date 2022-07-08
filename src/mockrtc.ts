@@ -25,6 +25,17 @@ export interface MockRTCOptions {
     recordMessages?: boolean;
 }
 
+export type MockRTCEventData = {
+    "peer-connected": {
+        peerId: string;
+        sessionId: string;
+        localSdp: RTCSessionDescriptionInit;
+        remoteSdp: RTCSessionDescriptionInit;
+    }
+};
+
+export type MockRTCEvent = keyof MockRTCEventData;
+
 export interface MockRTC {
 
     /**
@@ -38,5 +49,7 @@ export interface MockRTC {
     start(): Promise<void>;
 
     stop(): Promise<void>;
+
+    on<E extends MockRTCEvent>(event: E, callback: (param: MockRTCEventData[E]) => void): Promise<void>;
 
 }

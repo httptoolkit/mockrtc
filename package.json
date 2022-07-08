@@ -75,6 +75,7 @@
     "@graphql-tools/utils": "^8.8.0",
     "@types/sdp-transform": "^2.4.5",
     "graphql": "^15.8.0",
+    "graphql-subscriptions": "^1.2.1",
     "graphql-tag": "^2.12.6",
     "mockttp": "^3.2.1",
     "node-datachannel": "^0.3.0",

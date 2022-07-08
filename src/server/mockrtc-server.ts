@@ -3,7 +3,9 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
+import { EventEmitter } from "events";
+
+import { MockRTC, MockRTCEvent, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
 import { MockRTCServerPeer } from "./mockrtc-server-peer";
 import { MockRTCHandlerBuilder } from "../handling/handler-builder";
 import { HandlerStepDefinition } from "../handling/handler-step-definitions";
@@ -18,6 +20,8 @@ export class MockRTCServer implements MockRTC {
     ) {
         this.debug = !!options.debug;
     }
+
+    private eventEmitter = new EventEmitter();
 
     async start(): Promise<void> {
         if (this.debug) console.log("Starting MockRTC mock session");
@@ -43,7 +47,7 @@ export class MockRTCServer implements MockRTC {
                 definition
             );
         });
-        const peer = new MockRTCServerPeer(handlerSteps, this.options);
+        const peer = new MockRTCServerPeer(handlerSteps, this.options, this.eventEmitter);
         this._activePeers[peer.peerId] = peer;
         if (this.debug) console.log(
             `Built MockRTC peer ${peer.peerId} with steps: ${handlerStepDefinitions.map(d => d.type).join(', ')}`
@@ -58,6 +62,10 @@ export class MockRTCServer implements MockRTC {
 
     getPeer(id: string): MockRTCServerPeer {
         return this._activePeers[id];
+    }
+
+    async on(event: MockRTCEvent, callback: (...args: any) => void) {
+        this.eventEmitter.on(event, callback);
     }
 
 }

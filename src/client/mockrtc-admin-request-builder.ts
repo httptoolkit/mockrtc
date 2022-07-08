@@ -14,6 +14,7 @@ import * as BrowserPluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggab
 import { AdminQuery } from 'mockttp/dist/client/admin-query';
 
 import { HandlerStepDefinition } from '../handling/handler-step-definitions';
+import { MockRTCEvent, MockRTCEventData } from '../mockrtc';
 
 /**
  * This is part of Mockttp's experimental 'pluggable admin' API. This may change
@@ -46,6 +47,25 @@ export class MockRTCAdminRequestBuilder {
                 }
             },
             transformResponse: ({ createPeer }) => createPeer
+        };
+    }
+
+    buildSubscriptionRequest<E extends MockRTCEvent>(event: E): AdminQuery<MockRTCEventData[E]> | undefined {
+        const query = {
+            'peer-connected': gql`subscription OnPeerConnected {
+                rtcPeerConnected {
+                    peerId
+                    sessionId
+                    localSdp { type, sdp }
+                    remoteSdp { type, sdp }
+                }
+            }`
+        }[event];
+
+        if (!query) return; // Unrecognized event, we can't subscribe to this.
+
+        return {
+            query
         };
     }
 }

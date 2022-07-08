@@ -4,6 +4,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { EventEmitter } from "events";
 
 import {
     MockRTCPeer,
@@ -36,7 +37,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
     constructor(
         private handlerSteps: HandlerStep[],
-        private options: MockRTCPeerOptions = {}
+        private options: MockRTCPeerOptions = {},
+        private eventEmitter: EventEmitter
     ) {
         this.debug = !!options.debug;
     }
@@ -46,6 +48,17 @@ export class MockRTCServerPeer implements MockRTCPeer {
         conn.once('connection-closed', () => {
             delete this.connections[conn.id];
         });
+
+        if (conn instanceof MockRTCConnection) {
+            conn.waitUntilConnected().then(() => {
+                this.eventEmitter.emit('peer-connected', {
+                    peerId: this.peerId,
+                    sessionId: conn.id,
+                    localSdp: conn.getLocalDescription(),
+                    remoteSdp: conn.getRemoteDescription()
+                });
+            });
+        }
     }
 
     private getExternalConnection = (id: string) => {

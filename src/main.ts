@@ -6,7 +6,9 @@
 import {
     MockRTC,
     MockRTCOptions,
-    MockRTCPeerBuilder
+    MockRTCPeerBuilder,
+    MockRTCEvent,
+    MockRTCEventData
 } from "./mockrtc";
 
 import { MockRTCServer } from "./server/mockrtc-server";
@@ -38,7 +40,9 @@ export type {
     MockRTCOptions,
     MockRTCClientOptions,
     MockRTCPeerBuilder,
-    MockRTCAdminServer
+    MockRTCAdminServer,
+    MockRTCEvent,
+    MockRTCEventData
 };
 
 export type {

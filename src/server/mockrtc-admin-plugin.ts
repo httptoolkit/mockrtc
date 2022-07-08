@@ -7,6 +7,7 @@ import * as stream from 'stream';
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
 import type { IResolvers } from "@graphql-tools/utils";
+import { PubSub } from "graphql-subscriptions";
 
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions } from '../mockrtc';
@@ -76,9 +77,26 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         }
 
         scalar HandlerStep
+
+        extend type Subscription {
+            rtcPeerConnected: RTCPeerConnection!
+        }
+
+        type RTCPeerConnection {
+            peerId: ID!
+            sessionId: ID!
+            localSdp: SessionDescriptionResult!
+            remoteSdp: SessionDescriptionResult!
+        }
     `;
 
     buildResolvers(adminStream: stream.Duplex, ruleParams: {}): IResolvers {
+        const pubsub = new PubSub();
+
+        this.mockRTCServer.on('peer-connected', (peer) => {
+            pubsub.publish('peer-connected', { rtcPeerConnected: peer });
+        });
+
         return {
             Mutation: {
                 createPeer: (__: any, { data: { steps } }: { data: {
@@ -189,6 +207,11 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                             return message;
                         }
                     });
+                }
+            },
+            Subscription: {
+                rtcPeerConnected: {
+                    subscribe: () => pubsub.asyncIterator('peer-connected')
                 }
             }
         };

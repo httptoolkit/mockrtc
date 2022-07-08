@@ -11,7 +11,7 @@
 import * as BrowserPluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 import type { PluggableAdmin } from 'mockttp';
 
-import { MockRTC, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
+import { MockRTC, MockRTCEvent, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
 
 import type { MockRTCAdminPlugin } from "../server/mockrtc-admin-plugin";
 import type { MockRTCPeer } from '../mockrtc-peer';
@@ -60,5 +60,20 @@ export class MockRTCClient implements MockRTC {
 
     async stop(): Promise<void> {
         await this.adminClient.stop();
+    }
+
+    async on(event: MockRTCEvent, callback: any): Promise<void> {
+        const subscriptionRequest = this.requestBuilder.buildSubscriptionRequest(event);
+
+        if (!subscriptionRequest) {
+            // We just return an immediately promise if we don't recognize the event, which will quietly
+            // succeed but never call the corresponding callback (the same as the server and most event
+            // sources in the same kind of situation). This is what happens when the *client* doesn't
+            // recognize the event. Subscribe() below handles the unknown-to-server case.
+            console.warn(`Ignoring subscription for event unrecognized by MockRTC client: ${event}`);
+            return;
+        }
+
+        return this.adminClient.subscribe(subscriptionRequest, callback);
     }
 }

@@ -28,6 +28,7 @@ export class RTCConnection extends EventEmitter {
         = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
 
     private remoteDescription: RTCSessionDescriptionInit | undefined;
+    private localDescription: RTCSessionDescriptionInit | undefined;
 
     private readonly trackedChannels: Array<{ stream: DataChannelStream, isLocal: boolean }> = [];
 
@@ -89,7 +90,11 @@ export class RTCConnection extends EventEmitter {
         });
 
         this.on('connection-state-changed', (state) => {
-            if (state === 'closed') this.emit('connection-closed');
+            if (state === 'closed') {
+                this.emit('connection-closed');
+                this.remoteDescription = undefined;
+                this.localDescription = undefined;
+            }
         });
     }
 
@@ -163,7 +168,7 @@ export class RTCConnection extends EventEmitter {
      * full result. Because this waits for gathering, it will not resolve if no DataChannel, other
      * tracks or remote description have been provided beforehand.
      */
-    async getLocalDescription(): Promise<RTCSessionDescriptionInit> {
+    async buildLocalDescription(): Promise<RTCSessionDescriptionInit> {
         if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
 
         let setupChannel: NodeDataChannel.DataChannel | undefined;
@@ -188,12 +193,18 @@ export class RTCConnection extends EventEmitter {
 
         const sessionDescription = this.rawConn.localDescription() as RTCSessionDescriptionInit;
         setupChannel?.close(); // Close the temporary setup channel, if we created one
+        this.localDescription = sessionDescription;
         return sessionDescription;
     }
 
     getRemoteDescription() {
         if (!this.rawConn) throw new Error("Can't get remote description after connection is closed");
         return this.remoteDescription;
+    }
+
+    getLocalDescription() {
+        if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
+        return this.localDescription;
     }
 
     async getMirroredLocalOffer(
@@ -319,7 +330,7 @@ export class RTCConnection extends EventEmitter {
                     addDataStream: !!options.addDataStream
                 });
             } else {
-                return this.getLocalDescription();
+                return this.buildLocalDescription();
             }
         },
 
@@ -336,7 +347,7 @@ export class RTCConnection extends EventEmitter {
             if (options.mirrorSDP) {
                 return this.getMirroredLocalAnswer(options.mirrorSDP);
             } else {
-                return this.getLocalDescription();
+                return this.buildLocalDescription();
             }
         }
     };
@@ -346,6 +357,8 @@ export class RTCConnection extends EventEmitter {
 
         const { rawConn } = this;
         this.rawConn = null; // Drop the reference, so nothing tries to use it after close
+        this.remoteDescription = undefined;
+        this.localDescription = undefined;
 
         if (rawConn.state() === 'closed') return;
         rawConn.close();
