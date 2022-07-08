@@ -50,7 +50,9 @@ export class MockRTCServerPeer implements MockRTCPeer {
         });
 
         if (conn instanceof MockRTCConnection) {
-            conn.waitUntilConnected().then(() => {
+            // Here we listen to the various internal connection events, and convert them into
+            // their corresponding public-API events.
+            conn.once('connection-connected', () => {
                 this.eventEmitter.emit('peer-connected', {
                     peerId: this.peerId,
                     sessionId: conn.id,
@@ -70,6 +72,21 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         }
                     });
                 });
+
+                const emitChannelEvents = (channelStream: DataChannelStream) => {
+                    this.eventEmitter.emit('data-channel-open', {
+                        peerId: this.peerId,
+                        sessionId: conn.id,
+                        channelId: channelStream.id,
+                        channelLabel: channelStream.label
+                    });
+                }
+
+                conn.on('channel-open', emitChannelEvents);
+                // Due to race conditions somewhere (?) presumably in node-datachannel, channels can
+                // be created before the 'connected' event fires, so we need to handle already existing
+                // channels here too:
+                conn.channels.forEach(emitChannelEvents);
 
                 conn.once('connection-closed', () => {
                     this.eventEmitter.emit('peer-disconnected', {

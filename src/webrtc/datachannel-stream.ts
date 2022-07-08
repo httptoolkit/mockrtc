@@ -95,6 +95,10 @@ export class DataChannelStream extends stream.Duplex {
         callback(maybeErr);
     }
 
+    get id() {
+        return this.rawChannel.getId();
+    }
+
     get label() {
         return this.rawChannel.getLabel();
     }

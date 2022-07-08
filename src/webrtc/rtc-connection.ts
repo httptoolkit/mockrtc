@@ -90,7 +90,9 @@ export class RTCConnection extends EventEmitter {
         });
 
         this.on('connection-state-changed', (state) => {
-            if (state === 'closed') {
+            if (state === 'connected') {
+                this.emit('connection-connected');
+            } else if (state === 'closed') {
                 this.emit('connection-closed');
                 this.remoteDescription = undefined;
                 this.localDescription = undefined;

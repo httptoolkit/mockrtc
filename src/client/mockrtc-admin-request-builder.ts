@@ -77,6 +77,14 @@ export class MockRTCAdminRequestBuilder {
                         remoteSdp { type, sdp }
                     }
                 }
+            }`,
+            'data-channel-open': gql`subscription OnDataChannelOpen {
+                dataChannelOpen {
+                    peerId
+                    sessionId
+                    channelId
+                    channelLabel
+                }
             }`
         }[event];
 

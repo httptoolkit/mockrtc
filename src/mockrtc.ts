@@ -45,6 +45,12 @@ export type MockRTCEventData = {
             localSdp: RTCSessionDescriptionInit;
             remoteSdp: RTCSessionDescriptionInit;
         }
+    },
+    "data-channel-open": {
+        peerId: string;
+        sessionId: string;
+        channelId: number;
+        channelLabel: string;
     }
 };
 

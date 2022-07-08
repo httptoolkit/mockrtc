@@ -167,4 +167,32 @@ describe("MockRTC event subscriptions", function () {
 
     });
 
+    describe("for data channels", function () {
+
+        it("fires an event when a data channel is created", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['data-channel-open']>();
+
+            mockRTC.on('data-channel-open', (channel) => eventPromise.resolve(channel));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .waitForChannel()
+                .thenSend('Test message');
+
+            const localConnection = new RTCPeerConnection();
+            localConnection.createDataChannel("test-channel");
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerOffer(localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            const channelEvent = await eventPromise;
+            expect(channelEvent.peerId).to.equal(mockPeer.peerId);
+            expect(channelEvent.sessionId).not.to.equal(undefined);
+            expect(channelEvent.channelId).to.equal(1);
+            expect(channelEvent.channelLabel).to.equal('test-channel');
+        });
+
+    });
+
 });
