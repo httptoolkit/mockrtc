@@ -53,7 +53,7 @@ export class MockRTCAdminRequestBuilder {
     buildSubscriptionRequest<E extends MockRTCEvent>(event: E): AdminQuery<MockRTCEventData[E]> | undefined {
         const query = {
             'peer-connected': gql`subscription OnPeerConnected {
-                rtcPeerConnected {
+                peerConnected {
                     peerId
                     sessionId
                     localSdp { type, sdp }
@@ -61,13 +61,13 @@ export class MockRTCAdminRequestBuilder {
                 }
             }`,
             'peer-disconnected': gql`subscription OnPeerDisconnected {
-                rtcPeerDisconnected {
+                peerDisconnected {
                     peerId
                     sessionId
                 }
             }`,
             'external-peer-attached': gql`subscription OnExternalPeerAttached {
-                rtcExternalPeerAttached {
+                externalPeerAttached {
                     peerId
                     sessionId
                     externalConnection {

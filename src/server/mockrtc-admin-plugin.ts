@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as _ from 'lodash';
 import * as stream from 'stream';
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
@@ -21,6 +22,12 @@ export interface SessionData {
     id: string;
     description: RTCSessionDescriptionInit
 }
+
+const EVENTS = [
+    'peer-connected',
+    'peer-disconnected',
+    'external-peer-attached'
+] as const;
 
 export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOptions, {}> {
 
@@ -79,43 +86,37 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         scalar HandlerStep
 
         extend type Subscription {
-            rtcPeerConnected: RTCPeerConnection!
-            rtcPeerDisconnected: RTCPeerConnectionIds!
-            rtcExternalPeerAttached: RTCExternalAttachment!
+            peerConnected: RTCPeerConnectionEvent!
+            peerDisconnected: RTCPeerDisconnectionEvent!
+            externalPeerAttached: RTCAttachmentEvent!
         }
 
-        type RTCPeerConnectionIds {
-            peerId: ID!
-            sessionId: ID!
-        }
-
-        type RTCPeerConnection {
+        type RTCPeerConnectionEvent {
             peerId: ID!
             sessionId: ID!
             localSdp: SessionDescriptionResult!
             remoteSdp: SessionDescriptionResult!
         }
 
-        type RTCExternalAttachment {
+        type RTCPeerDisconnectionEvent {
             peerId: ID!
             sessionId: ID!
-            externalConnection: RTCPeerConnection!
+        }
+
+        type RTCAttachmentEvent {
+            peerId: ID!
+            sessionId: ID!
+            externalConnection: RTCPeerConnectionEvent!
         }
     `;
 
     buildResolvers(adminStream: stream.Duplex, ruleParams: {}): IResolvers {
         const pubsub = new PubSub();
 
-        this.mockRTCServer.on('peer-connected', (peer) => {
-            pubsub.publish('peer-connected', { rtcPeerConnected: peer });
-        });
-
-        this.mockRTCServer.on('peer-disconnected', (peer) => {
-            pubsub.publish('peer-disconnected', { rtcPeerDisconnected: peer });
-        });
-
-        this.mockRTCServer.on('external-peer-attached', (attachment) => {
-            pubsub.publish('external-peer-attached', { rtcExternalPeerAttached: attachment });
+        EVENTS.forEach((eventName) => {
+            this.mockRTCServer.on(eventName, (peer) => {
+                pubsub.publish(eventName, { [_.camelCase(eventName)]: peer });
+            });
         });
 
         return {
@@ -231,15 +232,12 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 }
             },
             Subscription: {
-                rtcPeerConnected: {
-                    subscribe: () => pubsub.asyncIterator('peer-connected')
-                },
-                rtcPeerDisconnected: {
-                    subscribe: () => pubsub.asyncIterator('peer-disconnected')
-                },
-                rtcExternalPeerAttached: {
-                    subscribe: () => pubsub.asyncIterator('external-peer-attached')
-                }
+                ...(EVENTS.reduce((acc, eventName) => ({
+                    ...acc,
+                    [_.camelCase(eventName)]: {
+                        subscribe: () => pubsub.asyncIterator(eventName)
+                    }
+                }), {}))
             }
         };
     }
