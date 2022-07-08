@@ -193,6 +193,66 @@ describe("MockRTC event subscriptions", function () {
             expect(channelEvent.channelLabel).to.equal('test-channel');
         });
 
+        it("fires an event when a data channel message is sent", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['data-channel-message-sent']>();
+
+            mockRTC.on('data-channel-message-sent', (message) => eventPromise.resolve(message));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .waitForChannel()
+                .thenSend('Test message');
+
+            const localConnection = new RTCPeerConnection();
+            localConnection.createDataChannel("test-channel");
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerOffer(localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            const messageEvent = await eventPromise;
+            expect(messageEvent.peerId).to.equal(mockPeer.peerId);
+            expect(messageEvent.sessionId).not.to.equal(undefined);
+            expect(messageEvent.channelId).to.equal(1);
+            expect(messageEvent.isBinary).to.equal(false);
+            expect(messageEvent.content.toString()).to.equal('Test message');
+        });
+
+        it("fires an event when a data channel message is received", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['data-channel-message-received']>();
+
+            mockRTC.on('data-channel-message-received', (message) => eventPromise.resolve(message));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .waitForChannel()
+                .send('Outgoing message')
+                .waitForNextMessage()
+                .thenClose();
+
+            const localConnection = new RTCPeerConnection();
+            const dataChannel = localConnection.createDataChannel("test-channel");
+
+            // Send a message to MockRTC once the connection opens:
+            dataChannel.addEventListener('open', () => {
+                dataChannel.send(
+                    Buffer.from('Technically binary message from client')
+                );
+            });
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerOffer(localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            const messageEvent = await eventPromise;
+            expect(messageEvent.peerId).to.equal(mockPeer.peerId);
+            expect(messageEvent.sessionId).not.to.equal(undefined);
+            expect(messageEvent.channelId).to.equal(1);
+
+            expect(messageEvent.isBinary).to.equal(true);
+            expect(messageEvent.content.toString()).to.equal('Technically binary message from client');
+        });
+
     });
 
 });

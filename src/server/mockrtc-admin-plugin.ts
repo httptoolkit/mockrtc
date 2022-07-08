@@ -27,7 +27,9 @@ const EVENTS = [
     'peer-connected',
     'peer-disconnected',
     'external-peer-attached',
-    'data-channel-open'
+    'data-channel-open',
+    'data-channel-message-sent',
+    'data-channel-message-received'
 ] as const;
 
 export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOptions, {}> {
@@ -92,6 +94,8 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             externalPeerAttached: RTCAttachmentEvent!
 
             dataChannelOpen: DataChannelOpenEvent!
+            dataChannelMessageSent: DataChannelMessageEvent!
+            dataChannelMessageReceived: DataChannelMessageEvent!
         }
 
         type RTCPeerConnectionEvent {
@@ -117,6 +121,14 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             sessionId: ID!
             channelId: Int!
             channelLabel: String!
+        }
+
+        type DataChannelMessageEvent {
+            peerId: ID!
+            sessionId: ID!
+            channelId: Int!
+            content: Buffer!
+            isBinary: Boolean!
         }
     `;
 

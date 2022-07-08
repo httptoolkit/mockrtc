@@ -51,6 +51,20 @@ export type MockRTCEventData = {
         sessionId: string;
         channelId: number;
         channelLabel: string;
+    },
+    "data-channel-message-sent": {
+        peerId: string;
+        sessionId: string;
+        channelId: number;
+        content: Buffer;
+        isBinary: boolean;
+    },
+    "data-channel-message-received": {
+        peerId: string;
+        sessionId: string;
+        channelId: number;
+        content: Buffer;
+        isBinary: boolean;
     }
 };
 

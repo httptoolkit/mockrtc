@@ -85,13 +85,35 @@ export class MockRTCAdminRequestBuilder {
                     channelId
                     channelLabel
                 }
+            }`,
+            'data-channel-message-sent': gql`subscription OnDataChannelMessageSent {
+                dataChannelMessageSent {
+                    peerId
+                    sessionId
+                    channelId
+                    content
+                    isBinary
+                }
+            }`,
+            'data-channel-message-received': gql`subscription OnDataChannelMessageReceived {
+                dataChannelMessageReceived {
+                    peerId
+                    sessionId
+                    channelId
+                    content
+                    isBinary
+                }
             }`
         }[event];
 
         if (!query) return; // Unrecognized event, we can't subscribe to this.
 
         return {
-            query
+            query,
+            transformResponse: (result: any) => {
+                if (result.content) result.content = Buffer.from(result.content, 'base64');
+                return result;
+            }
         };
     }
 }

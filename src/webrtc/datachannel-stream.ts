@@ -32,6 +32,12 @@ export class DataChannelStream extends stream.Duplex {
         });
 
         rawChannel.onMessage((msg) => {
+            // Independently of the stream and it's normal events, we also fire our own
+            // read/wrote-data events, used for MockRTC event subscriptions. These aren't
+            // buffered, and this ensures that those events do not consume data that will
+            // separately be processed by handler steps.
+            this.emit('read-data', msg);
+
             if (!this._readActive) return; // If the buffer is full, drop messages.
 
             // If the push is rejected, we pause reading until the next call to _read().
@@ -73,6 +79,8 @@ export class DataChannelStream extends stream.Duplex {
                 const typeName = (chunk as object).constructor.name || typeof chunk;
                 throw new Error(`Cannot write ${typeName} to DataChannel stream`);
             }
+
+            this.emit('wrote-data', chunk);
         } catch (err: any) {
             return callback(err);
         }

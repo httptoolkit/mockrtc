@@ -53,17 +53,20 @@ export class MockRTCServerPeer implements MockRTCPeer {
             // Here we listen to the various internal connection events, and convert them into
             // their corresponding public-API events.
             conn.once('connection-connected', () => {
-                this.eventEmitter.emit('peer-connected', {
+                const connectionEventParams = {
                     peerId: this.peerId,
-                    sessionId: conn.id,
+                    sessionId: conn.id
+                };
+
+                this.eventEmitter.emit('peer-connected', {
+                    ...connectionEventParams,
                     localSdp: conn.getLocalDescription(),
                     remoteSdp: conn.getRemoteDescription()
                 });
 
                 conn.once('external-connection-attached', (externalConn) => {
                     this.eventEmitter.emit('external-peer-attached', {
-                        peerId: this.peerId,
-                        sessionId: conn.id,
+                        ...connectionEventParams,
                         externalConnection: {
                             peerId: this.peerId,
                             sessionId: externalConn.id,
@@ -74,12 +77,32 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 });
 
                 const emitChannelEvents = (channelStream: DataChannelStream) => {
-                    this.eventEmitter.emit('data-channel-open', {
-                        peerId: this.peerId,
-                        sessionId: conn.id,
+                    const channelEventParams = {
+                        ...connectionEventParams,
                         channelId: channelStream.id,
+                    };
+
+                    this.eventEmitter.emit('data-channel-open', {
+                        ...channelEventParams,
                         channelLabel: channelStream.label
                     });
+
+                    const emitMessage = (direction: 'sent' | 'received') => (data: Buffer | string) => {
+                        const isBinary = Buffer.isBuffer(data);
+
+                        const content: Buffer = isBinary
+                            ? data
+                            : Buffer.from(data, 'utf8');
+
+                        this.eventEmitter.emit(`data-channel-message-${direction}`, {
+                            ...channelEventParams,
+                            content,
+                            isBinary
+                        });
+                    };
+
+                    channelStream.on('read-data', emitMessage('received'));
+                    channelStream.on('wrote-data', emitMessage('sent'));
                 }
 
                 conn.on('channel-open', emitChannelEvents);
@@ -89,10 +112,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 conn.channels.forEach(emitChannelEvents);
 
                 conn.once('connection-closed', () => {
-                    this.eventEmitter.emit('peer-disconnected', {
-                        peerId: this.peerId,
-                        sessionId: conn.id
-                    });
+                    this.eventEmitter.emit('peer-disconnected', { ...connectionEventParams });
                 });
             });
         }
