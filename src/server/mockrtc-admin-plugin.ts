@@ -80,6 +80,12 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
 
         extend type Subscription {
             rtcPeerConnected: RTCPeerConnection!
+            rtcPeerDisconnected: RTCPeerConnectionIds!
+        }
+
+        type RTCPeerConnectionIds {
+            peerId: ID!
+            sessionId: ID!
         }
 
         type RTCPeerConnection {
@@ -95,6 +101,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
 
         this.mockRTCServer.on('peer-connected', (peer) => {
             pubsub.publish('peer-connected', { rtcPeerConnected: peer });
+        });
+
+        this.mockRTCServer.on('peer-disconnected', (peer) => {
+            pubsub.publish('peer-disconnected', { rtcPeerDisconnected: peer });
         });
 
         return {
@@ -212,6 +222,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             Subscription: {
                 rtcPeerConnected: {
                     subscribe: () => pubsub.asyncIterator('peer-connected')
+                },
+                rtcPeerDisconnected: {
+                    subscribe: () => pubsub.asyncIterator('peer-disconnected')
                 }
             }
         };

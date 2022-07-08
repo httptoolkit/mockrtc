@@ -57,6 +57,13 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     localSdp: conn.getLocalDescription(),
                     remoteSdp: conn.getRemoteDescription()
                 });
+
+                conn.once('connection-closed', () => {
+                    this.eventEmitter.emit('peer-disconnected', {
+                        peerId: this.peerId,
+                        sessionId: conn.id
+                    });
+                });
             });
         }
     }

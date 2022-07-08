@@ -59,6 +59,12 @@ export class MockRTCAdminRequestBuilder {
                     localSdp { type, sdp }
                     remoteSdp { type, sdp }
                 }
+            }`,
+            'peer-disconnected': gql`subscription OnPeerDisconnected {
+                rtcPeerDisconnected {
+                    peerId
+                    sessionId
+                }
             }`
         }[event];
 

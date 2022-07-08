@@ -31,6 +31,10 @@ export type MockRTCEventData = {
         sessionId: string;
         localSdp: RTCSessionDescriptionInit;
         remoteSdp: RTCSessionDescriptionInit;
+    },
+    "peer-disconnected": {
+        peerId: string;
+        sessionId: string;
     }
 };
 

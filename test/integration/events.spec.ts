@@ -77,6 +77,58 @@ describe("MockRTC event subscriptions", function () {
             expect(result).to.equal('timeout');
         });
 
+        it("should fire an event when a mock peer is disconnected", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['peer-disconnected']>();
+
+            mockRTC.on('peer-disconnected', (peer) => eventPromise.resolve(peer));
+
+            const mockPeer = await mockRTC.buildPeer().thenClose();
+
+            const localConnection = new RTCPeerConnection();
+
+            const { offer, setAnswer } = await mockPeer.createOffer();
+            await localConnection.setRemoteDescription(offer);
+
+            const localAnswer = await localConnection.createAnswer();
+            await localConnection.setLocalDescription(localAnswer);
+            await setAnswer(localAnswer);
+
+            // Wait until the connection opens successfully:
+            await waitForState(localConnection, 'connected');
+
+            const connectionEvent = await eventPromise;
+            expect(connectionEvent.peerId).to.equal(mockPeer.peerId);
+            expect(connectionEvent.sessionId).not.to.equal(undefined);
+        });
+
+        it("should not fire an event when an external peer disconnects", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['peer-disconnected']>();
+
+            mockRTC.on('peer-disconnected', (peer) => eventPromise.resolve(peer));
+
+            const mockPeer = await mockRTC.buildPeer().thenClose();
+
+            const localConnection = new RTCPeerConnection();
+
+            const { offer, setAnswer } = await mockPeer.createExternalOffer();
+            await localConnection.setRemoteDescription(offer);
+
+            const localAnswer = await localConnection.createAnswer();
+            await localConnection.setLocalDescription(localAnswer);
+            await setAnswer(localAnswer);
+
+            // Wait until the connection opens successfully:
+            await waitForState(localConnection, 'connected');
+
+            const result = await Promise.race([
+                delay(500).then(() => 'timeout'),
+                eventPromise
+            ]);
+
+            // No event fires within 500ms
+            expect(result).to.equal('timeout');
+        });
+
     });
 
 });
