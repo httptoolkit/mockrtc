@@ -77,6 +77,42 @@ describe("MockRTC event subscriptions", function () {
             expect(result).to.equal('timeout');
         });
 
+        it("should fire an event when an external peer is attached", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['external-peer-attached']>();
+
+            mockRTC.on('external-peer-attached', (peer) => eventPromise.resolve(peer));
+
+            const mockPeer = await mockRTC.buildPeer().waitForNextMessage().thenSend('Goodbye');
+
+            // Hook the local connection (so traffic is redirected via an external peer)
+            const localConnection = new RTCPeerConnection();
+            MockRTC.hookWebRTCConnection(localConnection, mockPeer);
+
+            // Create and connect an unhooked remote connection:
+            const remoteConn = new RTCPeerConnection();
+            remoteConn.createDataChannel("test-channel");
+            const remoteOffer = await remoteConn.createOffer();
+            remoteConn.setLocalDescription(remoteOffer);
+            await localConnection.setRemoteDescription(remoteOffer);
+            const localAnswer = await localConnection.createAnswer();
+            localConnection.setLocalDescription(localAnswer);
+
+            // Wait until the connection opens successfully:
+            await waitForState(localConnection, 'connected');
+
+            const attachEvent = await eventPromise;
+            expect(attachEvent.peerId).to.equal(mockPeer.peerId);
+            expect(attachEvent.sessionId).not.to.equal(undefined);
+
+            const { externalConnection } = attachEvent;
+            expect(externalConnection.peerId).to.equal(mockPeer.peerId);
+            expect(externalConnection.sessionId).not.to.equal(attachEvent.sessionId);
+            expect(externalConnection.localSdp.type).to.equal('answer');
+            expect(externalConnection.localSdp.sdp!.length).to.be.greaterThan(10);
+            expect(externalConnection.remoteSdp.type).to.equal('offer');
+            expect(externalConnection.remoteSdp.sdp!.length).to.be.greaterThan(10);
+        });
+
         it("should fire an event when a mock peer is disconnected", async () => {
             const eventPromise = getDeferred<MockRTCEventData['peer-disconnected']>();
 

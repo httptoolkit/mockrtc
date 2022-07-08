@@ -65,6 +65,18 @@ export class MockRTCAdminRequestBuilder {
                     peerId
                     sessionId
                 }
+            }`,
+            'external-peer-attached': gql`subscription OnExternalPeerAttached {
+                rtcExternalPeerAttached {
+                    peerId
+                    sessionId
+                    externalConnection {
+                        peerId
+                        sessionId
+                        localSdp { type, sdp }
+                        remoteSdp { type, sdp }
+                    }
+                }
             }`
         }[event];
 

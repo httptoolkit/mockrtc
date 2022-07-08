@@ -81,6 +81,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         extend type Subscription {
             rtcPeerConnected: RTCPeerConnection!
             rtcPeerDisconnected: RTCPeerConnectionIds!
+            rtcExternalPeerAttached: RTCExternalAttachment!
         }
 
         type RTCPeerConnectionIds {
@@ -94,6 +95,12 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             localSdp: SessionDescriptionResult!
             remoteSdp: SessionDescriptionResult!
         }
+
+        type RTCExternalAttachment {
+            peerId: ID!
+            sessionId: ID!
+            externalConnection: RTCPeerConnection!
+        }
     `;
 
     buildResolvers(adminStream: stream.Duplex, ruleParams: {}): IResolvers {
@@ -105,6 +112,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
 
         this.mockRTCServer.on('peer-disconnected', (peer) => {
             pubsub.publish('peer-disconnected', { rtcPeerDisconnected: peer });
+        });
+
+        this.mockRTCServer.on('external-peer-attached', (attachment) => {
+            pubsub.publish('external-peer-attached', { rtcExternalPeerAttached: attachment });
         });
 
         return {
@@ -225,6 +236,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 },
                 rtcPeerDisconnected: {
                     subscribe: () => pubsub.asyncIterator('peer-disconnected')
+                },
+                rtcExternalPeerAttached: {
+                    subscribe: () => pubsub.asyncIterator('external-peer-attached')
                 }
             }
         };

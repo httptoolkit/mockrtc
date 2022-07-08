@@ -289,7 +289,8 @@ export class RTCConnection extends EventEmitter {
         mirrorMediaParams(offerToMirror, offerSDP);
         localDesc.sdp = SDP.write(offerSDP);
 
-        return localDesc as RTCSessionDescriptionInit;
+        this.localDescription = localDesc as RTCSessionDescriptionInit;
+        return this.localDescription;
     }
 
     async getMirroredLocalAnswer(sdpToMirror: string): Promise<RTCSessionDescriptionInit> {
@@ -300,7 +301,9 @@ export class RTCConnection extends EventEmitter {
         mirrorMediaParams(answerToMirror, answerSDP);
 
         localDesc.sdp = SDP.write(answerSDP);
-        return localDesc as RTCSessionDescriptionInit;
+
+        this.localDescription = localDesc as RTCSessionDescriptionInit;
+        return this.localDescription;
     }
 
     waitUntilConnected() {

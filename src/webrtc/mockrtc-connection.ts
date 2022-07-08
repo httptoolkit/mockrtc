@@ -49,7 +49,7 @@ export class MockRTCConnection extends RTCConnection {
                         }
                         this.externalConnection = this.getExternalConnection(controlMessage.id);
 
-                        this.emit('external-connection-attached');
+                        this.emit('external-connection-attached', this.externalConnection);
 
                         // We don't necessarily proxy traffic through to the external connection at this point,
                         // that depends on the specific handling that's used here.
@@ -88,6 +88,15 @@ export class MockRTCConnection extends RTCConnection {
     }
 
     proxyTrafficTo(externalConnection: RTCConnection) {
+        if (this.externalConnection) {
+            if (externalConnection !== this.externalConnection) {
+                throw new Error('Cannot attach multiple external connections');
+            }
+        } else {
+            this.externalConnection = externalConnection;
+            this.emit('external-connection-attached', this.externalConnection);
+        }
+
         /**
          * When proxying traffic, you effectively have four peers, each with a connection endpoint:
          * - The incoming RTCPeerConnection that we're mocking ('internal')
