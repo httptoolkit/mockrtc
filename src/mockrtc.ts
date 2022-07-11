@@ -78,6 +78,14 @@ export type MockRTCEventData = {
         trackType: string;
         trackDirection: string;
     },
+    "media-track-stats": {
+        peerId: string;
+        sessionId: string;
+        trackMid: string;
+
+        totalBytesSent: number;
+        totalBytesReceived: number;
+    },
     "media-track-closed": {
         peerId: string;
         sessionId: string;

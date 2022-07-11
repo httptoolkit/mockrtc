@@ -30,6 +30,8 @@ export class MediaTrackStream extends stream.Duplex {
         });
 
         rawTrack.onMessage((msg) => {
+            this._totalBytesReceived += msg.byteLength;
+
             if (!this._readActive) return; // If the buffer is full, drop messages.
 
             // If the push is rejected, we pause reading until the next call to _read().
@@ -48,6 +50,16 @@ export class MediaTrackStream extends stream.Duplex {
             this.cork();
             rawTrack.onOpen(() => this.uncork());
         }
+    }
+
+    private _totalBytesSent = 0;
+    get totalBytesSent() {
+        return this._totalBytesSent;
+    }
+
+    private _totalBytesReceived = 0;
+    get totalBytesReceived() {
+        return this._totalBytesReceived;
     }
 
     private close() {
@@ -73,6 +85,7 @@ export class MediaTrackStream extends stream.Duplex {
 
         try {
             sentOk = this.rawTrack.sendMessageBinary(chunk);
+            this._totalBytesSent += chunk.byteLength;
         } catch (err: any) {
             return callback(err);
         }
@@ -95,9 +108,9 @@ export class MediaTrackStream extends stream.Duplex {
         }
 
         try {
-            sentOk = this.rawTrack.sendMessageBinary(
-                Buffer.concat(chunks.map(c => c.chunk))
-            );
+            const combinedChunks = Buffer.concat(chunks.map(c => c.chunk));
+            sentOk = this.rawTrack.sendMessageBinary(combinedChunks);
+            this._totalBytesSent += combinedChunks.byteLength;
         } catch (err: any) {
             return callback(err);
         }

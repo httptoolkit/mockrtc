@@ -120,6 +120,15 @@ export class MockRTCAdminRequestBuilder {
                     trackDirection
                 }
             }`,
+            'media-track-stats': gql`subscription OnDataChannelClose {
+                mediaTrackStats {
+                    peerId
+                    sessionId
+                    trackMid
+                    totalBytesSent
+                    totalBytesReceived
+                }
+            }`,
             'media-track-closed': gql`subscription OnDataChannelClose {
                 mediaTrackClosed {
                     peerId

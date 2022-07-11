@@ -379,6 +379,44 @@ describe("MockRTC event subscriptions", function () {
             expect(trackEvent.trackMid).to.equal("0");
         });
 
+        it("should fire media stats events whilst the connection is open", async function () {
+            this.timeout(5000);
+
+            const receivedStats: Array<MockRTCEventData['media-track-stats']> = [];
+            mockRTC.on('media-track-stats', (stats) => receivedStats.push(stats));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .sleep(10000)
+                .thenClose();
+
+            const localConnection = new RTCPeerConnection();
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            stream.getTracks().forEach((track) => localConnection.addTrack(track, stream));
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer, session } = await mockPeer.answerOffer(await localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            await waitForState(localConnection, 'connected');
+            await delay(2500); // Stats fires every 1s
+
+            expect(receivedStats.length).to.be.greaterThanOrEqual(2);
+            receivedStats.forEach((stats) => {
+                expect(stats.peerId).to.equal(mockPeer.peerId);
+                expect(stats.sessionId).to.equal(session.sessionId);
+                expect(stats.trackMid).to.equal("0");
+            });
+            const [firstStats, secondStats] = receivedStats;
+
+            expect(firstStats.totalBytesReceived).to.be.greaterThan(1);
+            expect(firstStats.totalBytesSent).to.equal(0);
+
+            expect(secondStats.totalBytesReceived).to.be.greaterThan(firstStats.totalBytesReceived);
+            expect(secondStats.totalBytesSent).to.equal(0);
+        });
+
     });
+
 
 });

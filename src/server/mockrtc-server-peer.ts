@@ -128,9 +128,18 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         trackDirection: mediaTrack.direction
                     });
 
-                    mediaTrack.on('close', () =>
+                    const statsInterval = setInterval(() => {
+                        this.eventEmitter.emit('media-track-stats', {
+                            ...trackEventParams,
+                            totalBytesSent: mediaTrack.totalBytesSent,
+                            totalBytesReceived: mediaTrack.totalBytesReceived
+                        });
+                    }, 1000);
+
+                    mediaTrack.on('close', () => {
+                        clearInterval(statsInterval);
                         this.eventEmitter.emit('media-track-closed', { ...trackEventParams })
-                    );
+                });
                 }
 
                 conn.on('track-open', emitTrackEvents);
