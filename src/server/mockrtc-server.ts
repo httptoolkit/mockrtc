@@ -26,14 +26,20 @@ export class MockRTCServer implements MockRTC {
     async start(): Promise<void> {
         if (this.debug) console.log("Starting MockRTC mock session");
     }
+
     async stop(): Promise<void> {
         if (this.debug) console.log("Stopping MockRTC mock session");
+        await this.reset();
+    }
+
+    async reset() {
         await Promise.all(
             this.activePeers.map(peer =>
                 peer.close()
             )
         );
         this._activePeers = {};
+        this.eventEmitter.removeAllListeners();
     }
 
     buildPeer(): MockRTCPeerBuilder {

@@ -45,7 +45,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         return this.mockRTCServer.start();
     }
 
-    reset() {}
+    reset() {
+        this.mockRTCServer.reset();
+    }
 
     stop() {
         return this.mockRTCServer.stop();
