@@ -278,6 +278,48 @@ describe("MockRTC event subscriptions", function () {
             expect(channelEvent.channelId).to.equal(1);
         });
 
+        it("does not fire any events for external connection data channels", async () => {
+            const eventPromises = ([
+                'data-channel-opened',
+                'data-channel-message-sent',
+                'data-channel-message-received',
+                'data-channel-closed'
+            ] as const).map((eventName) => {
+                const eventPromise = getDeferred<MockRTCEventData[typeof eventName]>();
+                mockRTC.on(eventName, (message) => eventPromise.resolve(message));
+                return eventPromise;
+            });
+
+            const mockPeer = await mockRTC.buildPeer()
+                .waitForChannel()
+                .send('Outgoing message')
+                .waitForNextMessage()
+                .thenClose();
+
+            const localConnection = new RTCPeerConnection();
+            const dataChannel = localConnection.createDataChannel("test-channel");
+
+            // Send a message to MockRTC once the connection opens:
+            dataChannel.addEventListener('open', () => {
+                dataChannel.send(
+                    Buffer.from('Technically binary message from client')
+                );
+            });
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerExternalOffer(localOffer); // <-- External
+            await localConnection.setRemoteDescription(answer);
+
+            const result = await Promise.race([
+                delay(500).then(() => 'timeout'),
+                ...eventPromises
+            ]);
+
+            // No event fires within 500ms
+            expect(result).to.equal('timeout');
+        });
+
     });
 
 });
