@@ -71,6 +71,18 @@ export type MockRTCEventData = {
         sessionId: string;
         channelId: number;
     }
+    "media-track-opened": {
+        peerId: string;
+        sessionId: string;
+        trackMid: string;
+        trackType: string;
+        trackDirection: string;
+    },
+    "media-track-closed": {
+        peerId: string;
+        sessionId: string;
+        trackMid: string;
+    }
 };
 
 export type MockRTCEvent = keyof MockRTCEventData;

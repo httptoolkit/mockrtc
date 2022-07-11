@@ -22,6 +22,7 @@ import { HandlerStep } from '../handling/handler-steps';
 import { RTCConnection } from '../webrtc/rtc-connection';
 import { MockRTCConnection } from '../webrtc/mockrtc-connection';
 import { DataChannelStream } from '../webrtc/datachannel-stream';
+import { MediaTrackStream } from '../webrtc/mediatrack-stream';
 
 export class MockRTCServerPeer implements MockRTCPeer {
 
@@ -111,9 +112,32 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
                 conn.on('channel-open', emitChannelEvents);
                 // Due to race conditions somewhere (?) presumably in node-datachannel, channels can
-                // be created before the 'connected' event fires, so we need to handle already existing
-                // channels here too:
+                // be created before the 'connected' event fires, so we need to handle already
+                // existing channels here too:
                 conn.channels.forEach(emitChannelEvents);
+
+                const emitTrackEvents = (mediaTrack: MediaTrackStream) => {
+                    const trackEventParams = {
+                        ...connectionEventParams,
+                        trackMid: mediaTrack.mid
+                    };
+
+                    this.eventEmitter.emit('media-track-opened', {
+                        ...trackEventParams,
+                        trackType: mediaTrack.type,
+                        trackDirection: mediaTrack.direction
+                    });
+
+                    mediaTrack.on('close', () =>
+                        this.eventEmitter.emit('media-track-closed', { ...trackEventParams })
+                    );
+                }
+
+                conn.on('track-open', emitTrackEvents);
+                // Due to race conditions somewhere (?) presumably in node-datachannel, tracks can
+                // be created before the 'connected' event fires, so we need to handle already
+                // existing tracks here too:
+                conn.mediaTracks.forEach(emitTrackEvents);
 
                 conn.once('connection-closed', () => {
                     this.eventEmitter.emit('peer-disconnected', { ...connectionEventParams });

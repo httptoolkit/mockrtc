@@ -31,6 +31,8 @@ const EVENTS = [
     'data-channel-message-sent',
     'data-channel-message-received',
     'data-channel-closed',
+    'media-track-opened',
+    'media-track-closed'
 ] as const;
 
 export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOptions, {}> {
@@ -98,6 +100,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             dataChannelMessageSent: DataChannelMessageEvent!
             dataChannelMessageReceived: DataChannelMessageEvent!
             dataChannelClosed: DataChannelCloseEvent!
+
+            mediaTrackOpened: MediaTrackOpenEvent!
+            mediaTrackClosed: MediaTrackCloseEvent!
         }
 
         type RTCPeerConnectionEvent {
@@ -137,6 +142,20 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             peerId: ID!
             sessionId: ID!
             channelId: Int!
+        }
+
+        type MediaTrackOpenEvent {
+            peerId: ID!
+            sessionId: ID!
+            trackMid: ID!
+            trackType: String!
+            trackDirection: String!
+        }
+
+        type MediaTrackCloseEvent {
+            peerId: ID!
+            sessionId: ID!
+            trackMid: ID!
         }
     `;
 

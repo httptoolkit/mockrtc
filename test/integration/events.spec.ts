@@ -322,4 +322,63 @@ describe("MockRTC event subscriptions", function () {
 
     });
 
+    describe("for media tracks", function () {
+
+        it("fires an event when a media track is created", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['media-track-opened']>();
+
+            mockRTC.on('media-track-opened', (track) => eventPromise.resolve(track));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .waitForNextMedia()
+                .thenClose();
+
+            const localConnection = new RTCPeerConnection();
+
+            const localOffer = await localConnection.createOffer({
+                offerToReceiveAudio: true
+            });
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerOffer(localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            const trackEvent = await eventPromise;
+            expect(trackEvent.peerId).to.equal(mockPeer.peerId);
+            expect(trackEvent.sessionId).not.to.equal(undefined);
+            expect(trackEvent.trackMid).to.equal("0");
+            expect(trackEvent.trackDirection).to.equal("SendOnly");
+            expect(trackEvent.trackType).to.equal("audio");
+        });
+
+        it("fires an event when a media track is closed", async () => {
+            const eventPromise = getDeferred<MockRTCEventData['media-track-closed']>();
+
+            mockRTC.on('media-track-closed', (track) => eventPromise.resolve(track));
+
+            const mockPeer = await mockRTC.buildPeer()
+                .thenEcho();
+
+            const localConnection = new RTCPeerConnection();
+            const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+            stream.getTracks().forEach((track) => localConnection.addTrack(track, stream));
+
+            const localOffer = await localConnection.createOffer();
+            await localConnection.setLocalDescription(localOffer);
+            const { answer } = await mockPeer.answerOffer(localOffer);
+            await localConnection.setRemoteDescription(answer);
+
+            await waitForState(localConnection, 'connected');
+
+            // Close the connection entirely, implicitly closing the media tracks:
+            localConnection.close();
+            // (renegotiating doesn't work - browsers keep the stream but updates direction to 'inactive')
+
+            const trackEvent = await eventPromise;
+            expect(trackEvent.peerId).to.equal(mockPeer.peerId);
+            expect(trackEvent.sessionId).not.to.equal(undefined);
+            expect(trackEvent.trackMid).to.equal("0");
+        });
+
+    });
+
 });
