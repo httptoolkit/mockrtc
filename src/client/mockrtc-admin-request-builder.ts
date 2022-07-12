@@ -83,6 +83,7 @@ export class MockRTCAdminRequestBuilder {
                     sessionId
                     channelId
                     channelLabel
+                    channelProtocol
                 }
             }`,
             'data-channel-message-sent': gql`subscription OnDataChannelMessageSent {

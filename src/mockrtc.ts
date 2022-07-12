@@ -51,6 +51,7 @@ export type MockRTCEventData = {
         sessionId: string;
         channelId: number;
         channelLabel: string;
+        channelProtocol: string;
     },
     "data-channel-message-sent": {
         peerId: string;

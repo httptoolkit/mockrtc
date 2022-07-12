@@ -178,7 +178,9 @@ describe("MockRTC event subscriptions", function () {
                 .thenSend('Test message');
 
             const localConnection = new RTCPeerConnection();
-            localConnection.createDataChannel("test-channel");
+            localConnection.createDataChannel("test-channel", {
+                protocol: "mockrtc-protocol"
+            });
 
             const localOffer = await localConnection.createOffer();
             await localConnection.setLocalDescription(localOffer);
@@ -190,6 +192,7 @@ describe("MockRTC event subscriptions", function () {
             expect(channelEvent.sessionId).not.to.equal(undefined);
             expect(channelEvent.channelId).to.equal(1);
             expect(channelEvent.channelLabel).to.equal('test-channel');
+            expect(channelEvent.channelProtocol).to.equal("mockrtc-protocol");
         });
 
         it("fires an event when a data channel message is sent", async () => {

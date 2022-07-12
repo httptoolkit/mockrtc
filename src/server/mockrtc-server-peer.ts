@@ -84,7 +84,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
                     this.eventEmitter.emit('data-channel-opened', {
                         ...channelEventParams,
-                        channelLabel: channelStream.label
+                        channelLabel: channelStream.label,
+                        channelProtocol: channelStream.protocol
                     });
 
                     const emitMessage = (direction: 'sent' | 'received') => (data: Buffer | string) => {

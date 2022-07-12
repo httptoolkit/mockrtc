@@ -138,6 +138,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             sessionId: ID!
             channelId: Int!
             channelLabel: String!
+            channelProtocol: String!
         }
 
         type DataChannelMessageEvent {

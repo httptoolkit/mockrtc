@@ -111,4 +111,8 @@ export class DataChannelStream extends stream.Duplex {
         return this.rawChannel.getLabel();
     }
 
+    get protocol() {
+        return this.rawChannel.getProtocol();
+    }
+
 }
