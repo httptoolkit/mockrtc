@@ -71,7 +71,6 @@ export class MockRTCAdminRequestBuilder {
                     peerId
                     sessionId
                     externalConnection {
-                        peerId
                         sessionId
                         localSdp { type, sdp }
                         remoteSdp { type, sdp }

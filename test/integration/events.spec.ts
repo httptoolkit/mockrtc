@@ -105,7 +105,6 @@ describe("MockRTC event subscriptions", function () {
             expect(attachEvent.sessionId).not.to.equal(undefined);
 
             const { externalConnection } = attachEvent;
-            expect(externalConnection.peerId).to.equal(mockPeer.peerId);
             expect(externalConnection.sessionId).not.to.equal(attachEvent.sessionId);
             expect(externalConnection.localSdp.type).to.equal('answer');
             expect(externalConnection.localSdp.sdp!.length).to.be.greaterThan(10);

@@ -124,7 +124,13 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         type RTCAttachmentEvent {
             peerId: ID!
             sessionId: ID!
-            externalConnection: RTCPeerConnectionEvent!
+            externalConnection: RTCExternalPeerConnectionEvent!
+        }
+
+        type RTCExternalPeerConnectionEvent {
+            sessionId: ID!
+            localSdp: SessionDescriptionResult!
+            remoteSdp: SessionDescriptionResult!
         }
 
         type DataChannelOpenEvent {
