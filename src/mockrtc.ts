@@ -56,6 +56,7 @@ export type MockRTCEventData = {
         peerId: string;
         sessionId: string;
         channelId: number;
+        direction: 'sent';
         content: Buffer;
         isBinary: boolean;
     },
@@ -63,6 +64,7 @@ export type MockRTCEventData = {
         peerId: string;
         sessionId: string;
         channelId: number;
+        direction: 'received';
         content: Buffer;
         isBinary: boolean;
     },

@@ -138,6 +138,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             peerId: ID!
             sessionId: ID!
             channelId: Int!
+            direction: String!
             content: Buffer!
             isBinary: Boolean!
         }

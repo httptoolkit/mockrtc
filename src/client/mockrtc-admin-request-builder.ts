@@ -91,6 +91,7 @@ export class MockRTCAdminRequestBuilder {
                     peerId
                     sessionId
                     channelId
+                    direction
                     content
                     isBinary
                 }
@@ -100,6 +101,7 @@ export class MockRTCAdminRequestBuilder {
                     peerId
                     sessionId
                     channelId
+                    direction
                     content
                     isBinary
                 }

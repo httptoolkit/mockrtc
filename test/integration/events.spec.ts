@@ -214,6 +214,8 @@ describe("MockRTC event subscriptions", function () {
             expect(messageEvent.peerId).to.equal(mockPeer.peerId);
             expect(messageEvent.sessionId).not.to.equal(undefined);
             expect(messageEvent.channelId).to.equal(1);
+
+            expect(messageEvent.direction).to.equal('sent');
             expect(messageEvent.isBinary).to.equal(false);
             expect(messageEvent.content.toString()).to.equal('Test message');
         });
@@ -249,6 +251,7 @@ describe("MockRTC event subscriptions", function () {
             expect(messageEvent.sessionId).not.to.equal(undefined);
             expect(messageEvent.channelId).to.equal(1);
 
+            expect(messageEvent.direction).to.equal('received');
             expect(messageEvent.isBinary).to.equal(true);
             expect(messageEvent.content.toString()).to.equal('Technically binary message from client');
         });

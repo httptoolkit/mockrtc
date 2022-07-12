@@ -97,6 +97,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
                         this.eventEmitter.emit(`data-channel-message-${direction}`, {
                             ...channelEventParams,
+                            direction,
                             content,
                             isBinary
                         });
