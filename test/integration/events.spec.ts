@@ -96,6 +96,7 @@ describe("MockRTC event subscriptions", function () {
             await localConnection.setRemoteDescription(remoteOffer);
             const localAnswer = await localConnection.createAnswer();
             localConnection.setLocalDescription(localAnswer);
+            remoteConn.setRemoteDescription(localAnswer);
 
             // Wait until the connection opens successfully:
             await waitForState(localConnection, 'connected');

@@ -47,12 +47,17 @@ export class MockRTCConnection extends RTCConnection {
                         if (this.externalConnection) {
                             throw new Error('Cannot attach mock connection to multiple external connections');
                         }
-                        this.externalConnection = this.getExternalConnection(controlMessage.id);
 
-                        this.emit('external-connection-attached', this.externalConnection);
+                        const externalConnection = this.getExternalConnection(controlMessage.id);
+                        // We don't attach until the external connection actually connects. Typically that's
+                        // already happened at this point, but its not guaranteed, so best to check:
+                        externalConnection.waitUntilConnected().then(() => {
+                            this.externalConnection = externalConnection;
+                            this.emit('external-connection-attached', this.externalConnection);
+                        });
 
-                        // We don't necessarily proxy traffic through to the external connection at this point,
-                        // that depends on the specific handling that's used here.
+                        // We don't necessarily proxy traffic through to the external connection at this
+                        // point, that depends on the specific handling that's used here.
                     } else {
                         throw new Error(`Unrecognized control channel message: ${controlMessage.type}`);
                     }
