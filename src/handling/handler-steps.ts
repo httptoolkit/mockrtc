@@ -190,7 +190,7 @@ export class PeerProxyStep extends PeerProxyStepDefinition {
         );
         externalConn.setRemoteDescription(await this.getAnswer(externalOffer));
 
-        connection.proxyTrafficTo(externalConn);
+        await connection.proxyTrafficTo(externalConn);
 
         // This step keeps running indefinitely, until the connection closes
         return new Promise<void>((resolve) => connection.on('connection-closed', resolve));

@@ -89,15 +89,16 @@ export class MockRTCConnection extends RTCConnection {
             await new Promise((resolve) => this.once('external-connection-attached', resolve));
         }
 
-        this.proxyTrafficTo(this.externalConnection!);
+        await this.proxyTrafficTo(this.externalConnection!);
     }
 
-    proxyTrafficTo(externalConnection: RTCConnection) {
+    async proxyTrafficTo(externalConnection: RTCConnection) {
         if (this.externalConnection) {
             if (externalConnection !== this.externalConnection) {
                 throw new Error('Cannot attach multiple external connections');
             }
         } else {
+            await externalConnection.waitUntilConnected();
             this.externalConnection = externalConnection;
             this.emit('external-connection-attached', this.externalConnection);
         }
