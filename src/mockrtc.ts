@@ -25,12 +25,21 @@ export interface MockRTCOptions {
     recordMessages?: boolean;
 }
 
+export interface SelectedRTCCandidate {
+    address: string;
+    port: number;
+    protocol: 'udp' | 'tcp';
+    type: string;
+};
+
 export type MockRTCEventData = {
     "peer-connected": {
         peerId: string;
         sessionId: string;
         localSdp: RTCSessionDescriptionInit;
         remoteSdp: RTCSessionDescriptionInit;
+        selectedLocalCandidate: SelectedRTCCandidate;
+        selectedRemoteCandidate: SelectedRTCCandidate;
     },
     "peer-disconnected": {
         peerId: string;
@@ -44,6 +53,8 @@ export type MockRTCEventData = {
             sessionId: string;
             localSdp: RTCSessionDescriptionInit;
             remoteSdp: RTCSessionDescriptionInit;
+            selectedLocalCandidate: SelectedRTCCandidate;
+            selectedRemoteCandidate: SelectedRTCCandidate;
         }
     },
     "data-channel-opened": {

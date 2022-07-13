@@ -58,6 +58,8 @@ export class MockRTCAdminRequestBuilder {
                     sessionId
                     localSdp { type, sdp }
                     remoteSdp { type, sdp }
+                    selectedLocalCandidate { address, port, protocol, type }
+                    selectedRemoteCandidate { address, port, protocol, type }
                 }
             }`,
             'peer-disconnected': gql`subscription OnPeerDisconnected {
@@ -74,6 +76,8 @@ export class MockRTCAdminRequestBuilder {
                         sessionId
                         localSdp { type, sdp }
                         remoteSdp { type, sdp }
+                        selectedLocalCandidate { address, port, protocol, type }
+                        selectedRemoteCandidate { address, port, protocol, type }
                     }
                 }
             }`,

@@ -3,6 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
@@ -207,6 +208,25 @@ export class RTCConnection extends EventEmitter {
     getLocalDescription() {
         if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
         return this.localDescription;
+    }
+
+    getSelectedCandidates() {
+        if (!this.rawConn) throw new Error("Can't get selected candidates after connection is closed");
+
+        const candidates = this.rawConn.getSelectedCandidatePair();
+        if (!candidates) return undefined;
+
+        // Rename transportType -> protocol, to better match the browser WebRTC APIs
+        return {
+            local: {
+                ..._.omit(candidates.local, 'transportType'),
+                protocol: candidates.local.transportType.toLowerCase()
+            },
+            remote: {
+                ..._.omit(candidates.remote, 'transportType'),
+                protocol: candidates.remote.transportType.toLowerCase()
+            }
+        };
     }
 
     async getMirroredLocalOffer(

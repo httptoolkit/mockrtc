@@ -47,6 +47,15 @@ describe("MockRTC event subscriptions", function () {
             expect(connectionEvent.localSdp.sdp!.length).to.be.greaterThan(10);
             expect(connectionEvent.remoteSdp.type).to.equal('answer');
             expect(connectionEvent.remoteSdp.sdp!.length).to.be.greaterThan(10);
+
+            const { selectedLocalCandidate, selectedRemoteCandidate } = connectionEvent;
+            [selectedLocalCandidate, selectedRemoteCandidate].forEach((candidate) => {
+                expect(candidate.address).to.match(/[:\w\.]+/); // IPv4 or 6
+                expect(candidate.port).to.be.greaterThan(0);
+                expect(candidate.protocol).to.equal('udp');
+                expect(candidate.type).not.to.equal(undefined);
+            });
+            expect(selectedLocalCandidate.port).to.not.equal(selectedRemoteCandidate.port);
         });
 
         it("should not fire an event when an external peer connects", async () => {
@@ -111,6 +120,15 @@ describe("MockRTC event subscriptions", function () {
             expect(externalConnection.localSdp.sdp!.length).to.be.greaterThan(10);
             expect(externalConnection.remoteSdp.type).to.equal('offer');
             expect(externalConnection.remoteSdp.sdp!.length).to.be.greaterThan(10);
+
+            const { selectedLocalCandidate, selectedRemoteCandidate } = externalConnection;
+            [selectedLocalCandidate, selectedRemoteCandidate].forEach((candidate) => {
+                expect(candidate.address).to.match(/[:\w\.]+/); // IPv4 or 6
+                expect(candidate.port).to.be.greaterThan(0);
+                expect(candidate.protocol).to.equal('udp');
+                expect(candidate.type).not.to.equal(undefined);
+            });
+            expect(selectedLocalCandidate.port).to.not.equal(selectedRemoteCandidate.port);
         });
 
         it("should fire an event when a mock peer is disconnected", async () => {

@@ -59,19 +59,29 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     sessionId: conn.id
                 };
 
+                const selectedCandidates = conn.getSelectedCandidates()!;
+
                 this.eventEmitter.emit('peer-connected', {
                     ...connectionEventParams,
                     localSdp: conn.getLocalDescription(),
-                    remoteSdp: conn.getRemoteDescription()
+                    remoteSdp: conn.getRemoteDescription(),
+
+                    selectedLocalCandidate: selectedCandidates.local,
+                    selectedRemoteCandidate: selectedCandidates.remote
                 });
 
-                conn.once('external-connection-attached', (externalConn) => {
+                conn.once('external-connection-attached', (externalConn: RTCConnection) => {
+                    const selectedExternalCandidates = externalConn.getSelectedCandidates()!;
+
                     this.eventEmitter.emit('external-peer-attached', {
                         ...connectionEventParams,
                         externalConnection: {
                             sessionId: externalConn.id,
                             localSdp: externalConn.getLocalDescription(),
-                            remoteSdp: externalConn.getRemoteDescription()
+                            remoteSdp: externalConn.getRemoteDescription(),
+
+                            selectedLocalCandidate: selectedExternalCandidates.local,
+                            selectedRemoteCandidate: selectedExternalCandidates.remote
                         }
                     });
                 });

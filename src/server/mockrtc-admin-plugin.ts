@@ -114,6 +114,15 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             sessionId: ID!
             localSdp: SessionDescriptionResult!
             remoteSdp: SessionDescriptionResult!
+            selectedLocalCandidate: RTCSelectedCandidate!
+            selectedRemoteCandidate: RTCSelectedCandidate!
+        }
+
+        type RTCSelectedCandidate {
+            address: String!
+            port: Int!
+            protocol: String!
+            type: String!
         }
 
         type RTCPeerDisconnectionEvent {
@@ -131,6 +140,8 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             sessionId: ID!
             localSdp: SessionDescriptionResult!
             remoteSdp: SessionDescriptionResult!
+            selectedLocalCandidate: RTCSelectedCandidate!
+            selectedRemoteCandidate: RTCSelectedCandidate!
         }
 
         type DataChannelOpenEvent {
