@@ -5,6 +5,7 @@
 
 import { randomUUID } from 'crypto';
 import { EventEmitter } from "events";
+import now = require("performance-now");
 
 import {
     MockRTCPeer,
@@ -23,6 +24,7 @@ import { RTCConnection } from '../webrtc/rtc-connection';
 import { MockRTCConnection } from '../webrtc/mockrtc-connection';
 import { DataChannelStream } from '../webrtc/datachannel-stream';
 import { MediaTrackStream } from '../webrtc/mediatrack-stream';
+import { TimingEvents } from '../mockrtc';
 
 export class MockRTCServerPeer implements MockRTCPeer {
 
@@ -54,9 +56,15 @@ export class MockRTCServerPeer implements MockRTCPeer {
             // Here we listen to the various internal connection events, and convert them into
             // their corresponding public-API events.
             conn.once('connection-connected', () => {
+                const timingEvents: TimingEvents = {
+                    startTime: Date.now(),
+                    connectTimestamp: now()
+                }
+
                 const connectionEventParams = {
                     peerId: this.peerId,
-                    sessionId: conn.id
+                    sessionId: conn.id,
+                    timingEvents
                 };
 
                 const selectedCandidates = conn.getSelectedCandidates()!;
@@ -73,6 +81,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 });
 
                 conn.once('external-connection-attached', (externalConn: RTCConnection) => {
+                    timingEvents.externalAttachTimestamp = now();
+
                     const selectedExternalCandidates = externalConn.getSelectedCandidates()!;
 
                     this.eventEmitter.emit('external-peer-attached', {
@@ -97,7 +107,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     this.eventEmitter.emit('data-channel-opened', {
                         ...channelEventParams,
                         channelLabel: channelStream.label,
-                        channelProtocol: channelStream.protocol
+                        channelProtocol: channelStream.protocol,
+                        eventTimestamp: now()
                     });
 
                     const emitMessage = (direction: 'sent' | 'received') => (data: Buffer | string) => {
@@ -111,16 +122,18 @@ export class MockRTCServerPeer implements MockRTCPeer {
                             ...channelEventParams,
                             direction,
                             content,
-                            isBinary
+                            isBinary,
+                            eventTimestamp: now()
                         });
                     };
 
                     channelStream.on('read-data', emitMessage('received'));
                     channelStream.on('wrote-data', emitMessage('sent'));
 
-                    channelStream.on('close', () =>
-                        this.eventEmitter.emit('data-channel-closed', { ...channelEventParams })
-                    );
+                    channelStream.on('close', () => this.eventEmitter.emit('data-channel-closed', {
+                        ...channelEventParams,
+                        eventTimestamp: now()
+                    }));
                 }
 
                 conn.on('channel-open', emitChannelEvents);
@@ -138,21 +151,26 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     this.eventEmitter.emit('media-track-opened', {
                         ...trackEventParams,
                         trackType: mediaTrack.type,
-                        trackDirection: mediaTrack.direction
+                        trackDirection: mediaTrack.direction,
+                        eventTimestamp: now()
                     });
 
                     const statsInterval = setInterval(() => {
                         this.eventEmitter.emit('media-track-stats', {
                             ...trackEventParams,
                             totalBytesSent: mediaTrack.totalBytesSent,
-                            totalBytesReceived: mediaTrack.totalBytesReceived
+                            totalBytesReceived: mediaTrack.totalBytesReceived,
+                            eventTimestamp: now()
                         });
                     }, 1000);
 
                     mediaTrack.on('close', () => {
                         clearInterval(statsInterval);
-                        this.eventEmitter.emit('media-track-closed', { ...trackEventParams })
-                });
+                        this.eventEmitter.emit('media-track-closed', {
+                            ...trackEventParams,
+                            eventTimestamp: now()
+                        });
+                    });
                 }
 
                 conn.on('track-open', emitTrackEvents);
@@ -162,6 +180,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 conn.mediaTracks.forEach(emitTrackEvents);
 
                 conn.once('connection-closed', () => {
+                    timingEvents.disconnectTimestamp = now();
                     this.eventEmitter.emit('peer-disconnected', { ...connectionEventParams });
                 });
             });

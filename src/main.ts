@@ -9,7 +9,8 @@ import {
     MockRTCPeerBuilder,
     MockRTCEvent,
     MockRTCEventData,
-    SelectedRTCCandidate
+    SelectedRTCCandidate,
+    TimingEvents
 } from "./mockrtc";
 
 import { MockRTCServer } from "./server/mockrtc-server";
@@ -44,7 +45,8 @@ export type {
     MockRTCAdminServer,
     MockRTCEvent,
     MockRTCEventData,
-    SelectedRTCCandidate
+    SelectedRTCCandidate,
+    TimingEvents
 };
 
 export type {

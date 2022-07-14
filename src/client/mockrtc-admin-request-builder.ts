@@ -58,6 +58,7 @@ export class MockRTCAdminRequestBuilder {
                     sessionId
 
                     metadata
+                    timingEvents
 
                     localSdp { type, sdp }
                     remoteSdp { type, sdp }
@@ -69,12 +70,14 @@ export class MockRTCAdminRequestBuilder {
                 peerDisconnected {
                     peerId
                     sessionId
+                    timingEvents
                 }
             }`,
             'external-peer-attached': gql`subscription OnExternalPeerAttached {
                 externalPeerAttached {
                     peerId
                     sessionId
+                    timingEvents
                     externalConnection {
                         sessionId
                         localSdp { type, sdp }
@@ -91,6 +94,9 @@ export class MockRTCAdminRequestBuilder {
                     channelId
                     channelLabel
                     channelProtocol
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`,
             'data-channel-message-sent': gql`subscription OnDataChannelMessageSent {
@@ -101,6 +107,9 @@ export class MockRTCAdminRequestBuilder {
                     direction
                     content
                     isBinary
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`,
             'data-channel-message-received': gql`subscription OnDataChannelMessageReceived {
@@ -111,6 +120,9 @@ export class MockRTCAdminRequestBuilder {
                     direction
                     content
                     isBinary
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`,
             'data-channel-closed': gql`subscription OnDataChannelClose {
@@ -118,6 +130,9 @@ export class MockRTCAdminRequestBuilder {
                     peerId
                     sessionId
                     channelId
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`,
             'media-track-opened': gql`subscription OnDataChannelClose {
@@ -127,6 +142,9 @@ export class MockRTCAdminRequestBuilder {
                     trackMid
                     trackType
                     trackDirection
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`,
             'media-track-stats': gql`subscription OnDataChannelClose {
@@ -136,6 +154,9 @@ export class MockRTCAdminRequestBuilder {
                     trackMid
                     totalBytesSent
                     totalBytesReceived
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`,
             'media-track-closed': gql`subscription OnDataChannelClose {
@@ -143,6 +164,9 @@ export class MockRTCAdminRequestBuilder {
                     peerId
                     sessionId
                     trackMid
+
+                    eventTimestamp
+                    timingEvents
                 }
             }`
         }[event];

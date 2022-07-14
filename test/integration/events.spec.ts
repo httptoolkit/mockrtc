@@ -52,6 +52,11 @@ describe("MockRTC event subscriptions", function () {
             expect(connectionEvent.remoteSdp.type).to.equal('answer');
             expect(connectionEvent.remoteSdp.sdp!.length).to.be.greaterThan(10);
 
+            expect(connectionEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(connectionEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(connectionEvent.timingEvents.externalAttachTimestamp).to.equal(undefined);
+            expect(connectionEvent.timingEvents.disconnectTimestamp).to.equal(undefined);
+
             expect(connectionEvent.metadata.userAgent).to.equal(navigator.userAgent);
 
             const { selectedLocalCandidate, selectedRemoteCandidate } = connectionEvent;
@@ -127,6 +132,11 @@ describe("MockRTC event subscriptions", function () {
             expect(externalConnection.remoteSdp.type).to.equal('offer');
             expect(externalConnection.remoteSdp.sdp!.length).to.be.greaterThan(10);
 
+            expect(attachEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(attachEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(attachEvent.timingEvents.externalAttachTimestamp).to.be.greaterThan(0);
+            expect(attachEvent.timingEvents.disconnectTimestamp).to.equal(undefined);
+
             const { selectedLocalCandidate, selectedRemoteCandidate } = externalConnection;
             [selectedLocalCandidate, selectedRemoteCandidate].forEach((candidate) => {
                 expect(candidate.address).to.match(/[:\w\.]+/); // IPv4 or 6
@@ -159,6 +169,11 @@ describe("MockRTC event subscriptions", function () {
             const connectionEvent = await eventPromise;
             expect(connectionEvent.peerId).to.equal(mockPeer.peerId);
             expect(connectionEvent.sessionId).not.to.equal(undefined);
+
+            expect(connectionEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(connectionEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(connectionEvent.timingEvents.externalAttachTimestamp).to.equal(undefined);
+            expect(connectionEvent.timingEvents.disconnectTimestamp).to.be.greaterThan(0);
         });
 
         it("should fire an event when a mock peer is disconnected by the peer", async () => {
@@ -188,6 +203,11 @@ describe("MockRTC event subscriptions", function () {
             const connectionEvent = await disconnectEventPromise;
             expect(connectionEvent.peerId).to.equal(mockPeer.peerId);
             expect(connectionEvent.sessionId).not.to.equal(undefined);
+
+            expect(connectionEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(connectionEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(connectionEvent.timingEvents.externalAttachTimestamp).to.equal(undefined);
+            expect(connectionEvent.timingEvents.disconnectTimestamp).to.be.greaterThan(0);
         });
 
         it("should not fire an event when an external peer disconnects", async () => {
@@ -247,6 +267,11 @@ describe("MockRTC event subscriptions", function () {
             expect(channelEvent.channelId).to.equal(1);
             expect(channelEvent.channelLabel).to.equal('test-channel');
             expect(channelEvent.channelProtocol).to.equal("mockrtc-protocol");
+
+            expect(channelEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(channelEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(channelEvent.eventTimestamp)
+                .to.be.greaterThan(channelEvent.timingEvents.connectTimestamp);
         });
 
         it("fires an event when a data channel message is sent", async () => {
@@ -274,6 +299,11 @@ describe("MockRTC event subscriptions", function () {
             expect(messageEvent.direction).to.equal('sent');
             expect(messageEvent.isBinary).to.equal(false);
             expect(messageEvent.content.toString()).to.equal('Test message');
+
+            expect(messageEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(messageEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(messageEvent.eventTimestamp)
+                .to.be.greaterThan(messageEvent.timingEvents.connectTimestamp);
         });
 
         it("fires an event when a data channel message is received", async () => {
@@ -310,6 +340,11 @@ describe("MockRTC event subscriptions", function () {
             expect(messageEvent.direction).to.equal('received');
             expect(messageEvent.isBinary).to.equal(true);
             expect(messageEvent.content.toString()).to.equal('Technically binary message from client');
+
+            expect(messageEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(messageEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(messageEvent.eventTimestamp)
+                .to.be.greaterThan(messageEvent.timingEvents.connectTimestamp);
         });
 
         it("fires an event when a data channel is closed", async () => {
@@ -335,6 +370,11 @@ describe("MockRTC event subscriptions", function () {
             expect(channelEvent.peerId).to.equal(mockPeer.peerId);
             expect(channelEvent.sessionId).not.to.equal(undefined);
             expect(channelEvent.channelId).to.equal(1);
+
+            expect(channelEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(channelEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(channelEvent.eventTimestamp)
+                .to.be.greaterThan(channelEvent.timingEvents.connectTimestamp);
         });
 
         it("does not fire any events for external connection data channels", async () => {
@@ -407,6 +447,11 @@ describe("MockRTC event subscriptions", function () {
             expect(trackEvent.trackMid).to.equal("0");
             expect(trackEvent.trackDirection).to.equal("SendOnly");
             expect(trackEvent.trackType).to.equal("audio");
+
+            expect(trackEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(trackEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(trackEvent.eventTimestamp)
+                .to.be.greaterThan(trackEvent.timingEvents.connectTimestamp);
         });
 
         it("fires an event when a media track is closed", async () => {
@@ -436,6 +481,11 @@ describe("MockRTC event subscriptions", function () {
             expect(trackEvent.peerId).to.equal(mockPeer.peerId);
             expect(trackEvent.sessionId).not.to.equal(undefined);
             expect(trackEvent.trackMid).to.equal("0");
+
+            expect(trackEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+            expect(trackEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
+            expect(trackEvent.eventTimestamp)
+                .to.be.greaterThan(trackEvent.timingEvents.connectTimestamp);
         });
 
         it("should fire media stats events whilst the connection is open", async function () {
@@ -465,6 +515,11 @@ describe("MockRTC event subscriptions", function () {
                 expect(stats.peerId).to.equal(mockPeer.peerId);
                 expect(stats.sessionId).to.equal(session.sessionId);
                 expect(stats.trackMid).to.equal("0");
+
+                expect(stats.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
+                expect(stats.timingEvents.connectTimestamp).to.be.greaterThan(0);
+                expect(stats.eventTimestamp)
+                    .to.be.greaterThan(stats.timingEvents.connectTimestamp);
             });
             const [firstStats, secondStats] = receivedStats;
 

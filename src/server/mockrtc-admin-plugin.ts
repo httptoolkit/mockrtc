@@ -114,6 +114,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             sessionId: ID!
 
             metadata: Raw!
+            timingEvents: Raw!
 
             localSdp: SessionDescriptionResult!
             remoteSdp: SessionDescriptionResult!
@@ -131,12 +132,14 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         type RTCPeerDisconnectionEvent {
             peerId: ID!
             sessionId: ID!
+            timingEvents: Raw!
         }
 
         type RTCAttachmentEvent {
             peerId: ID!
             sessionId: ID!
             externalConnection: RTCExternalPeerConnectionEvent!
+            timingEvents: Raw!
         }
 
         type RTCExternalPeerConnectionEvent {
@@ -153,6 +156,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             channelId: Int!
             channelLabel: String!
             channelProtocol: String!
+
+            eventTimestamp: Float!
+            timingEvents: Raw!
         }
 
         type DataChannelMessageEvent {
@@ -162,12 +168,18 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             direction: String!
             content: Buffer!
             isBinary: Boolean!
+
+            eventTimestamp: Float!
+            timingEvents: Raw!
         }
 
         type DataChannelCloseEvent {
             peerId: ID!
             sessionId: ID!
             channelId: Int!
+
+            eventTimestamp: Float!
+            timingEvents: Raw!
         }
 
         type MediaTrackOpenEvent {
@@ -176,6 +188,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             trackMid: ID!
             trackType: String!
             trackDirection: String!
+
+            eventTimestamp: Float!
+            timingEvents: Raw!
         }
 
         type MediaTrackStatsEvent {
@@ -185,12 +200,18 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
 
             totalBytesSent: Int!
             totalBytesReceived: Int!
+
+            eventTimestamp: Float!
+            timingEvents: Raw!
         }
 
         type MediaTrackCloseEvent {
             peerId: ID!
             sessionId: ID!
             trackMid: ID!
+
+            eventTimestamp: Float!
+            timingEvents: Raw!
         }
     `;
 

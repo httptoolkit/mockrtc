@@ -32,6 +32,20 @@ export interface SelectedRTCCandidate {
     type: string;
 };
 
+export interface TimingEvents {
+    // Milliseconds since unix epoch
+    startTime: number;
+
+    // High-precision floating-point monotonically increasing timestamps.
+    // Comparable and precise, but not related to specific current time.
+    connectTimestamp: number;
+    disconnectTimestamp?: number;
+    externalAttachTimestamp?: number;
+
+    // Other events (everything that might not be a on-off) each come with their
+    // eventTimestamp property for that specific event.
+}
+
 export type MockRTCEventData = {
     "peer-connected": {
         peerId: string;
@@ -41,10 +55,14 @@ export type MockRTCEventData = {
         remoteSdp: RTCSessionDescriptionInit;
         selectedLocalCandidate: SelectedRTCCandidate;
         selectedRemoteCandidate: SelectedRTCCandidate;
+
+        timingEvents: TimingEvents;
     },
     "peer-disconnected": {
         peerId: string;
         sessionId: string;
+
+        timingEvents: TimingEvents;
     },
     "external-peer-attached": {
         peerId: string;
@@ -56,7 +74,8 @@ export type MockRTCEventData = {
             remoteSdp: RTCSessionDescriptionInit;
             selectedLocalCandidate: SelectedRTCCandidate;
             selectedRemoteCandidate: SelectedRTCCandidate;
-        }
+        };
+        timingEvents: TimingEvents;
     },
     "data-channel-opened": {
         peerId: string;
@@ -64,6 +83,9 @@ export type MockRTCEventData = {
         channelId: number;
         channelLabel: string;
         channelProtocol: string;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     },
     "data-channel-message-sent": {
         peerId: string;
@@ -72,6 +94,9 @@ export type MockRTCEventData = {
         direction: 'sent';
         content: Buffer;
         isBinary: boolean;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     },
     "data-channel-message-received": {
         peerId: string;
@@ -80,11 +105,17 @@ export type MockRTCEventData = {
         direction: 'received';
         content: Buffer;
         isBinary: boolean;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     },
     "data-channel-closed": {
         peerId: string;
         sessionId: string;
         channelId: number;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     }
     "media-track-opened": {
         peerId: string;
@@ -92,6 +123,9 @@ export type MockRTCEventData = {
         trackMid: string;
         trackType: string;
         trackDirection: string;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     },
     "media-track-stats": {
         peerId: string;
@@ -100,11 +134,17 @@ export type MockRTCEventData = {
 
         totalBytesSent: number;
         totalBytesReceived: number;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     },
     "media-track-closed": {
         peerId: string;
         sessionId: string;
         trackMid: string;
+
+        eventTimestamp: number;
+        timingEvents: TimingEvents;
     }
 };
 
