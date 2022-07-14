@@ -155,13 +155,24 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         eventTimestamp: now()
                     });
 
+                    let previousBytesSent = 0;
+                    let previousBytesReceived = 0;
+
                     const statsInterval = setInterval(() => {
+                        if (
+                            previousBytesSent === mediaTrack.totalBytesSent &&
+                            previousBytesReceived === mediaTrack.totalBytesReceived
+                        ) return; // Skip zero-change events to limit traffic noise
+
                         this.eventEmitter.emit('media-track-stats', {
                             ...trackEventParams,
                             totalBytesSent: mediaTrack.totalBytesSent,
                             totalBytesReceived: mediaTrack.totalBytesReceived,
                             eventTimestamp: now()
                         });
+
+                        previousBytesSent = mediaTrack.totalBytesSent;
+                        previousBytesReceived = mediaTrack.totalBytesReceived;
                     }, 1000);
 
                     mediaTrack.on('close', () => {
