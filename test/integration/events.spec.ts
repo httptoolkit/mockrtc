@@ -137,12 +137,12 @@ describe("MockRTC event subscriptions", function () {
             expect(selectedLocalCandidate.port).to.not.equal(selectedRemoteCandidate.port);
         });
 
-        it("should fire an event when a mock peer is disconnected", async () => {
+        it("should fire an event when a mock peer is disconnected by MockRTC", async () => {
             const eventPromise = getDeferred<MockRTCEventData['peer-disconnected']>();
 
             mockRTC.on('peer-disconnected', (peer) => eventPromise.resolve(peer));
 
-            const mockPeer = await mockRTC.buildPeer().thenClose();
+            const mockPeer = await mockRTC.buildPeer().thenClose(); // MockRTC closes immediately
 
             const localConnection = new RTCPeerConnection();
 
@@ -157,6 +157,35 @@ describe("MockRTC event subscriptions", function () {
             await waitForState(localConnection, 'connected');
 
             const connectionEvent = await eventPromise;
+            expect(connectionEvent.peerId).to.equal(mockPeer.peerId);
+            expect(connectionEvent.sessionId).not.to.equal(undefined);
+        });
+
+        it("should fire an event when a mock peer is disconnected by the peer", async () => {
+            const connectEventPromise = getDeferred<MockRTCEventData['peer-connected']>();
+            const disconnectEventPromise = getDeferred<MockRTCEventData['peer-disconnected']>();
+
+            mockRTC.on('peer-connected', (peer) => connectEventPromise.resolve(peer));
+            mockRTC.on('peer-disconnected', (peer) => disconnectEventPromise.resolve(peer));
+
+            const mockPeer = await mockRTC.buildPeer().thenEcho(); // Stay open indefinitely
+
+            const localConnection = new RTCPeerConnection();
+
+            const { offer, setAnswer } = await mockPeer.createOffer();
+            await localConnection.setRemoteDescription(offer);
+
+            const localAnswer = await localConnection.createAnswer();
+            await localConnection.setLocalDescription(localAnswer);
+            await setAnswer(localAnswer);
+
+            // Wait until the connection opens successfully. We need to wait until MockRTC is fully
+            // aware - if we disconnect before full connection, there are no events at all.
+            await connectEventPromise;
+
+            localConnection.close(); // Explicitly close the local connection
+
+            const connectionEvent = await disconnectEventPromise;
             expect(connectionEvent.peerId).to.equal(mockPeer.peerId);
             expect(connectionEvent.sessionId).not.to.equal(undefined);
         });
