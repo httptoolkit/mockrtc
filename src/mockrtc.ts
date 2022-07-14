@@ -4,7 +4,7 @@
  */
 
 import type { MockRTCHandlerBuilder } from "./handling/handler-builder";
-import type { MockRTCPeer } from "./mockrtc-peer";
+import type { ConnectionMetadata, MockRTCPeer } from "./mockrtc-peer";
 
 export interface MockRTCPeerBuilder extends MockRTCHandlerBuilder<MockRTCPeer> {}
 
@@ -36,6 +36,7 @@ export type MockRTCEventData = {
     "peer-connected": {
         peerId: string;
         sessionId: string;
+        metadata: ConnectionMetadata,
         localSdp: RTCSessionDescriptionInit;
         remoteSdp: RTCSessionDescriptionInit;
         selectedLocalCandidate: SelectedRTCCandidate;

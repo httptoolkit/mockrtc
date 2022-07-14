@@ -161,7 +161,8 @@ export function hookWebRTCConnection(conn: RTCPeerConnection, mockPeer: MockRTCP
             // hasn't yet completed.
             mockOffer = mockPeer.createOffer({
                 mirrorSDP: remoteDescription.sdp,
-                addDataStream: true
+                addDataStream: true,
+                connectionMetadata: { userAgent: navigator.userAgent }
             });
 
             await _setRemoteDescription((await mockOffer).offer);
@@ -173,7 +174,8 @@ export function hookWebRTCConnection(conn: RTCPeerConnection, mockPeer: MockRTCP
                 setAnswer(remoteDescription),
                 // Complete the internal <-> mock connection:
                 mockPeer.answerOffer(realOffer, {
-                    mirrorSDP: remoteDescription.sdp
+                    mirrorSDP: remoteDescription.sdp,
+                    connectionMetadata: { userAgent: navigator.userAgent }
                 }).then(({ answer }) => _setRemoteDescription(answer))
             ]);
 

@@ -9,7 +9,12 @@ import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
 import * as NodeDataChannel from 'node-datachannel';
 
-import { AnswerOptions, MockRTCSession, OfferOptions } from '../mockrtc-peer';
+import {
+    ConnectionMetadata,
+    MockRTCSession,
+    AnswerOptions,
+    OfferOptions
+} from '../mockrtc-peer';
 
 import { DataChannelStream } from './datachannel-stream';
 import { MediaTrackStream } from './mediatrack-stream';
@@ -30,6 +35,11 @@ export class RTCConnection extends EventEmitter {
 
     private remoteDescription: RTCSessionDescriptionInit | undefined;
     private localDescription: RTCSessionDescriptionInit | undefined;
+
+    private _connectionMetadata: ConnectionMetadata = {};
+    public get metadata() {
+        return this._connectionMetadata;
+    }
 
     private readonly trackedChannels: Array<{ stream: DataChannelStream, isLocal: boolean }> = [];
 
@@ -350,6 +360,13 @@ export class RTCConnection extends EventEmitter {
         sessionId: this.id, // The session id is actually just the connection id, shhh don't tell anyone.
 
         createOffer: async (options: OfferOptions = {}): Promise<RTCSessionDescriptionInit> => {
+            if (options.connectionMetadata) {
+                this._connectionMetadata = {
+                    ...this._connectionMetadata,
+                    ...options.connectionMetadata
+                };
+            }
+
             if (options.mirrorSDP) {
                 return this.getMirroredLocalOffer(options.mirrorSDP, {
                     addDataStream: !!options.addDataStream
@@ -367,6 +384,13 @@ export class RTCConnection extends EventEmitter {
             offer: RTCSessionDescriptionInit,
             options: AnswerOptions = {}
         ): Promise<RTCSessionDescriptionInit> => {
+            if (options.connectionMetadata) {
+                this._connectionMetadata = {
+                    ...this._connectionMetadata,
+                    ...options.connectionMetadata
+                };
+            }
+
             this.setRemoteDescription(offer);
 
             if (options.mirrorSDP) {

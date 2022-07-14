@@ -56,6 +56,9 @@ export class MockRTCAdminRequestBuilder {
                 peerConnected {
                     peerId
                     sessionId
+
+                    metadata
+
                     localSdp { type, sdp }
                     remoteSdp { type, sdp }
                     selectedLocalCandidate { address, port, protocol, type }

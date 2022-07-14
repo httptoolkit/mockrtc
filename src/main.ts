@@ -56,7 +56,8 @@ export type {
     MockRTCExternalOfferParams,
     MockRTCExternalAnswerParams,
     OfferOptions,
-    AnswerOptions
+    AnswerOptions,
+    ConnectionMetadata
 } from './mockrtc-peer';
 
 export {

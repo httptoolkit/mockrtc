@@ -30,7 +30,11 @@ describe("MockRTC event subscriptions", function () {
 
             const localConnection = new RTCPeerConnection();
 
-            const { offer, setAnswer } = await mockPeer.createOffer();
+            const { offer, setAnswer } = await mockPeer.createOffer({
+                connectionMetadata: {
+                    userAgent: navigator.userAgent
+                }
+            });
             await localConnection.setRemoteDescription(offer);
 
             const localAnswer = await localConnection.createAnswer();
@@ -47,6 +51,8 @@ describe("MockRTC event subscriptions", function () {
             expect(connectionEvent.localSdp.sdp!.length).to.be.greaterThan(10);
             expect(connectionEvent.remoteSdp.type).to.equal('answer');
             expect(connectionEvent.remoteSdp.sdp!.length).to.be.greaterThan(10);
+
+            expect(connectionEvent.metadata.userAgent).to.equal(navigator.userAgent);
 
             const { selectedLocalCandidate, selectedRemoteCandidate } = connectionEvent;
             [selectedLocalCandidate, selectedRemoteCandidate].forEach((candidate) => {

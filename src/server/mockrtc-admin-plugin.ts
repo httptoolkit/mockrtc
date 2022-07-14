@@ -112,6 +112,9 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         type RTCPeerConnectionEvent {
             peerId: ID!
             sessionId: ID!
+
+            metadata: Raw!
+
             localSdp: SessionDescriptionResult!
             remoteSdp: SessionDescriptionResult!
             selectedLocalCandidate: RTCSelectedCandidate!

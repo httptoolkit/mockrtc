@@ -63,8 +63,10 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
                 this.eventEmitter.emit('peer-connected', {
                     ...connectionEventParams,
+
                     localSdp: conn.getLocalDescription(),
                     remoteSdp: conn.getRemoteDescription(),
+                    metadata: conn.metadata,
 
                     selectedLocalCandidate: selectedCandidates.local,
                     selectedRemoteCandidate: selectedCandidates.remote

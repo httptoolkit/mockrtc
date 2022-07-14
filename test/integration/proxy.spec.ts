@@ -3,13 +3,15 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { MockRTCEventData } from '../../src/mockrtc';
 import {
     MockRTC,
     expect,
     waitForChannelOpen,
     waitForChannelClose,
     waitForState,
-    setupPerfectNegotiation
+    setupPerfectNegotiation,
+    getDeferred
 } from '../test-setup';
 
 describe("When proxying WebRTC traffic", () => {
@@ -521,6 +523,69 @@ describe("When proxying WebRTC traffic", () => {
         expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
         expect(remoteFrame!.displayHeight).to.be.greaterThanOrEqual(240);
         expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+    });
+
+    it("should include user-agent metadata when creating a hooked offer", async () => {
+        const eventPromise = getDeferred<MockRTCEventData['peer-connected']>();
+        mockRTC.on('peer-connected', (peer) => eventPromise.resolve(peer));
+
+        const remoteConn = new RTCPeerConnection();
+
+        const mockPeer = await mockRTC.buildPeer()
+            .thenClose();
+
+        // Create a local data connection:
+        const localConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCConnection(localConn, mockPeer); // Automatically redirect traffic via mockPeer
+        localConn.createDataChannel("dataChannel");
+
+        // Create a local offer (which will be hooked automatically):
+        const localOffer = await localConn.createOffer();
+        localConn.setLocalDescription(localOffer);
+
+        // v-- Normally happens remotely, via signalling ---
+        remoteConn.setRemoteDescription(localOffer);
+        const remoteAnswer = await remoteConn.createAnswer();
+        remoteConn.setLocalDescription(remoteAnswer);
+        // ^-- Normally happens remotely, via signalling ---
+
+        // Accept the real remote answer, and start communicating:
+        localConn.setRemoteDescription(remoteAnswer);
+
+        // Check that the connection event automatically includes the user agent:
+        const connectEvent = await eventPromise;
+        expect(connectEvent.metadata.userAgent).to.equal(navigator.userAgent);
+    });
+
+    it("should include user-agent metadata when creating a hooked answer", async () => {
+        const eventPromise = getDeferred<MockRTCEventData['peer-connected']>();
+        mockRTC.on('peer-connected', (peer) => eventPromise.resolve(peer));
+
+        const remoteConn = new RTCPeerConnection();
+        remoteConn.createDataChannel("empty-channel"); // Need at least one channel/track to get an offer
+
+        const mockPeer = await mockRTC.buildPeer()
+            .thenClose();
+
+        // Remote connection starts first, sending us a real offer:
+        const remoteOffer = await remoteConn.createOffer();
+        remoteConn.setLocalDescription(remoteOffer);
+
+        // Create a local data connection:
+        const localConn = new RTCPeerConnection();
+        MockRTC.hookWebRTCConnection(localConn, mockPeer); // Automatically redirect traffic via mockPeer
+
+        // Receive the remote offer, use that locally to create an answer (this is all hooked):
+        await localConn.setRemoteDescription(remoteOffer);
+        const localAnswer = await localConn.createAnswer();
+        localConn.setLocalDescription(localAnswer);
+
+        // Signal the answer back to the real unhooked remote connection:
+        await remoteConn.setRemoteDescription(localAnswer);
+
+        // Check that the connection event automatically includes the user agent:
+        const connectEvent = await eventPromise;
+        expect(connectEvent.metadata.userAgent).to.equal(navigator.userAgent);
     });
 
 });

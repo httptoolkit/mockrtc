@@ -153,6 +153,16 @@ export interface OfferOptions {
      * This option has no effect if mirrorSDP is not set.
      */
     addDataStream?: boolean;
+
+    /**
+     * Extra metadata to associate with the connection. This will be exposed on
+     * events like peer-connected, and can be used to add context to connections.
+     *
+     * If this value is provided during renegotiation, it is merged key-wise with
+     * any existing metadata value for the connection (i.e. existing metadata
+     * values will not change, unless a new value for the same key is provided).
+     */
+    connectionMetadata?: ConnectionMetadata;
 }
 
 export interface AnswerOptions {
@@ -161,6 +171,28 @@ export interface AnswerOptions {
      * create an equivalent answer, including the same media params.
      */
     mirrorSDP?: string;
+
+    /**
+     * Extra metadata to associate with the connection. This will be exposed on
+     * events like peer-connected, and can be used to add context to connections.
+     *
+     * If this value is provided during renegotiation, it is merged key-wise with
+     * any existing metadata value for the connection (i.e. existing metadata
+     * values will not change, unless a new value for the same key is provided).
+     */
+    connectionMetadata?: ConnectionMetadata;
+}
+
+/**
+ * Extra metadata to associate with the connection. This will be exposed on
+ * events like peer-connected, and can be used to add context to connections.
+ *
+ * The only defined value is 'userAgent' which must be a client user agent
+ * string (in a browser, the navigator.userAgent value) if defined.
+ */
+export interface ConnectionMetadata {
+    userAgent?: string;
+    [k: string]: any;
 }
 
 export interface MockRTCExternalOfferParams {
