@@ -231,10 +231,12 @@ export class RTCConnection extends EventEmitter {
         return {
             local: {
                 ..._.omit(candidates.local, 'transportType'),
+                type: candidates.local.type as RTCIceCandidateType,
                 protocol: candidates.local.transportType.toLowerCase()
             },
             remote: {
                 ..._.omit(candidates.remote, 'transportType'),
+                type: candidates.remote.type as RTCIceCandidateType,
                 protocol: candidates.remote.transportType.toLowerCase()
             }
         };

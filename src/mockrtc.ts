@@ -34,7 +34,7 @@ export interface SelectedRTCCandidate {
     address: string;
     port: number;
     protocol: 'udp' | 'tcp';
-    type: string;
+    type: RTCIceCandidateType;
 };
 
 export interface TimingEvents {
