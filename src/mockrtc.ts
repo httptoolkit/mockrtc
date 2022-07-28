@@ -25,6 +25,11 @@ export interface MockRTCOptions {
     recordMessages?: boolean;
 }
 
+export interface MockRTCSessionDescription {
+    type: 'offer' | 'answer';
+    sdp: string;
+}
+
 export interface SelectedRTCCandidate {
     address: string;
     port: number;
@@ -50,9 +55,9 @@ export type MockRTCEventData = {
     "peer-connected": {
         peerId: string;
         sessionId: string;
-        metadata: ConnectionMetadata,
-        localSdp: RTCSessionDescriptionInit;
-        remoteSdp: RTCSessionDescriptionInit;
+        metadata: ConnectionMetadata;
+        localSessionDescription: MockRTCSessionDescription;
+        remoteSessionDescription: MockRTCSessionDescription;
         selectedLocalCandidate: SelectedRTCCandidate;
         selectedRemoteCandidate: SelectedRTCCandidate;
 
@@ -70,8 +75,8 @@ export type MockRTCEventData = {
         externalConnection: {
             peerId: string;
             sessionId: string;
-            localSdp: RTCSessionDescriptionInit;
-            remoteSdp: RTCSessionDescriptionInit;
+            localSessionDescription: MockRTCSessionDescription;
+            remoteSessionDescription: MockRTCSessionDescription;
             selectedLocalCandidate: SelectedRTCCandidate;
             selectedRemoteCandidate: SelectedRTCCandidate;
         };

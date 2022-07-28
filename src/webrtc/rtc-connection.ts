@@ -9,6 +9,7 @@ import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
 import * as NodeDataChannel from 'node-datachannel';
 
+import type { MockRTCSessionDescription } from '../mockrtc';
 import {
     ConnectionMetadata,
     MockRTCSession,
@@ -34,7 +35,7 @@ export class RTCConnection extends EventEmitter {
         = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
 
     private remoteDescription: RTCSessionDescriptionInit | undefined;
-    private localDescription: RTCSessionDescriptionInit | undefined;
+    private localDescription: MockRTCSessionDescription | undefined;
 
     private _connectionMetadata: ConnectionMetadata = {};
     public get metadata() {
@@ -181,7 +182,7 @@ export class RTCConnection extends EventEmitter {
      * full result. Because this waits for gathering, it will not resolve if no DataChannel, other
      * tracks or remote description have been provided beforehand.
      */
-    async buildLocalDescription(): Promise<RTCSessionDescriptionInit> {
+    async buildLocalDescription(): Promise<MockRTCSessionDescription> {
         if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
 
         let setupChannel: NodeDataChannel.DataChannel | undefined;
@@ -204,7 +205,7 @@ export class RTCConnection extends EventEmitter {
 
         if (!this.rawConn) throw new Error("Connection was closed while building local description");
 
-        const sessionDescription = this.rawConn.localDescription() as RTCSessionDescriptionInit;
+        const sessionDescription = this.rawConn.localDescription() as MockRTCSessionDescription;
         setupChannel?.close(); // Close the temporary setup channel, if we created one
         this.localDescription = sessionDescription;
         return sessionDescription;
@@ -242,7 +243,7 @@ export class RTCConnection extends EventEmitter {
     async getMirroredLocalOffer(
         sdpToMirror: string,
         options: { addDataStream?: boolean } = {}
-    ): Promise<RTCSessionDescriptionInit> {
+    ): Promise<MockRTCSessionDescription> {
         if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
 
         const offerToMirror = SDP.parse(sdpToMirror);
@@ -321,11 +322,11 @@ export class RTCConnection extends EventEmitter {
         mirrorMediaParams(offerToMirror, offerSDP);
         localDesc.sdp = SDP.write(offerSDP);
 
-        this.localDescription = localDesc as RTCSessionDescriptionInit;
+        this.localDescription = localDesc as MockRTCSessionDescription;
         return this.localDescription;
     }
 
-    async getMirroredLocalAnswer(sdpToMirror: string): Promise<RTCSessionDescriptionInit> {
+    async getMirroredLocalAnswer(sdpToMirror: string): Promise<MockRTCSessionDescription> {
         const localDesc = this.rawConn!.localDescription()!;
 
         const answerToMirror = SDP.parse(sdpToMirror);
@@ -334,7 +335,7 @@ export class RTCConnection extends EventEmitter {
 
         localDesc.sdp = SDP.write(answerSDP);
 
-        this.localDescription = localDesc as RTCSessionDescriptionInit;
+        this.localDescription = localDesc as MockRTCSessionDescription;
         return this.localDescription;
     }
 
@@ -359,7 +360,7 @@ export class RTCConnection extends EventEmitter {
     readonly sessionApi: MockRTCSession = {
         sessionId: this.id, // The session id is actually just the connection id, shhh don't tell anyone.
 
-        createOffer: async (options: OfferOptions = {}): Promise<RTCSessionDescriptionInit> => {
+        createOffer: async (options: OfferOptions = {}): Promise<MockRTCSessionDescription> => {
             if (options.connectionMetadata) {
                 this._connectionMetadata = {
                     ...this._connectionMetadata,
@@ -376,14 +377,14 @@ export class RTCConnection extends EventEmitter {
             }
         },
 
-        completeOffer: async (answer: RTCSessionDescriptionInit): Promise<void> => {
+        completeOffer: async (answer: MockRTCSessionDescription): Promise<void> => {
             this.setRemoteDescription(answer);
         },
 
         answerOffer: async (
-            offer: RTCSessionDescriptionInit,
+            offer: MockRTCSessionDescription,
             options: AnswerOptions = {}
-        ): Promise<RTCSessionDescriptionInit> => {
+        ): Promise<MockRTCSessionDescription> => {
             if (options.connectionMetadata) {
                 this._connectionMetadata = {
                     ...this._connectionMetadata,

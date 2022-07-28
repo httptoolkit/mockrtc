@@ -5,6 +5,7 @@
 
 import { PluggableAdmin } from 'mockttp';
 
+import { MockRTCSessionDescription } from '../mockrtc';
 import type { DataChannelStream } from '../webrtc/datachannel-stream';
 import type { MediaTrackStream } from '../webrtc/mediatrack-stream';
 import type { MockRTCConnection } from '../webrtc/mockrtc-connection';
@@ -198,7 +199,7 @@ export class PeerProxyStep extends PeerProxyStepDefinition {
 
     serialize(channel: ClientServerChannel): {} {
         channel.onRequest<
-            { offer: RTCSessionDescriptionInit },
+            { offer: MockRTCSessionDescription },
             { answer: RTCSessionDescriptionInit }
         >(async (msg) => {
             return { answer: await this.getAnswer(msg.offer) };
@@ -208,10 +209,10 @@ export class PeerProxyStep extends PeerProxyStepDefinition {
     }
 
     static deserialize(_data: {}, channel: ClientServerChannel): PeerProxyStep {
-        return new PeerProxyStep(async (offer: RTCSessionDescriptionInit) => {
+        return new PeerProxyStep(async (offer: MockRTCSessionDescription) => {
             const response = await channel.request<
-                { offer: RTCSessionDescriptionInit },
-                { answer: RTCSessionDescriptionInit }
+                { offer: MockRTCSessionDescription },
+                { answer: MockRTCSessionDescription }
             >({ offer });
             return response.answer;
         });

@@ -3,12 +3,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import type { MockRTCSessionDescription } from './mockrtc';
 import type {
+    MockRTCPeer,
     MockRTCExternalAnswerParams,
     MockRTCExternalOfferParams,
     MockRTCOfferParams
 } from "./mockrtc-peer";
-import type { MockRTCPeer } from "./mockrtc-peer";
 
 import { MOCKRTC_CONTROL_CHANNEL } from "./webrtc/control-channel";
 
@@ -151,7 +152,7 @@ export function hookWebRTCConnection(conn: RTCPeerConnection, mockPeer: MockRTCP
         }
     }) as any;
 
-    conn.setRemoteDescription = (async (remoteDescription: RTCSessionDescriptionInit) => {
+    conn.setRemoteDescription = (async (remoteDescription: MockRTCSessionDescription) => {
         if (remoteDescription.type === 'offer') {
             // We have an offer! Remember it, so we can createAnswer shortly.
             pendingRemoteDescription = remoteDescription;

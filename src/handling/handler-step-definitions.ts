@@ -5,6 +5,8 @@
 
 import * as PluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 
+import { MockRTCSessionDescription } from '../mockrtc';
+
 export type Serializable = PluggableAdmin.Serialization.Serializable;
 export const { Serializable } = PluggableAdmin.Serialization;
 type ClientServerChannel = PluggableAdmin.Serialization.ClientServerChannel;
@@ -89,18 +91,18 @@ export class PeerProxyStepDefinition extends Serializable implements HandlerStep
 
     readonly type = 'peer-proxy';
 
-    protected getAnswer: (offer: RTCSessionDescriptionInit) => Promise<RTCSessionDescriptionInit>;
+    protected getAnswer: (offer: MockRTCSessionDescription) => Promise<RTCSessionDescriptionInit>;
 
     constructor(
         connectionTarget:
             | RTCPeerConnection
-            | ((offer: RTCSessionDescriptionInit) => Promise<RTCSessionDescriptionInit>)
+            | ((offer: MockRTCSessionDescription) => Promise<RTCSessionDescriptionInit>)
     ) {
         super();
         if (connectionTarget instanceof Function) {
             this.getAnswer = connectionTarget;
         } else {
-            this.getAnswer = async (offer: RTCSessionDescriptionInit) => {
+            this.getAnswer = async (offer: MockRTCSessionDescription) => {
                 await connectionTarget.setRemoteDescription(offer);
                 const answer = await connectionTarget.createAnswer();
                 await connectionTarget.setLocalDescription(answer);
@@ -111,7 +113,7 @@ export class PeerProxyStepDefinition extends Serializable implements HandlerStep
 
     serialize(channel: ClientServerChannel): {} {
         channel.onRequest<
-            { offer: RTCSessionDescriptionInit },
+            { offer: MockRTCSessionDescription },
             { answer: RTCSessionDescriptionInit }
         >(async (msg) => {
             return { answer: await this.getAnswer(msg.offer) };

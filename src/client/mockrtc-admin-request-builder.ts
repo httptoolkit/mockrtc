@@ -60,8 +60,8 @@ export class MockRTCAdminRequestBuilder {
                     metadata
                     timingEvents
 
-                    localSdp { type, sdp }
-                    remoteSdp { type, sdp }
+                    localSessionDescription { type, sdp }
+                    remoteSessionDescription { type, sdp }
                     selectedLocalCandidate { address, port, protocol, type }
                     selectedRemoteCandidate { address, port, protocol, type }
                 }
@@ -80,8 +80,8 @@ export class MockRTCAdminRequestBuilder {
                     timingEvents
                     externalConnection {
                         sessionId
-                        localSdp { type, sdp }
-                        remoteSdp { type, sdp }
+                        localSessionDescription { type, sdp }
+                        remoteSessionDescription { type, sdp }
                         selectedLocalCandidate { address, port, protocol, type }
                         selectedRemoteCandidate { address, port, protocol, type }
                     }

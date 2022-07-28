@@ -3,6 +3,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+import { MockRTCSessionDescription } from './mockrtc';
+
 export interface MockRTCPeerOptions {
     debug?: boolean;
     recordMessages?: boolean;
@@ -112,7 +114,7 @@ export interface MockRTCSession {
     /**
      * Create a new offer for this session, to renegotiate the existing connection.
      */
-    createOffer(options?: OfferOptions): Promise<RTCSessionDescriptionInit>;
+    createOffer(options?: OfferOptions): Promise<MockRTCSessionDescription>;
 
     /**
      * Provide an answer to complete an offer for this session, to renegotiate the existing connection.
@@ -122,17 +124,17 @@ export interface MockRTCSession {
     /**
      * Get an answer given an offer from elsewhere, to renegotiate the existing connection.
      */
-    answerOffer(offer: RTCSessionDescriptionInit, options?: AnswerOptions): Promise<RTCSessionDescriptionInit>;
+    answerOffer(offer: RTCSessionDescriptionInit, options?: AnswerOptions): Promise<MockRTCSessionDescription>;
 }
 
 export interface MockRTCOfferParams {
-    offer: RTCSessionDescriptionInit;
+    offer: MockRTCSessionDescription;
     setAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
     session: MockRTCSession;
 }
 
 export interface MockRTCAnswerParams {
-    answer: RTCSessionDescriptionInit;
+    answer: MockRTCSessionDescription;
     session: MockRTCSession;
 }
 
@@ -197,13 +199,13 @@ export interface ConnectionMetadata {
 
 export interface MockRTCExternalOfferParams {
     id: string; // Used for external attach control messages
-    offer: RTCSessionDescriptionInit;
+    offer: MockRTCSessionDescription;
     setAnswer: (answer: RTCSessionDescriptionInit) => Promise<void>;
     session: MockRTCSession;
 }
 
 export interface MockRTCExternalAnswerParams {
     id: string; // Used for external attach control messagesz
-    answer: RTCSessionDescriptionInit;
+    answer: MockRTCSessionDescription;
     session: MockRTCSession;
 }

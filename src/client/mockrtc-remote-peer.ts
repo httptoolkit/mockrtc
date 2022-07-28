@@ -6,6 +6,7 @@
 import { gql } from 'graphql-tag';
 import * as PluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 
+import { MockRTCSessionDescription } from '../mockrtc';
 import {
     MockRTCPeer,
     MockRTCOfferParams,
@@ -83,7 +84,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
     }
 
     async answerOffer(
-        offer: RTCSessionDescriptionInit,
+        offer: MockRTCSessionDescription,
         options?: AnswerOptions
     ): Promise<MockRTCAnswerParams> {
         return this.adminClient.sendQuery<
@@ -114,7 +115,7 @@ export class MockRTCRemotePeer implements MockRTCPeer {
     }
 
     async answerExternalOffer(
-        offer: RTCSessionDescriptionInit,
+        offer: MockRTCSessionDescription,
         options?: AnswerOptions
     ): Promise<MockRTCExternalAnswerParams> {
         return this.adminClient.sendQuery<
@@ -211,10 +212,10 @@ class RemoteSessionApi implements MockRTCSession {
         public readonly sessionId: string
     ) {}
 
-    createOffer(options?: OfferOptions): Promise<RTCSessionDescriptionInit> {
+    createOffer(options?: OfferOptions): Promise<MockRTCSessionDescription> {
         return this.adminClient.sendQuery<
             { createOffer: SessionData },
-            RTCSessionDescriptionInit
+            MockRTCSessionDescription
         >({
             query: gql`
                 mutation GetPeerRTCSessionOffer($peerId: ID!, $sessionId: ID!, $options: Raw) {
@@ -231,7 +232,7 @@ class RemoteSessionApi implements MockRTCSession {
         });
     }
 
-    completeOffer(answer: RTCSessionDescriptionInit): Promise<void> {
+    completeOffer(answer: MockRTCSessionDescription): Promise<void> {
         return this.adminClient.sendQuery<void>({
             query: gql`
                 mutation CompletePeerRTCOffer(
@@ -251,12 +252,12 @@ class RemoteSessionApi implements MockRTCSession {
     }
 
     answerOffer(
-        offer: RTCSessionDescriptionInit,
+        offer: MockRTCSessionDescription,
         options?: AnswerOptions
-    ): Promise<RTCSessionDescriptionInit> {
+    ): Promise<MockRTCSessionDescription> {
         return this.adminClient.sendQuery<
             { answerOffer: SessionData },
-            RTCSessionDescriptionInit
+            MockRTCSessionDescription
         >({
             query: gql`
                 mutation GetPeerRTCAnswer(

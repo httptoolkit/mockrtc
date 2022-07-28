@@ -72,8 +72,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 this.eventEmitter.emit('peer-connected', {
                     ...connectionEventParams,
 
-                    localSdp: conn.getLocalDescription(),
-                    remoteSdp: conn.getRemoteDescription(),
+                    localSessionDescription: conn.getLocalDescription(),
+                    remoteSessionDescription: conn.getRemoteDescription(),
                     metadata: conn.metadata,
 
                     selectedLocalCandidate: selectedCandidates.local,
@@ -89,8 +89,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         ...connectionEventParams,
                         externalConnection: {
                             sessionId: externalConn.id,
-                            localSdp: externalConn.getLocalDescription(),
-                            remoteSdp: externalConn.getRemoteDescription(),
+                            localSessionDescription: externalConn.getLocalDescription(),
+                            remoteSessionDescription: externalConn.getRemoteDescription(),
 
                             selectedLocalCandidate: selectedExternalCandidates.local,
                             selectedRemoteCandidate: selectedExternalCandidates.remote

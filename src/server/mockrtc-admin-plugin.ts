@@ -11,7 +11,7 @@ import type { IResolvers } from "@graphql-tools/utils";
 import { PubSub } from "graphql-subscriptions";
 
 import { HandlerStep, StepLookup } from '../handling/handler-steps';
-import { MockRTCOptions } from '../mockrtc';
+import { MockRTCOptions, MockRTCSessionDescription } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 import { AnswerOptions, OfferOptions } from '../mockrtc-peer';
 
@@ -20,7 +20,7 @@ type SerializedValue<T> = PluggableAdmin.Serialization.SerializedValue<T>;
 
 export interface SessionData {
     id: string;
-    description: RTCSessionDescriptionInit
+    description: MockRTCSessionDescription
 }
 
 const EVENTS = [
@@ -116,8 +116,8 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             metadata: Raw!
             timingEvents: Raw!
 
-            localSdp: SessionDescriptionResult!
-            remoteSdp: SessionDescriptionResult!
+            localSessionDescription: SessionDescriptionResult!
+            remoteSessionDescription: SessionDescriptionResult!
             selectedLocalCandidate: RTCSelectedCandidate!
             selectedRemoteCandidate: RTCSelectedCandidate!
         }
@@ -144,8 +144,8 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
 
         type RTCExternalPeerConnectionEvent {
             sessionId: ID!
-            localSdp: SessionDescriptionResult!
-            remoteSdp: SessionDescriptionResult!
+            localSessionDescription: SessionDescriptionResult!
+            remoteSessionDescription: SessionDescriptionResult!
             selectedLocalCandidate: RTCSelectedCandidate!
             selectedRemoteCandidate: RTCSelectedCandidate!
         }
@@ -273,7 +273,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 completeOffer: async (__: any, { peerId, sessionId, answer } : {
                     peerId: string,
                     sessionId: string,
-                    answer: RTCSessionDescriptionInit
+                    answer: MockRTCSessionDescription
                 }): Promise<void> => {
                     const session = this.mockRTCServer.getPeer(peerId).getSession(sessionId);
                     await session.completeOffer(answer);
@@ -281,7 +281,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 answerOffer: async (__: any, { peerId, sessionId, offer, options } : {
                     peerId: string,
                     sessionId?: string,
-                    offer: RTCSessionDescriptionInit,
+                    offer: MockRTCSessionDescription,
                     options?: AnswerOptions
                 }): Promise<SessionData> => {
                     const peer = this.mockRTCServer.getPeer(peerId);
@@ -301,7 +301,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 },
                 answerExternalOffer: async (__: any, { peerId, offer, options } : {
                     peerId: string,
-                    offer: RTCSessionDescriptionInit,
+                    offer: MockRTCSessionDescription,
                     options?: AnswerOptions
                 }): Promise<SessionData> => {
                     const peer = this.mockRTCServer.getPeer(peerId);

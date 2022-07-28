@@ -47,10 +47,10 @@ describe("MockRTC event subscriptions", function () {
             const connectionEvent = await eventPromise;
             expect(connectionEvent.peerId).to.equal(mockPeer.peerId);
             expect(connectionEvent.sessionId).not.to.equal(undefined);
-            expect(connectionEvent.localSdp.type).to.equal('offer');
-            expect(connectionEvent.localSdp.sdp!.length).to.be.greaterThan(10);
-            expect(connectionEvent.remoteSdp.type).to.equal('answer');
-            expect(connectionEvent.remoteSdp.sdp!.length).to.be.greaterThan(10);
+            expect(connectionEvent.localSessionDescription.type).to.equal('offer');
+            expect(connectionEvent.localSessionDescription.sdp!.length).to.be.greaterThan(10);
+            expect(connectionEvent.remoteSessionDescription.type).to.equal('answer');
+            expect(connectionEvent.remoteSessionDescription.sdp!.length).to.be.greaterThan(10);
 
             expect(connectionEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
             expect(connectionEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
@@ -127,10 +127,10 @@ describe("MockRTC event subscriptions", function () {
 
             const { externalConnection } = attachEvent;
             expect(externalConnection.sessionId).not.to.equal(attachEvent.sessionId);
-            expect(externalConnection.localSdp.type).to.equal('answer');
-            expect(externalConnection.localSdp.sdp!.length).to.be.greaterThan(10);
-            expect(externalConnection.remoteSdp.type).to.equal('offer');
-            expect(externalConnection.remoteSdp.sdp!.length).to.be.greaterThan(10);
+            expect(externalConnection.localSessionDescription.type).to.equal('answer');
+            expect(externalConnection.localSessionDescription.sdp!.length).to.be.greaterThan(10);
+            expect(externalConnection.remoteSessionDescription.type).to.equal('offer');
+            expect(externalConnection.remoteSessionDescription.sdp!.length).to.be.greaterThan(10);
 
             expect(attachEvent.timingEvents.startTime).to.be.lessThanOrEqual(Date.now());
             expect(attachEvent.timingEvents.connectTimestamp).to.be.greaterThan(0);
