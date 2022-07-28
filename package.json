@@ -22,7 +22,7 @@
     "build:src": "tsc && chmod +x ./dist/admin-bin.js",
     "build:doc": "typedoc src/main.ts",
     "prepack": "npm run build",
-    "test": "karma start",
+    "test": "tsc --noEmit -p test/tsconfig.json && karma start",
     "test:dev": "CONTINUOUS_TEST=true npm run test",
     "test:dev:debug": "HEADFUL_TEST=true CONTINUOUS_TEST=true npm run test"
   },
