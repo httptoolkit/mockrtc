@@ -36,6 +36,10 @@ export class MockRTCClient implements MockRTC {
         this.requestBuilder = new MockRTCAdminRequestBuilder();
     }
 
+    getMatchingPeer(): MockRTCPeer {
+        return new MockRTCRemotePeer('matching-peer', this.adminClient);
+    }
+
     buildPeer(): MockRTCPeerBuilder {
         return new MockRTCHandlerBuilder(this.buildPeerFromData);
     }

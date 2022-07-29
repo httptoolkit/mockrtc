@@ -162,8 +162,32 @@ export interface MockRTC {
      * must be configured with the mock peer's settings. Once configured the
      * peer can be created by calling any `.thenX()` method to define the
      * peer's behaviour.
+     *
+     * This API allows you to define a single set of handling steps, and then
+     * connect directly to the resulting peer to run those steps directly.
+     *
+     * To instead define multiple behaviours that match different conditions, and
+     * then connect clients who may each see different behaviour, define your
+     * rules using the `forX()` methods, and connect by using `getMatchingPeer()`.
      */
     buildPeer(): MockRTCPeerBuilder;
+
+    /**
+     * Get the rule-matching peer.
+     *
+     * This peer accepts connections, matches them against defined rules (defined
+     * via the `.forX()` methods) and then handles them according to the steps
+     * for the defined rule.
+     *
+     * To more directly define a set of steps and make a connection that will
+     * follow those steps, define a peer with `.buildPeer()` and then connect
+     * to that directly.
+     *
+     * The default behaviour of this peer for unmatched connections is equivalent
+     * to `.thenPassThrough()` - it will accept all incoming data without response
+     * initially, and proxy all data to a remote peer if one is attached.
+     */
+    getMatchingPeer(): MockRTCPeer;
 
     start(): Promise<void>;
 
