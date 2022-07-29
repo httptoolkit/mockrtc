@@ -251,14 +251,17 @@ export class MockRTCServerPeer implements MockRTCPeer {
         });
 
         if (this.options.recordMessages) {
-            conn.on('channel-open', (channel: DataChannelStream) => {
+            const logChannelMessages = (channel: DataChannelStream) => {
                 const channelLabel = channel.label;
                 const messageLog = (this.messages[channelLabel] ??= []);
 
                 channel.on('data', d => {
                     messageLog.push(d);
                 });
-            });
+            };
+
+            conn.channels.forEach(logChannelMessages);
+            conn.on('channel-open', logChannelMessages);
         }
 
         return conn;
@@ -315,10 +318,18 @@ export class MockRTCServerPeer implements MockRTCPeer {
     private messages: { [channelName: string]: Array<string | Buffer> } = {};
 
     async getAllMessages() {
+        if (!this.options.recordMessages) {
+            throw new Error("Can't query messages, as recordMessages was not enabled");
+        }
+
         return Object.values(this.messages).flat();
     }
 
     async getMessagesOnChannel(channelName: string) {
+        if (!this.options.recordMessages) {
+            throw new Error("Can't query messages, as recordMessages was not enabled");
+        }
+
         return this.messages[channelName].flat();
     }
 
