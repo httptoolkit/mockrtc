@@ -17,6 +17,8 @@ before(async function () {
     let shownMessage = false;
 
     while (true) {
+        await delay(100);
+
         try {
             const server = MockRTC.getRemote();
             await server.start();
