@@ -39,7 +39,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
     private readonly unassignedExternalConnections: { [id: string]: RTCConnection } = {};
 
     constructor(
-        private getHandlerSteps: (conn: RTCConnection) => HandlerStep[],
+        private getHandlerSteps: (conn: RTCConnection) =>
+            (HandlerStep[] | Promise<HandlerStep[]>),
         private options: MockRTCPeerOptions & { peerId?: string } = {},
         private eventEmitter: EventEmitter
     ) {
@@ -298,7 +299,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
     private async handleConnection(conn: MockRTCConnection) {
         await conn.waitUntilConnected();
 
-        const handlerSteps = this.getHandlerSteps(conn);
+        const handlerSteps = await this.getHandlerSteps(conn);
 
         for (const step of handlerSteps) {
             await step.handle(conn);

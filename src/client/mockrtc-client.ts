@@ -11,20 +11,21 @@
 import * as BrowserPluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 import type { PluggableAdmin } from 'mockttp';
 
-import { MockRTC, MockRTCEvent, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
+import { MockRTC, MockRTCEvent, MockRTCOptions } from "../mockrtc";
+import { MockRTCBase } from '../mockrtc-base';
 
-import type { MockRTCAdminPlugin } from "../server/mockrtc-admin-plugin";
 import type { MockRTCPeer } from '../mockrtc-peer';
 import { MockRTCRemotePeer } from './mockrtc-remote-peer';
-import { MockRTCHandlerBuilder } from '../handling/handler-builder';
-import { HandlerStepDefinition } from '../handling/handler-step-definitions';
+import type { MockRTCAdminPlugin } from "../server/mockrtc-admin-plugin";
 import { MockRTCAdminRequestBuilder } from './mockrtc-admin-request-builder';
+import { HandlerStepDefinition } from '../handling/handler-step-definitions';
+import { MatcherDefinition } from '../matching/matcher-definitions';
 
 export type MockRTCClientOptions =
     PluggableAdmin.AdminClientOptions &
     MockRTCOptions;
 
-export class MockRTCClient implements MockRTC {
+export class MockRTCClient extends MockRTCBase implements MockRTC {
 
     private adminClient: PluggableAdmin.AdminClient<{ webrtc: MockRTCAdminPlugin }>;
     private requestBuilder: MockRTCAdminRequestBuilder;
@@ -32,6 +33,8 @@ export class MockRTCClient implements MockRTC {
     constructor(
         private options: MockRTCClientOptions = {}
     ) {
+        super();
+
         this.adminClient = new BrowserPluggableAdmin.AdminClient(options);
         this.requestBuilder = new MockRTCAdminRequestBuilder();
     }
@@ -40,11 +43,7 @@ export class MockRTCClient implements MockRTC {
         return new MockRTCRemotePeer('matching-peer', this.adminClient);
     }
 
-    buildPeer(): MockRTCPeerBuilder {
-        return new MockRTCHandlerBuilder(this.buildPeerFromData);
-    }
-
-    private buildPeerFromData = async (handlerSteps: HandlerStepDefinition[]): Promise<MockRTCPeer> => {
+    protected buildPeerFromData = async (handlerSteps: HandlerStepDefinition[]): Promise<MockRTCPeer> => {
         const { adminStream } = this.adminClient;
 
         const peerData = await this.adminClient.sendQuery(
@@ -54,6 +53,17 @@ export class MockRTCClient implements MockRTC {
         const { peerId } = peerData;
 
         return new MockRTCRemotePeer(peerId, this.adminClient);
+    }
+
+    protected async addRule(
+        matchers: MatcherDefinition[],
+        handlerSteps: HandlerStepDefinition[]
+    ) {
+        const { adminStream } = this.adminClient;
+
+        await this.adminClient.sendQuery(
+            this.requestBuilder.buildAddRuleQuery(matchers, handlerSteps, adminStream)
+        );
     }
 
     async start(): Promise<void> {

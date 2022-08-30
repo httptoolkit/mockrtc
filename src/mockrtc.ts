@@ -189,6 +189,50 @@ export interface MockRTC {
      */
     getMatchingPeer(): MockRTCPeer;
 
+    /**
+     * Define a rule that will match any new connection that initially negotiates
+     * a data channel.
+     *
+     * This rule definition changes the behaviour of the matching peer (as returned
+     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
+     * is not defined until a `.thenX()` method is called, and the returned promise
+     * resolves successfully.
+     */
+    forDataConnections(): MockRTCHandlerBuilder<void>;
+
+    /**
+     * Define a rule that will match any new connection that initially negotiates
+     * a video track.
+     *
+     * This rule definition changes the behaviour of the matching peer (as returned
+     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
+     * is not defined until a `.thenX()` method is called, and the returned promise
+     * resolves successfully.
+     */
+    forVideoConnections(): MockRTCHandlerBuilder<void>;
+
+    /**
+     * Define a rule that will match any new connection that initially negotiates
+     * an audio track.
+     *
+     * This rule definition changes the behaviour of the matching peer (as returned
+     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
+     * is not defined until a `.thenX()` method is called, and the returned promise
+     * resolves successfully.
+     */
+    forAudioConnections(): MockRTCHandlerBuilder<void>;
+
+    /**
+     * Define a rule that will match any new connection that initially negotiates
+     * either any media (either audio or video) track.
+     *
+     * This rule definition changes the behaviour of the matching peer (as returned
+     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
+     * is not defined until a `.thenX()` method is called, and the returned promise
+     * resolves successfully.
+     */
+    forMediaConnections(): MockRTCHandlerBuilder<void>;
+
     start(): Promise<void>;
 
     stop(): Promise<void>;

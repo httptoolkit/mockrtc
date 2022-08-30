@@ -5,23 +5,27 @@
 
 import { EventEmitter } from "events";
 
-import { MockRTC, MockRTCEvent, MockRTCOptions, MockRTCPeerBuilder } from "../mockrtc";
+import { MockRTC, MockRTCEvent, MockRTCOptions } from "../mockrtc";
+import { MockRTCBase } from "../mockrtc-base";
 import { MockRTCServerPeer } from "./mockrtc-server-peer";
-import { MockRTCHandlerBuilder } from "../handling/handler-builder";
-import { HandlerStepDefinition } from "../handling/handler-step-definitions";
-import { DynamicProxyStep, StepLookup } from "../handling/handler-steps";
-import { RTCConnection } from "../main";
 import { MockRTCPeer } from "../mockrtc-peer";
+import { RTCConnection } from "../webrtc/rtc-connection";
+
+import type { MatcherDefinition } from "../matching/matcher-definitions";
+import { Matcher, MatcherLookup } from "../matching/matchers";
+import type { HandlerStepDefinition } from "../handling/handler-step-definitions";
+import { DynamicProxyStep, HandlerStep, StepLookup } from "../handling/handler-steps";
 
 const MATCHING_PEER_ID = 'matching-peer';
 
-export class MockRTCServer implements MockRTC {
+export class MockRTCServer extends MockRTCBase implements MockRTC {
 
     private debug: boolean = false;
 
     constructor(
         private options: MockRTCOptions = {}
     ) {
+        super();
         this.debug = !!options.debug;
     }
 
@@ -51,6 +55,7 @@ export class MockRTCServer implements MockRTC {
 
         this._activePeers = {};
         this.matchingPeer = undefined;
+        this.rules = [];
 
         this.eventEmitter.removeAllListeners();
     }
@@ -80,20 +85,59 @@ export class MockRTCServer implements MockRTC {
         return this.matchingPeer;
     }
 
-    private matchConnection(connection: RTCConnection) {
-        return [
-            new DynamicProxyStep()
-        ];
+    private rules: Array<{
+        matchers: Matcher[],
+        handlerSteps: HandlerStep[]
+    }> = [];
+
+    async addRule(
+        matcherDefinitions: MatcherDefinition[],
+        handlerStepDefinitions: HandlerStepDefinition[]
+    ) {
+        const matchers = matcherDefinitions.map((definition): Matcher => {
+            return Object.assign(
+                Object.create(MatcherLookup[definition.type].prototype),
+                definition
+            );
+        });
+
+        const handlerSteps = handlerStepDefinitions.map((definition): HandlerStep => {
+            return Object.assign(
+                Object.create(StepLookup[definition.type].prototype),
+                definition
+            );
+        });
+
+        this.rules.push({ matchers, handlerSteps });
+    }
+
+    private async matchConnection(connection: RTCConnection) {
+        if (this.debug) console.log('Matching incoming RTC connection...');
+        await connection.waitUntilConnected();
+
+        for (const rule of this.rules) {
+            const matches = rule.matchers.every(matcher => matcher.matches(connection));
+
+            if (matches) {
+                if (this.debug) console.log(`Matched incoming RTC connection, running steps: ${
+                    rule.handlerSteps.map(s => s.type).join(', ')
+                }`);
+
+                return rule.handlerSteps;
+            }
+        }
+
+        if (this.debug) console.log('RTC connection did not match any rules');
+
+        // Unmatched connections are proxied dynamically. In practice, that means they're accepted
+        // and ignored initially, unless an external peer also connects and is attached:
+        return [new DynamicProxyStep()];
     }
 
     // Peer definition API:
 
-    buildPeer(): MockRTCPeerBuilder {
-        return new MockRTCHandlerBuilder(this.buildPeerFromData);
-    }
-
     buildPeerFromData = async (handlerStepDefinitions: HandlerStepDefinition[]): Promise<MockRTCServerPeer> => {
-        const handlerSteps = handlerStepDefinitions.map((definition) => {
+        const handlerSteps = handlerStepDefinitions.map((definition): HandlerStep => {
             return Object.assign(
                 Object.create(StepLookup[definition.type].prototype),
                 definition

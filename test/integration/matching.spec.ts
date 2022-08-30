@@ -1,7 +1,8 @@
 import {
     MockRTC,
     expect,
-    delay
+    delay,
+    waitForState
 } from '../test-setup';
 
 describe("Connection rule matching", () => {
@@ -64,5 +65,36 @@ describe("Connection rule matching", () => {
             'local message 2',
             'local message 3',
         ]);
+    });
+
+    it("can match data connections", async () => {
+        // Explicitly hard-close media connections:
+        await mockRTC.forMediaConnections()
+            .thenClose();
+
+        // Send a message on data channels only:
+        await mockRTC.forDataConnections()
+            .waitForChannel()
+            .thenSend('bye');
+
+        const matchingPeer = await mockRTC.getMatchingPeer();
+
+        // Create a local data connection:
+        const localConn = new RTCPeerConnection();
+
+        const dataChannel = localConn.createDataChannel("dataChannel");
+
+        const messagePromise = new Promise((resolve) => {
+            dataChannel.addEventListener('message', ({ data }) => resolve(data));
+        });
+
+        const localOffer = await localConn.createOffer();
+        await localConn.setLocalDescription(localOffer);
+        const { answer } = await matchingPeer.answerOffer(localOffer);
+        await localConn.setRemoteDescription(answer);
+
+        // Wait until the matching handler sends the configured message:
+        const receivedMessage = await messagePromise;
+        expect(receivedMessage).to.equal('bye');
     });
 });

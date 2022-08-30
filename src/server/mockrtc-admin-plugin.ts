@@ -10,10 +10,13 @@ import { PluggableAdmin } from 'mockttp';
 import type { IResolvers } from "@graphql-tools/utils";
 import { PubSub } from "graphql-subscriptions";
 
-import { HandlerStep, StepLookup } from '../handling/handler-steps';
+import { StepLookup } from '../handling/handler-steps';
 import { MockRTCOptions, MockRTCSessionDescription } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 import { AnswerOptions, OfferOptions } from '../mockrtc-peer';
+import { MatcherDefinition } from '../matching/matcher-definitions';
+import { MatcherLookup } from '../matching/matchers';
+import { HandlerStepDefinition } from '../handling/handler-step-definitions';
 
 const { deserialize } = PluggableAdmin.Serialization;
 type SerializedValue<T> = PluggableAdmin.Serialization.SerializedValue<T>;
@@ -56,6 +59,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
     schema = gql`
         extend type Mutation {
             createPeer(data: RTCHandlerData!): MockedPeer!
+            addRule(data: RTCRuleData!): Void
 
             createOffer(peerId: ID!, sessionId: ID, options: Raw): Session!
             createExternalOffer(peerId: ID!, options: Raw): Session!
@@ -66,6 +70,11 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         }
 
         input RTCHandlerData {
+            steps: [Raw!]!
+        }
+
+        input RTCRuleData {
+            matchers: [Raw!]!
             steps: [Raw!]!
         }
 
@@ -227,9 +236,22 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         return {
             Mutation: {
                 createPeer: (__: any, { data: { steps } }: { data: {
-                    steps: Array<SerializedValue<HandlerStep>>
+                    steps: Array<SerializedValue<HandlerStepDefinition>>
                 } }) => {
                     return this.mockRTCServer.buildPeerFromData(
+                        steps.map((stepData) =>
+                            deserialize(stepData, adminStream, ruleParams, StepLookup)
+                        )
+                    );
+                },
+                addRule: (__: any, { data: { steps, matchers } }: { data: {
+                    matchers: Array<SerializedValue<MatcherDefinition>>
+                    steps: Array<SerializedValue<HandlerStepDefinition>>
+                } }) => {
+                    return this.mockRTCServer.addRule(
+                        matchers.map((matcherData) =>
+                            deserialize(matcherData, adminStream, ruleParams, MatcherLookup)
+                        ),
                         steps.map((stepData) =>
                             deserialize(stepData, adminStream, ruleParams, StepLookup)
                         )

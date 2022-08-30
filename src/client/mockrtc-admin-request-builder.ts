@@ -13,8 +13,9 @@ import * as stream from 'stream';
 import * as BrowserPluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 import { AdminQuery } from 'mockttp/dist/client/admin-query';
 
-import { HandlerStepDefinition } from '../handling/handler-step-definitions';
 import { MockRTCEvent, MockRTCEventData } from '../mockrtc';
+import { HandlerStepDefinition } from '../handling/handler-step-definitions';
+import { MatcherDefinition } from '../matching/matcher-definitions';
 
 /**
  * This is part of Mockttp's experimental 'pluggable admin' API. This may change
@@ -47,6 +48,30 @@ export class MockRTCAdminRequestBuilder {
                 }
             },
             transformResponse: ({ createPeer }) => createPeer
+        };
+    }
+
+    buildAddRuleQuery(
+        matchers: Array<MatcherDefinition>,
+        handlerSteps: Array<HandlerStepDefinition>,
+        adminStream: stream.Duplex
+    ): AdminQuery<void> {
+        return {
+            query: gql`
+                mutation AddRule($ruleData: RTCRuleData!) {
+                    addRule(data: $ruleData)
+                }
+            `,
+            variables: {
+                ruleData: {
+                    matchers: matchers.map(matcher =>
+                        BrowserPluggableAdmin.Serialization.serialize(matcher, adminStream)
+                    ),
+                    steps: handlerSteps.map(step =>
+                        BrowserPluggableAdmin.Serialization.serialize(step, adminStream)
+                    )
+                }
+            }
         };
     }
 
