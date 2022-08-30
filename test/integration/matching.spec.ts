@@ -97,4 +97,43 @@ describe("Connection rule matching", () => {
         const receivedMessage = await messagePromise;
         expect(receivedMessage).to.equal('bye');
     });
+
+    it("can match media connections", async () => {
+        // Explicitly hard-close data connections:
+        await mockRTC.forDataConnections()
+            .thenClose();
+
+        // Send a message on media connections only:
+        await mockRTC.forMediaConnections()
+            .thenEcho();
+
+        const matchingPeer = await mockRTC.getMatchingPeer();
+
+        // Create a local connection:
+        const localConn = new RTCPeerConnection();
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        localConn.addTrack(stream.getTracks()[0], stream);
+
+        // Turn incoming tracks into readable streams of frames:
+        const mediaStreamPromise = new Promise<ReadableStream<VideoFrame>>((resolve) => {
+            localConn.addEventListener('track', ({ track }) => {
+                const streamProcessor = new MediaStreamTrackProcessor({
+                    track: track as MediaStreamVideoTrack
+                });
+                resolve(streamProcessor.readable);
+            });
+        });
+
+        // Connect the local connection to the matching peer:
+        const localOffer = await localConn.createOffer();
+        await localConn.setLocalDescription(localOffer);
+        const { answer } = await matchingPeer.answerOffer(localOffer);
+        await localConn.setRemoteDescription(answer);
+
+        // Check that our video is mirrored as expected:
+        const localMedia = await mediaStreamPromise;
+        const { value: localFrame } = await localMedia!.getReader().read();
+        expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
+        expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+    });
 });
