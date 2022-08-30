@@ -255,7 +255,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 const channelLabel = channel.label;
                 const messageLog = (this.messages[channelLabel] ??= []);
 
-                channel.on('data', d => {
+                channel.on('read-data', d => {
                     messageLog.push(d);
                 });
             };
