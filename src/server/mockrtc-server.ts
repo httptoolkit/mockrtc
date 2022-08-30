@@ -90,7 +90,7 @@ export class MockRTCServer extends MockRTCBase implements MockRTC {
         handlerSteps: HandlerStep[]
     }> = [];
 
-    async addRule(
+    async addRuleFromDefinition(
         matcherDefinitions: MatcherDefinition[],
         handlerStepDefinitions: HandlerStepDefinition[]
     ) {
@@ -136,7 +136,7 @@ export class MockRTCServer extends MockRTCBase implements MockRTC {
 
     // Peer definition API:
 
-    buildPeerFromData = async (handlerStepDefinitions: HandlerStepDefinition[]): Promise<MockRTCServerPeer> => {
+    async buildPeerFromDefinition(handlerStepDefinitions: HandlerStepDefinition[]): Promise<MockRTCServerPeer> {
         const handlerSteps = handlerStepDefinitions.map((definition): HandlerStep => {
             return Object.assign(
                 Object.create(StepLookup[definition.type].prototype),

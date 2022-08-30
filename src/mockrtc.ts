@@ -4,6 +4,8 @@
  */
 
 import type { MockRTCHandlerBuilder } from "./handling/handler-builder";
+import { HandlerStepDefinition } from "./handling/handler-step-definitions";
+import { MatcherDefinition } from "./matching/matcher-definitions";
 import type { ConnectionMetadata, MockRTCPeer } from "./mockrtc-peer";
 
 export interface MockRTCPeerBuilder extends MockRTCHandlerBuilder<MockRTCPeer> {}
@@ -237,6 +239,44 @@ export interface MockRTC {
 
     stop(): Promise<void>;
 
+    /**
+     * Subscribe to events to monitor WebRTC interactions across all peers managed by
+     * this MockRTC session. The events available include:
+     *
+     * - `peer-connected`
+     * - `peer-disconnected`
+     * - `external-peer-attached`
+     * - `data-channel-opened`
+     * - `data-channel-message-sent`
+     * - `data-channel-message-received`
+     * - `data-channel-closed`
+     * - `media-track-opened`
+     * - `media-track-stats`
+     * - `media-track-closed`
+     */
     on<E extends MockRTCEvent>(event: E, callback: (param: MockRTCEventData[E]) => void): Promise<void>;
+
+    /**
+     * Create a peer from a set of step definitions.
+     *
+     * This API is only useful if you're building peers from data programmatically,
+     * rather than using `buildPeer()` and `MockRTCPeerBuilder`, which are generally
+     * preferable otherwise.
+     */
+    buildPeerFromDefinition(
+        handlerStepDefinitions: HandlerStepDefinition[]
+    ): Promise<MockRTCPeer>;
+
+    /**
+     * Create a connection-matching rule from a set of matchers and step definitions.
+     *
+     * This API is only useful if you're building rule from data programmatically,
+     * rather than using `forX()` and `MockRTCHandlerBuilder`, which are generally
+     * preferable otherwise.
+     */
+    addRuleFromDefinition(
+        matcherDefinitions: MatcherDefinition[],
+        handlerStepDefinitions: HandlerStepDefinition[]
+    ): Promise<void>;
 
 }

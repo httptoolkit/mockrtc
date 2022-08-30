@@ -238,7 +238,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 createPeer: (__: any, { data: { steps } }: { data: {
                     steps: Array<SerializedValue<HandlerStepDefinition>>
                 } }) => {
-                    return this.mockRTCServer.buildPeerFromData(
+                    return this.mockRTCServer.buildPeerFromDefinition(
                         steps.map((stepData) =>
                             deserialize(stepData, adminStream, ruleParams, StepLookup)
                         )
@@ -248,7 +248,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     matchers: Array<SerializedValue<MatcherDefinition>>
                     steps: Array<SerializedValue<HandlerStepDefinition>>
                 } }) => {
-                    return this.mockRTCServer.addRule(
+                    return this.mockRTCServer.addRuleFromDefinition(
                         matchers.map((matcherData) =>
                             deserialize(matcherData, adminStream, ruleParams, MatcherLookup)
                         ),

@@ -26,16 +26,21 @@ export abstract class MockRTCBase implements MockRTC {
     ): Promise<void>;
 
     buildPeer(): MockRTCPeerBuilder {
-        return new MockRTCHandlerBuilder(this.buildPeerFromData);
+        return new MockRTCHandlerBuilder(this.buildPeerFromDefinition.bind(this));
     }
 
-    protected abstract buildPeerFromData(
+    abstract buildPeerFromDefinition(
         handlerStepDefinitions: HandlerStepDefinition[]
     ): Promise<MockRTCPeer>;
 
+    abstract addRuleFromDefinition(
+        matcherDefinitions: MatcherDefinition[],
+        handlerStepDefinitions: HandlerStepDefinition[]
+    ): Promise<void>;
+
     forDataConnections(): MockRTCHandlerBuilder<void> {
         return new MockRTCHandlerBuilder(
-            this.addRule.bind(this, [
+            this.addRuleFromDefinition.bind(this, [
                 new HasDataChannelMatcherDefinition()
             ])
         );
@@ -43,7 +48,7 @@ export abstract class MockRTCBase implements MockRTC {
 
     forVideoConnections(): MockRTCHandlerBuilder<void> {
         return new MockRTCHandlerBuilder(
-            this.addRule.bind(this, [
+            this.addRuleFromDefinition.bind(this, [
                 new HasVideoTrackMatcherDefinition()
             ])
         );
@@ -51,7 +56,7 @@ export abstract class MockRTCBase implements MockRTC {
 
     forAudioConnections(): MockRTCHandlerBuilder<void> {
         return new MockRTCHandlerBuilder(
-            this.addRule.bind(this, [
+            this.addRuleFromDefinition.bind(this, [
                 new HasAudioTrackMatcherDefinition()
             ])
         );
@@ -59,15 +64,10 @@ export abstract class MockRTCBase implements MockRTC {
 
     forMediaConnections(): MockRTCHandlerBuilder<void> {
         return new MockRTCHandlerBuilder(
-            this.addRule.bind(this, [
+            this.addRuleFromDefinition.bind(this, [
                 new HasMediaTrackMatcherDefinition()
             ])
         );
     }
-
-    protected abstract addRule(
-        matcherDefinitions: MatcherDefinition[],
-        handlerStepDefinitions: HandlerStepDefinition[]
-    ): Promise<void>
 
 }

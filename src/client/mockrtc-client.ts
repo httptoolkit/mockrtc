@@ -43,7 +43,7 @@ export class MockRTCClient extends MockRTCBase implements MockRTC {
         return new MockRTCRemotePeer('matching-peer', this.adminClient);
     }
 
-    protected buildPeerFromData = async (handlerSteps: HandlerStepDefinition[]): Promise<MockRTCPeer> => {
+    async buildPeerFromDefinition(handlerSteps: HandlerStepDefinition[]): Promise<MockRTCPeer> {
         const { adminStream } = this.adminClient;
 
         const peerData = await this.adminClient.sendQuery(
@@ -55,7 +55,7 @@ export class MockRTCClient extends MockRTCBase implements MockRTC {
         return new MockRTCRemotePeer(peerId, this.adminClient);
     }
 
-    protected async addRule(
+    async addRuleFromDefinition(
         matchers: MatcherDefinition[],
         handlerSteps: HandlerStepDefinition[]
     ) {
