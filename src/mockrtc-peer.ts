@@ -189,11 +189,18 @@ export interface AnswerOptions {
  * Extra metadata to associate with the connection. This will be exposed on
  * events like peer-connected, and can be used to add context to connections.
  *
- * The only defined value is 'userAgent' which must be a client user agent
- * string (in a browser, the navigator.userAgent value) if defined.
+ * The defined fields may only be used as defined here, but all values are
+ * optional, and any other metadata may be attached in any format here.
+ *
+ * The only defined values are:
+ * - `userAgent` - a client user-agent string (in a browser, the value of
+ *   `navigator.userAgent`)
+ * - `sourceURL` - the URL of the referring page, when the request is sent by
+ *   a browser
  */
 export interface ConnectionMetadata {
     userAgent?: string;
+    sourceURL?: string;
     [k: string]: any;
 }
 

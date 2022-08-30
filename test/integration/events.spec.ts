@@ -32,7 +32,8 @@ describe("MockRTC event subscriptions", function () {
 
             const { offer, setAnswer } = await mockPeer.createOffer({
                 connectionMetadata: {
-                    userAgent: navigator.userAgent
+                    userAgent: navigator.userAgent,
+                    sourceURL: 'https://example.com/'
                 }
             });
             await localConnection.setRemoteDescription(offer);
@@ -58,6 +59,7 @@ describe("MockRTC event subscriptions", function () {
             expect(connectionEvent.timingEvents.disconnectTimestamp).to.equal(undefined);
 
             expect(connectionEvent.metadata.userAgent).to.equal(navigator.userAgent);
+            expect(connectionEvent.metadata.sourceURL).to.equal('https://example.com/');
 
             const { selectedLocalCandidate, selectedRemoteCandidate } = connectionEvent;
             [selectedLocalCandidate, selectedRemoteCandidate].forEach((candidate) => {

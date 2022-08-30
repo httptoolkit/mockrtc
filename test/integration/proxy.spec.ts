@@ -525,7 +525,7 @@ describe("When proxying WebRTC traffic", () => {
         expect(remoteFrame!.displayWidth).to.be.greaterThanOrEqual(320);
     });
 
-    it("should include user-agent metadata when creating a hooked offer", async () => {
+    it("should include user-agent & URL metadata when creating a hooked offer", async () => {
         const eventPromise = getDeferred<MockRTCEventData['peer-connected']>();
         mockRTC.on('peer-connected', (peer) => eventPromise.resolve(peer));
 
@@ -555,9 +555,10 @@ describe("When proxying WebRTC traffic", () => {
         // Check that the connection event automatically includes the user agent:
         const connectEvent = await eventPromise;
         expect(connectEvent.metadata.userAgent).to.equal(navigator.userAgent);
+        expect(connectEvent.metadata.sourceURL).to.equal(window.location.href);
     });
 
-    it("should include user-agent metadata when creating a hooked answer", async () => {
+    it("should include user-agent & URL metadata when creating a hooked answer", async () => {
         const eventPromise = getDeferred<MockRTCEventData['peer-connected']>();
         mockRTC.on('peer-connected', (peer) => eventPromise.resolve(peer));
 
@@ -586,6 +587,7 @@ describe("When proxying WebRTC traffic", () => {
         // Check that the connection event automatically includes the user agent:
         const connectEvent = await eventPromise;
         expect(connectEvent.metadata.userAgent).to.equal(navigator.userAgent);
+        expect(connectEvent.metadata.sourceURL).to.equal(window.location.href);
     });
 
 });
