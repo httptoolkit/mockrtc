@@ -36,7 +36,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    sleep(duration: number): this {
+    sleep(duration: number): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new WaitForDurationStepDefinition(duration));
         return this;
     }
@@ -46,7 +46,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    waitForChannel(channelLabel?: string): this {
+    waitForChannel(channelLabel?: string): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new WaitForChannelStepDefinition(channelLabel));
         return this;
     }
@@ -56,7 +56,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    waitForTrack(): this {
+    waitForTrack(): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new WaitForTrackStepDefinition());
         return this;
     }
@@ -69,7 +69,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    waitForNextMessage(): this {
+    waitForNextMessage(): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new WaitForMessageStepDefinition());
         return this;
     }
@@ -81,7 +81,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    waitForNextMedia(): this {
+    waitForNextMedia(): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new WaitForMediaStepDefinition());
         return this;
     }
@@ -94,7 +94,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    waitForNextMessageOnChannel(channelLabel: string): this {
+    waitForNextMessageOnChannel(channelLabel: string): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new WaitForMessageStepDefinition(channelLabel));
         return this;
     }
@@ -105,7 +105,7 @@ export class MockRTCHandlerBuilder<R> {
      *
      * @category Steps
      */
-    createDataChannel(channelLabel: string): this {
+    createDataChannel(channelLabel: string): MockRTCHandlerBuilder<R> {
         this.handlerSteps.push(new CreateChannelStepDefinition(channelLabel));
         return this;
     }
@@ -123,9 +123,9 @@ export class MockRTCHandlerBuilder<R> {
      *
     * @category Steps
      */
-    send(message: string | Buffer): this;
-    send(channel: string | undefined, message: string | Buffer): this;
-    send(...args: [string | undefined, string | Buffer] | [string | Buffer]): this {
+    send(message: string | Buffer): MockRTCHandlerBuilder<R>;
+    send(channel: string | undefined, message: string | Buffer): MockRTCHandlerBuilder<R>;
+    send(...args: [string | undefined, string | Buffer] | [string | Buffer]): MockRTCHandlerBuilder<R> {
         if (args[1] !== undefined) {
             const [channel, message] = args as [string, string | Buffer];
             this.handlerSteps.push(new SendStepDefinition(channel, message));

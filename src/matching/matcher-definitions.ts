@@ -28,9 +28,51 @@ export class HasMediaTrackMatcherDefinition extends Serializable implements Matc
     readonly type = 'has-media-track';
 }
 
+export class HostnameMatcherDefinition extends Serializable implements MatcherDefinition {
+
+    readonly type = 'hostname';
+
+    constructor(
+        public readonly hostname: string
+    ) {
+        super();
+    }
+}
+
+export class UrlRegexMatcherDefinition extends Serializable implements MatcherDefinition {
+
+    readonly type = 'url-regex';
+
+    readonly regexSource: string;
+    readonly regexFlags: string;
+
+    constructor(regex: RegExp) {
+        super();
+        this.regexSource = regex.source;
+        this.regexFlags = regex.flags;
+    }
+}
+
+export class UserAgentRegexMatcherDefinition  extends Serializable implements MatcherDefinition {
+
+    readonly type = 'user-agent-regex';
+
+    readonly regexSource: string;
+    readonly regexFlags: string;
+
+    constructor(regex: RegExp) {
+        super();
+        this.regexSource = regex.source;
+        this.regexFlags = regex.flags;
+    }
+}
+
 export const MatcherDefinitionLookup = {
     'has-data-channel': HasDataChannelMatcherDefinition,
     'has-video-track': HasVideoTrackMatcherDefinition,
     'has-audio-track': HasAudioTrackMatcherDefinition,
-    'has-media-track': HasMediaTrackMatcherDefinition
+    'has-media-track': HasMediaTrackMatcherDefinition,
+    'hostname': HostnameMatcherDefinition,
+    'url-regex': UrlRegexMatcherDefinition,
+    'user-agent-regex': UserAgentRegexMatcherDefinition
 };

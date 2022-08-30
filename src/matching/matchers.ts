@@ -1,3 +1,8 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Tim Perry <tim@httptoolkit.tech>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import { RTCConnection } from "../webrtc/rtc-connection";
 import {
     MatcherDefinition,
@@ -5,7 +10,10 @@ import {
     HasAudioTrackMatcherDefinition,
     HasDataChannelMatcherDefinition,
     HasMediaTrackMatcherDefinition,
-    HasVideoTrackMatcherDefinition
+    HasVideoTrackMatcherDefinition,
+    HostnameMatcherDefinition,
+    UrlRegexMatcherDefinition,
+    UserAgentRegexMatcherDefinition
 } from "./matcher-definitions";
 
 export interface Matcher extends MatcherDefinition {
@@ -56,9 +64,55 @@ export class HasMediaTrackMatcher extends HasMediaTrackMatcherDefinition {
 
 }
 
+const getConnectionSourceURL = (connection: RTCConnection): URL | undefined => {
+    const { sourceURL } = connection.metadata;
+    if (!sourceURL) return;
+
+    try {
+        return new URL(sourceURL);
+    } catch (e) {
+        console.warn('Unparseable RTC source URL:', e);
+        return;
+    }
+};
+
+export class HostnameMatcher extends HostnameMatcherDefinition {
+
+    matches(connection: RTCConnection): boolean {
+        const url = getConnectionSourceURL(connection);
+        return url?.hostname === this.hostname;
+    }
+
+}
+
+export class UrlRegexMatcher extends UrlRegexMatcherDefinition {
+
+    matches(connection: RTCConnection): boolean {
+        const url = getConnectionSourceURL(connection);
+        return !!url?.toString().match(
+            new RegExp(this.regexSource, this.regexFlags)
+        );
+    }
+
+}
+
+export class UserAgentRegexMatcher extends UserAgentRegexMatcherDefinition {
+
+    matches(connection: RTCConnection): boolean {
+        const userAgent = connection.metadata.userAgent;
+        return !!userAgent?.match(
+            new RegExp(this.regexSource, this.regexFlags)
+        );
+    }
+
+}
+
 export const MatcherLookup: typeof MatcherDefinitionLookup = {
     'has-data-channel': HasDataChannelMatcher,
     'has-video-track': HasVideoTrackMatcher,
     'has-audio-track': HasAudioTrackMatcher,
-    'has-media-track': HasMediaTrackMatcher
+    'has-media-track': HasMediaTrackMatcher,
+    'hostname': HostnameMatcher,
+    'url-regex': UrlRegexMatcher,
+    'user-agent-regex': UserAgentRegexMatcher
 };

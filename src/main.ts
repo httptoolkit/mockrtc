@@ -28,6 +28,7 @@ export { MockRTCAdminRequestBuilder } from "./client/mockrtc-admin-request-build
 // Re-export lots of types are used in various APIs (mostly to make TypeDoc happy):
 export type { HandlerStep } from "./handling/handler-steps";
 export type { MockRTCHandlerBuilder } from "./handling/handler-builder";
+export type { MockRTCRuleBuilder, RuleHandlerBuilder } from "./rule-builder";
 
 export type { MockRTCServerPeer } from "./server/mockrtc-server-peer";
 export type { SessionData } from "./server/mockrtc-admin-plugin";

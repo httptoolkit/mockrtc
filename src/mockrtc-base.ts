@@ -7,13 +7,8 @@ import { MockRTC, MockRTCEventData, MockRTCPeerBuilder } from "./mockrtc";
 import { MockRTCPeer } from "./mockrtc-peer";
 import { MockRTCHandlerBuilder } from "./handling/handler-builder";
 import { HandlerStepDefinition } from "./handling/handler-step-definitions";
-import {
-    MatcherDefinition,
-    HasAudioTrackMatcherDefinition,
-    HasDataChannelMatcherDefinition,
-    HasMediaTrackMatcherDefinition,
-    HasVideoTrackMatcherDefinition
-} from "./matching/matcher-definitions";
+import { MatcherDefinition } from "./matching/matcher-definitions";
+import { MockRTCRuleBuilder } from "./rule-builder";
 
 export abstract class MockRTCBase implements MockRTC {
 
@@ -33,41 +28,13 @@ export abstract class MockRTCBase implements MockRTC {
         handlerStepDefinitions: HandlerStepDefinition[]
     ): Promise<MockRTCPeer>;
 
+    forConnections(): MockRTCRuleBuilder {
+        return new MockRTCRuleBuilder(this.addRuleFromDefinition.bind(this));
+    }
+
     abstract addRuleFromDefinition(
         matcherDefinitions: MatcherDefinition[],
         handlerStepDefinitions: HandlerStepDefinition[]
     ): Promise<void>;
-
-    forDataConnections(): MockRTCHandlerBuilder<void> {
-        return new MockRTCHandlerBuilder(
-            this.addRuleFromDefinition.bind(this, [
-                new HasDataChannelMatcherDefinition()
-            ])
-        );
-    }
-
-    forVideoConnections(): MockRTCHandlerBuilder<void> {
-        return new MockRTCHandlerBuilder(
-            this.addRuleFromDefinition.bind(this, [
-                new HasVideoTrackMatcherDefinition()
-            ])
-        );
-    }
-
-    forAudioConnections(): MockRTCHandlerBuilder<void> {
-        return new MockRTCHandlerBuilder(
-            this.addRuleFromDefinition.bind(this, [
-                new HasAudioTrackMatcherDefinition()
-            ])
-        );
-    }
-
-    forMediaConnections(): MockRTCHandlerBuilder<void> {
-        return new MockRTCHandlerBuilder(
-            this.addRuleFromDefinition.bind(this, [
-                new HasMediaTrackMatcherDefinition()
-            ])
-        );
-    }
 
 }

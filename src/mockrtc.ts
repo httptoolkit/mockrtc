@@ -7,6 +7,7 @@ import type { MockRTCHandlerBuilder } from "./handling/handler-builder";
 import { HandlerStepDefinition } from "./handling/handler-step-definitions";
 import { MatcherDefinition } from "./matching/matcher-definitions";
 import type { ConnectionMetadata, MockRTCPeer } from "./mockrtc-peer";
+import { MockRTCRuleBuilder } from "./rule-builder";
 
 export interface MockRTCPeerBuilder extends MockRTCHandlerBuilder<MockRTCPeer> {}
 
@@ -175,6 +176,23 @@ export interface MockRTC {
     buildPeer(): MockRTCPeerBuilder;
 
     /**
+     * Starting defining a mock WebRTC rule. This methods returns a rule builder,
+     * which can be configured to define which incoming connections should be
+     * matched, with methods like `.fromPageHostname(hostname)`.
+     *
+     * Once the matching is configured, start calling handler methods like
+     * `.send()` to define a series of steps to run for matching connections,
+     * and then call a `.thenX()` method to complete the definition and
+     * define the rule.
+     *
+     * The rule definition is not complete until the returned promise resolves.
+     * Once it has resolved successfully, any future connections to the peer
+     * returned by `getMatchingPeer()` will be matched against these rules,
+     * and will run the steps for the first matching rule found.
+     */
+    forConnections(): MockRTCRuleBuilder;
+
+    /**
      * Get the rule-matching peer.
      *
      * This peer accepts connections, matches them against defined rules (defined
@@ -190,50 +208,6 @@ export interface MockRTC {
      * initially, and proxy all data to a remote peer if one is attached.
      */
     getMatchingPeer(): MockRTCPeer;
-
-    /**
-     * Define a rule that will match any new connection that initially negotiates
-     * a data channel.
-     *
-     * This rule definition changes the behaviour of the matching peer (as returned
-     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
-     * is not defined until a `.thenX()` method is called, and the returned promise
-     * resolves successfully.
-     */
-    forDataConnections(): MockRTCHandlerBuilder<void>;
-
-    /**
-     * Define a rule that will match any new connection that initially negotiates
-     * a video track.
-     *
-     * This rule definition changes the behaviour of the matching peer (as returned
-     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
-     * is not defined until a `.thenX()` method is called, and the returned promise
-     * resolves successfully.
-     */
-    forVideoConnections(): MockRTCHandlerBuilder<void>;
-
-    /**
-     * Define a rule that will match any new connection that initially negotiates
-     * an audio track.
-     *
-     * This rule definition changes the behaviour of the matching peer (as returned
-     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
-     * is not defined until a `.thenX()` method is called, and the returned promise
-     * resolves successfully.
-     */
-    forAudioConnections(): MockRTCHandlerBuilder<void>;
-
-    /**
-     * Define a rule that will match any new connection that initially negotiates
-     * either any media (either audio or video) track.
-     *
-     * This rule definition changes the behaviour of the matching peer (as returned
-     * by `getMatchingPeer()`) it does not create and return a new peer. The rule
-     * is not defined until a `.thenX()` method is called, and the returned promise
-     * resolves successfully.
-     */
-    forMediaConnections(): MockRTCHandlerBuilder<void>;
 
     start(): Promise<void>;
 

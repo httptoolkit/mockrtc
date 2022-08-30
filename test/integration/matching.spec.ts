@@ -1,8 +1,12 @@
+/*
+ * SPDX-FileCopyrightText: 2022 Tim Perry <tim@httptoolkit.tech>
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
 import {
     MockRTC,
     expect,
-    delay,
-    waitForState
+    delay
 } from '../test-setup';
 
 describe("Connection rule matching", () => {
@@ -69,11 +73,13 @@ describe("Connection rule matching", () => {
 
     it("can match data connections", async () => {
         // Explicitly hard-close media connections:
-        await mockRTC.forMediaConnections()
+        await mockRTC.forConnections()
+            .withMedia()
             .thenClose();
 
         // Send a message on data channels only:
-        await mockRTC.forDataConnections()
+        await mockRTC.forConnections()
+            .withDataChannels()
             .waitForChannel()
             .thenSend('bye');
 
@@ -100,11 +106,13 @@ describe("Connection rule matching", () => {
 
     it("can match media connections", async () => {
         // Explicitly hard-close data connections:
-        await mockRTC.forDataConnections()
+        await mockRTC.forConnections()
+            .withDataChannels()
             .thenClose();
 
         // Send a message on media connections only:
-        await mockRTC.forMediaConnections()
+        await mockRTC.forConnections()
+            .withMedia()
             .thenEcho();
 
         const matchingPeer = await mockRTC.getMatchingPeer();
@@ -135,5 +143,115 @@ describe("Connection rule matching", () => {
         const { value: localFrame } = await localMedia!.getReader().read();
         expect(localFrame!.displayHeight).to.be.greaterThanOrEqual(240);
         expect(localFrame!.displayWidth).to.be.greaterThanOrEqual(320);
+    });
+
+    it("can match connections by host", async () => {
+        // Send a message for connections made from example.com pages:
+        await mockRTC.forConnections()
+            .fromPageHostname('example.com')
+            .waitForChannel()
+            .thenSend('hello example.com');
+
+        // Close any other connections:
+        await mockRTC.forConnections()
+            .thenClose();
+
+        const matchingPeer = await mockRTC.getMatchingPeer();
+
+        // Create a local data connection:
+        const localConn = new RTCPeerConnection();
+
+        const dataChannel = localConn.createDataChannel("dataChannel");
+
+        const messagePromise = new Promise((resolve) => {
+            dataChannel.addEventListener('message', ({ data }) => resolve(data));
+        });
+
+        const localOffer = await localConn.createOffer();
+        await localConn.setLocalDescription(localOffer);
+        const { answer } = await matchingPeer.answerOffer(localOffer, {
+            connectionMetadata: {
+                sourceURL: 'https://example.com/abc?x=y#123'
+            }
+        });
+        await localConn.setRemoteDescription(answer);
+
+        // Wait until the matching handler sends the configured message:
+        const receivedMessage = await messagePromise;
+        expect(receivedMessage).to.equal('hello example.com');
+    });
+
+    it("can match connections by URL regex", async () => {
+        // Close some other connections:
+        await mockRTC.forConnections()
+            .fromPageUrlMatching(/\?1+1=3/)
+            .thenClose();
+
+        // Send a message for connections made from matching pages:
+        await mockRTC.forConnections()
+            .fromPageUrlMatching(/\?x=y/)
+            .waitForChannel()
+            .thenSend('hello x=y');
+
+        const matchingPeer = await mockRTC.getMatchingPeer();
+
+        // Create a local data connection:
+        const localConn = new RTCPeerConnection();
+
+        const dataChannel = localConn.createDataChannel("dataChannel");
+
+        const messagePromise = new Promise((resolve) => {
+            dataChannel.addEventListener('message', ({ data }) => resolve(data));
+        });
+
+        const localOffer = await localConn.createOffer();
+        await localConn.setLocalDescription(localOffer);
+        const { answer } = await matchingPeer.answerOffer(localOffer, {
+            connectionMetadata: {
+                sourceURL: 'https://example.com/abc?x=y#123'
+            }
+        });
+        await localConn.setRemoteDescription(answer);
+
+        // Wait until the matching handler sends the configured message:
+        const receivedMessage = await messagePromise;
+        expect(receivedMessage).to.equal('hello x=y');
+    });
+
+    it("can match connections by user agent regex", async () => {
+        // Close some other connections:
+        await mockRTC.forConnections()
+            .fromUserAgentMatching(/IE6/)
+            .thenClose();
+
+        // Send a message for connections made from Firefox:
+        await mockRTC.forConnections()
+            .fromUserAgentMatching(/Firefox/)
+            .waitForChannel()
+            .thenSend('hello Firefox');
+
+        const matchingPeer = await mockRTC.getMatchingPeer();
+
+        // Create a local data connection:
+        const localConn = new RTCPeerConnection();
+
+        const dataChannel = localConn.createDataChannel("dataChannel");
+
+        const messagePromise = new Promise((resolve) => {
+            dataChannel.addEventListener('message', ({ data }) => resolve(data));
+        });
+
+        const localOffer = await localConn.createOffer();
+        await localConn.setLocalDescription(localOffer);
+        const { answer } = await matchingPeer.answerOffer(localOffer, {
+            connectionMetadata: {
+                userAgent: 'Mozilla/5.0 (Firefox/123)'
+            }
+        });
+        await localConn.setRemoteDescription(answer);
+
+        // Wait until the matching handler sends the configured message:
+        const receivedMessage = await messagePromise;
+        expect(receivedMessage).to.equal('hello Firefox');
     });
 });
