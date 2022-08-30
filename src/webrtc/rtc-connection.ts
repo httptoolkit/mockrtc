@@ -150,7 +150,7 @@ export class RTCConnection extends EventEmitter {
         trackStream.on('close', () => {
             const trackIndex = this.trackedMediaTracks.findIndex(c => c.stream === trackStream);
             if (trackIndex !== -1) {
-                this.trackedChannels.splice(trackIndex, 1);
+                this.trackedMediaTracks.splice(trackIndex, 1);
             }
         });
 
