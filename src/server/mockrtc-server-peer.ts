@@ -106,12 +106,16 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         channelId: channelStream.id,
                     };
 
-                    this.eventEmitter.emit('data-channel-opened', {
-                        ...channelEventParams,
-                        channelLabel: channelStream.label,
-                        channelProtocol: channelStream.protocol,
-                        eventTimestamp: now()
-                    });
+                    const announceOpen = () => {
+                        this.eventEmitter.emit('data-channel-opened', {
+                            ...channelEventParams,
+                            channelLabel: channelStream.label,
+                            channelProtocol: channelStream.protocol,
+                            eventTimestamp: now()
+                        });
+                    };
+                    if (channelStream.isOpen) announceOpen();
+                    else channelStream.on('channel-open', announceOpen);
 
                     const emitMessage = (direction: 'sent' | 'received') => (data: Buffer | string) => {
                         const isBinary = Buffer.isBuffer(data);
@@ -138,7 +142,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     }));
                 }
 
-                conn.on('channel-open', emitChannelEvents);
+                conn.on('channel-created', emitChannelEvents);
                 // Due to race conditions somewhere (?) presumably in node-datachannel, channels can
                 // be created before the 'connected' event fires, so we need to handle already
                 // existing channels here too:
@@ -150,12 +154,17 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         trackMid: mediaTrack.mid
                     };
 
-                    this.eventEmitter.emit('media-track-opened', {
-                        ...trackEventParams,
-                        trackType: mediaTrack.type,
-                        trackDirection: mediaTrack.direction,
-                        eventTimestamp: now()
-                    });
+                    const announceOpen = () => {
+                        this.eventEmitter.emit('media-track-opened', {
+                            ...trackEventParams,
+                            trackType: mediaTrack.type,
+                            trackDirection: mediaTrack.direction,
+                            eventTimestamp: now()
+                        });
+                    };
+
+                    if (mediaTrack.isOpen) announceOpen();
+                    else mediaTrack.on('track-open', announceOpen);
 
                     let previousBytesSent = 0;
                     let previousBytesReceived = 0;
@@ -186,7 +195,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     });
                 }
 
-                conn.on('track-open', emitTrackEvents);
+                conn.on('track-created', emitTrackEvents);
                 // Due to race conditions somewhere (?) presumably in node-datachannel, tracks can
                 // be created before the 'connected' event fires, so we need to handle already
                 // existing tracks here too:
@@ -262,7 +271,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
             };
 
             conn.channels.forEach(logChannelMessages);
-            conn.on('channel-open', logChannelMessages);
+            conn.on('channel-created', logChannelMessages);
         }
 
         return conn;

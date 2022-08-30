@@ -136,13 +136,13 @@ export class RTCConnection extends EventEmitter {
         channelStream.on('error', (error) => {
             console.error('Channel error:', error);
         });
+        this.emit('channel-created', channelStream);
+        this.emit(`${options.isLocal ? 'local' : 'remote'}-channel-created`, channelStream);
 
-        this.emit('channel-open', channelStream);
-        if (options.isLocal) {
-            this.emit('local-channel-open', channelStream);
-        } else {
-            this.emit('remote-channel-open', channelStream);
-        }
+        channelStream.once('channel-open', () => {
+            this.emit('channel-open', channelStream);
+            this.emit(`${options.isLocal ? 'local' : 'remote'}-channel-open`, channelStream);
+        });
 
         return channelStream;
     }
@@ -162,12 +162,13 @@ export class RTCConnection extends EventEmitter {
             console.error('Media track error:', error);
         });
 
-        this.emit('track-open', trackStream);
-        if (options.isLocal) {
-            this.emit('local-track-open', trackStream);
-        } else {
-            this.emit('remote-track-open', trackStream);
-        }
+        this.emit('track-created', trackStream);
+        this.emit(`${options.isLocal ? 'local' : 'remote'}-track-created`, trackStream);
+
+        trackStream.once('track-open', () => {
+            this.emit('track-open', trackStream);
+            this.emit(`${options.isLocal ? 'local' : 'remote'}-track-open`, trackStream);
+        });
 
         return trackStream;
     }

@@ -48,8 +48,22 @@ export class MediaTrackStream extends stream.Duplex {
         // Buffer all writes until the DataChannel opens
         if (!rawTrack.isOpen()) {
             this.cork();
-            rawTrack.onOpen(() => this.uncork());
+            rawTrack.onOpen(() => {
+                this.uncork();
+                this._isOpen = true;
+                this.emit('track-open');
+            });
+        } else {
+            setImmediate(() => {
+                this._isOpen = true;
+                this.emit('track-open');
+            });
         }
+    }
+
+    private _isOpen = false;
+    get isOpen() {
+        return this._isOpen;
     }
 
     private _totalBytesSent = 0;

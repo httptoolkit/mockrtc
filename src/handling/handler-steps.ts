@@ -70,7 +70,7 @@ export class WaitForMessageStep extends WaitForMessageStepDefinition {
     async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
             const messageReceived = () => {
-                connection.removeListener('channel-open', listenForMessage);
+                connection.removeListener('channel-created', listenForMessage);
                 connection.channels.forEach((channel) => {
                     channel.removeListener('data', messageReceived);
                     channel.pause();
@@ -85,7 +85,7 @@ export class WaitForMessageStep extends WaitForMessageStepDefinition {
                 }
             }
 
-            connection.on('channel-open', listenForMessage);
+            connection.on('channel-created', listenForMessage);
             connection.channels.forEach(listenForMessage);
         });
     }
@@ -108,7 +108,7 @@ export class WaitForMediaStep extends WaitForMediaStepDefinition {
     async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
             const messageReceived = () => {
-                connection.removeListener('track-open', listenForData);
+                connection.removeListener('track-created', listenForData);
                 connection.mediaTracks.forEach((track) => {
                     track.removeListener('data', messageReceived);
                     track.pause();
@@ -121,7 +121,7 @@ export class WaitForMediaStep extends WaitForMediaStepDefinition {
                 track.once('data', messageReceived);
             }
 
-            connection.on('track-open', listenForData);
+            connection.on('track-created', listenForData);
             connection.mediaTracks.forEach(listenForData);
         });
     }
@@ -166,8 +166,8 @@ export class EchoStep extends EchoStepDefinition {
             stream.pipe(stream);
         };
 
-        connection.on('channel-open', echoContent);
-        connection.on('track-open', echoContent);
+        connection.on('channel-created', echoContent);
+        connection.on('track-created', echoContent);
         connection.channels.forEach(echoContent);
         connection.mediaTracks.forEach(echoContent);
 

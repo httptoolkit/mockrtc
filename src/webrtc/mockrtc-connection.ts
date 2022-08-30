@@ -143,7 +143,7 @@ export class MockRTCConnection extends RTCConnection {
 
         // If any new channels open in future, mirror them to the other peer:
         [[this, externalConnection], [externalConnection, this]].forEach(([connA, connB]) => {
-            connA.on('remote-channel-open', (incomingChannel: DataChannelStream) => {
+            connA.on('remote-channel-created', (incomingChannel: DataChannelStream) => {
                 const mirrorChannelStream = connB.createDataChannel(incomingChannel.label);
                 incomingChannel.pipe(mirrorChannelStream).pipe(incomingChannel);
             });

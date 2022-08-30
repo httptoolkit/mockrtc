@@ -57,8 +57,22 @@ export class DataChannelStream extends stream.Duplex {
         // Buffer all writes until the DataChannel opens
         if (!rawChannel.isOpen()) {
             this.cork();
-            rawChannel.onOpen(() => this.uncork());
+            rawChannel.onOpen(() => {
+                this.uncork();
+                this._isOpen = true;
+                this.emit('channel-open');
+            });
+        } else {
+            setImmediate(() => {
+                this._isOpen = true;
+                this.emit('channel-open');
+            });
         }
+    }
+
+    private _isOpen = false;
+    get isOpen() {
+        return this._isOpen;
     }
 
     private _readActive = true;
