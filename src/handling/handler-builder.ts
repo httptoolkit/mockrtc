@@ -6,6 +6,7 @@
 import {
     type HandlerStepDefinition,
     PeerProxyStepDefinition,
+    CreateChannelStepDefinition,
     SendStepDefinition,
     DynamicProxyStepDefinition,
     WaitForChannelStepDefinition,
@@ -91,10 +92,21 @@ export class MockRTCHandlerBuilder<R> {
      * This looks for new messages, ignoring any messages already consumed by
      * previous steps.
      *
-    * @category Steps
+     * @category Steps
      */
     waitForNextMessageOnChannel(channelLabel: string): this {
         this.handlerSteps.push(new WaitForMessageStepDefinition(channelLabel));
+        return this;
+    }
+
+    /**
+     * Creates a new data channel with the given name, waiting until it opens
+     * before continuing.
+     *
+     * @category Steps
+     */
+    createDataChannel(channelLabel: string): this {
+        this.handlerSteps.push(new CreateChannelStepDefinition(channelLabel));
         return this;
     }
 

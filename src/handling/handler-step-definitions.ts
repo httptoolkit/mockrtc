@@ -62,6 +62,18 @@ export class WaitForMediaStepDefinition extends Serializable implements HandlerS
 
 }
 
+export class CreateChannelStepDefinition extends Serializable implements HandlerStepDefinition {
+
+    readonly type = 'create-channel';
+
+    constructor(
+        protected channelLabel: string
+    ) {
+        super();
+    }
+
+}
+
 export class SendStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'send-message';
@@ -136,6 +148,7 @@ export const StepDefinitionLookup = {
     'wait-for-track': WaitForTrackStepDefinition,
     'wait-for-media': WaitForMediaStepDefinition,
     'wait-for-message': WaitForMessageStepDefinition,
+    'create-channel': CreateChannelStepDefinition,
     'send-message': SendStepDefinition,
     'close-connection': CloseStepDefinition,
     'echo-channels': EchoStepDefinition,

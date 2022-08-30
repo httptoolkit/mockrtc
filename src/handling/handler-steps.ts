@@ -17,6 +17,7 @@ import {
     EchoStepDefinition,
     HandlerStepDefinition,
     PeerProxyStepDefinition,
+    CreateChannelStepDefinition,
     SendStepDefinition,
     WaitForChannelStepDefinition,
     WaitForDurationStepDefinition,
@@ -124,6 +125,17 @@ export class WaitForMediaStep extends WaitForMediaStepDefinition {
             connection.on('track-created', listenForData);
             connection.mediaTracks.forEach(listenForData);
         });
+    }
+
+}
+
+export class CreateChannelStep extends CreateChannelStepDefinition {
+
+    async handle(conn: MockRTCConnection): Promise<void> {
+        const channel = conn.createDataChannel(this.channelLabel);
+        return new Promise<void>((resolve) =>
+            channel.once('channel-open', resolve)
+        );
     }
 
 }
@@ -247,6 +259,7 @@ export const StepLookup: typeof StepDefinitionLookup = {
     'wait-for-track': WaitForTrackStep,
     'wait-for-media': WaitForMediaStep,
     'wait-for-message': WaitForMessageStep,
+    'create-channel': CreateChannelStep,
     'send-message': SendStep,
     'close-connection': CloseStep,
     'echo-channels': EchoStep,

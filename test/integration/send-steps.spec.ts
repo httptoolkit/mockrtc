@@ -73,4 +73,29 @@ describe("Send steps", function () {
         ]);
     });
 
+    it("should be able to create a new data channel, and send a message there", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .createDataChannel('new-channel')
+            .thenSend('Hello from new channel');
+
+        const localConnection = new RTCPeerConnection();
+
+        const messagePromise = new Promise((resolve) => {
+            localConnection.addEventListener('datachannel', ({ channel }) => {
+                expect(channel.label).to.equal('new-channel');
+                channel.addEventListener('message', ({ data }) => resolve(data));
+            });
+        });
+
+        const { offer, setAnswer } = await mockPeer.createOffer();
+        await localConnection.setRemoteDescription(offer);
+        const localAnswer = await localConnection.createAnswer();
+        await localConnection.setLocalDescription(localAnswer);
+        await setAnswer(localAnswer);
+
+        // Wait for a response:
+        const message = await messagePromise;
+        expect(message).to.equal('Hello from new channel');
+    });
+
 });
