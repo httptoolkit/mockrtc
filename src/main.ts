@@ -31,7 +31,7 @@ export type { MockRTCHandlerBuilder } from "./handling/handler-builder";
 export type { MockRTCServerPeer } from "./server/mockrtc-server-peer";
 export type { SessionData } from "./server/mockrtc-admin-plugin";
 
-export type { RTCConnection } from "./webrtc/rtc-connection";
+export type { RTCConnection, ParsedSDP } from "./webrtc/rtc-connection";
 export type { MockRTCConnection } from "./webrtc/mockrtc-connection";
 export type { DataChannelStream } from "./webrtc/datachannel-stream";
 export type { MediaTrackStream } from "./webrtc/mediatrack-stream";

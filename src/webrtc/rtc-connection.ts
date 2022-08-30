@@ -20,6 +20,10 @@ import {
 import { DataChannelStream } from './datachannel-stream';
 import { MediaTrackStream } from './mediatrack-stream';
 
+export type ParsedSDP = {
+    parsedSdp: SDP.SessionDescription;
+};
+
 /**
  * An RTC connection is a single connection. This base class defines the raw connection management and
  * tracking logic for a generic connection. The MockRTCConnection subclass extends this and adds
@@ -34,8 +38,8 @@ export class RTCConnection extends EventEmitter {
     private rawConn: NodeDataChannel.PeerConnection | null
         = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
 
-    private remoteDescription: RTCSessionDescriptionInit | undefined;
-    private localDescription: MockRTCSessionDescription | undefined;
+    private remoteDescription: RTCSessionDescriptionInit & ParsedSDP | undefined;
+    private localDescription: MockRTCSessionDescription & ParsedSDP | undefined;
 
     private _connectionMetadata: ConnectionMetadata = {};
     public get metadata() {
@@ -171,7 +175,10 @@ export class RTCConnection extends EventEmitter {
     setRemoteDescription(description: RTCSessionDescriptionInit) {
         if (!this.rawConn) throw new Error("Can't set remote description after connection is closed");
 
-        this.remoteDescription = description;
+        this.remoteDescription = {
+            ...description,
+            parsedSdp: SDP.parse(description.sdp ?? '')
+        };
         const { type: offerType, sdp: offerSdp } = description;
         if (!offerSdp) throw new Error("Cannot set MockRTC peer description without providing an SDP");
         this.rawConn.setRemoteDescription(offerSdp, offerType[0].toUpperCase() + offerType.slice(1) as any);
@@ -207,7 +214,10 @@ export class RTCConnection extends EventEmitter {
 
         const sessionDescription = this.rawConn.localDescription() as MockRTCSessionDescription;
         setupChannel?.close(); // Close the temporary setup channel, if we created one
-        this.localDescription = sessionDescription;
+        this.localDescription = {
+            ...sessionDescription,
+            parsedSdp: SDP.parse(sessionDescription.sdp ?? '')
+        };
         return sessionDescription;
     }
 
@@ -324,7 +334,10 @@ export class RTCConnection extends EventEmitter {
         mirrorMediaParams(offerToMirror, offerSDP);
         localDesc.sdp = SDP.write(offerSDP);
 
-        this.localDescription = localDesc as MockRTCSessionDescription;
+        this.localDescription = {
+            ...localDesc as MockRTCSessionDescription,
+            parsedSdp: offerSDP
+        };
         return this.localDescription;
     }
 
@@ -337,7 +350,10 @@ export class RTCConnection extends EventEmitter {
 
         localDesc.sdp = SDP.write(answerSDP);
 
-        this.localDescription = localDesc as MockRTCSessionDescription;
+        this.localDescription = {
+            ...localDesc as MockRTCSessionDescription,
+            parsedSdp: answerSDP
+        };
         return this.localDescription;
     }
 
