@@ -59,7 +59,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
     schema = gql`
         extend type Mutation {
             createPeer(data: RTCHandlerData!): MockedPeer!
-            addRule(data: RTCRuleData!): Void
+            addRTCRule(data: RTCRuleData!): Void
 
             createOffer(peerId: ID!, sessionId: ID, options: Raw): Session!
             createExternalOffer(peerId: ID!, options: Raw): Session!
@@ -244,7 +244,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         )
                     );
                 },
-                addRule: (__: any, { data: { steps, matchers } }: { data: {
+                addRTCRule: (__: any, { data: { steps, matchers } }: { data: {
                     matchers: Array<SerializedValue<MatcherDefinition>>
                     steps: Array<SerializedValue<HandlerStepDefinition>>
                 } }) => {

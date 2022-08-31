@@ -58,8 +58,8 @@ export class MockRTCAdminRequestBuilder {
     ): AdminQuery<void> {
         return {
             query: gql`
-                mutation AddRule($ruleData: RTCRuleData!) {
-                    addRule(data: $ruleData)
+                mutation AddRTCRule($ruleData: RTCRuleData!) {
+                    addRTCRule(data: $ruleData)
                 }
             `,
             variables: {
