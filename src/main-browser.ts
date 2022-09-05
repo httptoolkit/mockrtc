@@ -11,6 +11,7 @@ import { MockRTCClient, MockRTCClientOptions } from "./client/mockrtc-client";
 
 // Export the required structures to remotely build and send rules to the admin API:
 export * as HandlerStepDefinitions from "./handling/handler-step-definitions";
+export * as MatcherDefinitions from "./matching/matcher-definitions";
 export { MockRTCAdminRequestBuilder } from "./client/mockrtc-admin-request-builder";
 
 export type {
