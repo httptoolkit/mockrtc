@@ -108,11 +108,11 @@ export class UserAgentRegexMatcher extends UserAgentRegexMatcherDefinition {
 }
 
 export const MatcherLookup: typeof MatcherDefinitionLookup = {
-    'has-data-channel': HasDataChannelMatcher,
-    'has-video-track': HasVideoTrackMatcher,
-    'has-audio-track': HasAudioTrackMatcher,
-    'has-media-track': HasMediaTrackMatcher,
-    'hostname': HostnameMatcher,
-    'url-regex': UrlRegexMatcher,
-    'user-agent-regex': UserAgentRegexMatcher
+    'has-rtc-data-channel': HasDataChannelMatcher,
+    'has-rtc-video-track': HasVideoTrackMatcher,
+    'has-rtc-audio-track': HasAudioTrackMatcher,
+    'has-rtc-media-track': HasMediaTrackMatcher,
+    'rtc-page-hostname': HostnameMatcher,
+    'rtc-page-regex': UrlRegexMatcher,
+    'rtc-user-agent-regex': UserAgentRegexMatcher
 };

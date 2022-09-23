@@ -13,7 +13,7 @@ export interface MatcherDefinition extends Serializable {
 }
 
 export class HasDataChannelMatcherDefinition extends Serializable implements MatcherDefinition {
-    readonly type = 'has-data-channel';
+    readonly type = 'has-rtc-data-channel';
 
     explain() {
         return `with a data channel`;
@@ -21,7 +21,7 @@ export class HasDataChannelMatcherDefinition extends Serializable implements Mat
 }
 
 export class HasVideoTrackMatcherDefinition extends Serializable implements MatcherDefinition {
-    readonly type = 'has-video-track';
+    readonly type = 'has-rtc-video-track';
 
     explain() {
         return `with a video track`;
@@ -29,7 +29,7 @@ export class HasVideoTrackMatcherDefinition extends Serializable implements Matc
 }
 
 export class HasAudioTrackMatcherDefinition extends Serializable implements MatcherDefinition {
-    readonly type = 'has-audio-track';
+    readonly type = 'has-rtc-audio-track';
 
     explain() {
         return `with an audio track`;
@@ -37,7 +37,7 @@ export class HasAudioTrackMatcherDefinition extends Serializable implements Matc
 }
 
 export class HasMediaTrackMatcherDefinition extends Serializable implements MatcherDefinition {
-    readonly type = 'has-media-track';
+    readonly type = 'has-rtc-media-track';
 
     explain() {
         return `with any media track`;
@@ -46,7 +46,7 @@ export class HasMediaTrackMatcherDefinition extends Serializable implements Matc
 
 export class HostnameMatcherDefinition extends Serializable implements MatcherDefinition {
 
-    readonly type = 'hostname';
+    readonly type = 'rtc-page-hostname';
 
     constructor(
         public readonly hostname: string
@@ -62,7 +62,7 @@ export class HostnameMatcherDefinition extends Serializable implements MatcherDe
 
 export class UrlRegexMatcherDefinition extends Serializable implements MatcherDefinition {
 
-    readonly type = 'url-regex';
+    readonly type = 'rtc-page-regex';
 
     readonly regexSource: string;
     readonly regexFlags: string;
@@ -81,7 +81,7 @@ export class UrlRegexMatcherDefinition extends Serializable implements MatcherDe
 
 export class UserAgentRegexMatcherDefinition  extends Serializable implements MatcherDefinition {
 
-    readonly type = 'user-agent-regex';
+    readonly type = 'rtc-user-agent-regex';
 
     readonly regexSource: string;
     readonly regexFlags: string;
@@ -99,11 +99,11 @@ export class UserAgentRegexMatcherDefinition  extends Serializable implements Ma
 }
 
 export const MatcherDefinitionLookup = {
-    'has-data-channel': HasDataChannelMatcherDefinition,
-    'has-video-track': HasVideoTrackMatcherDefinition,
-    'has-audio-track': HasAudioTrackMatcherDefinition,
-    'has-media-track': HasMediaTrackMatcherDefinition,
-    'hostname': HostnameMatcherDefinition,
-    'url-regex': UrlRegexMatcherDefinition,
-    'user-agent-regex': UserAgentRegexMatcherDefinition
+    'has-rtc-data-channel': HasDataChannelMatcherDefinition,
+    'has-rtc-video-track': HasVideoTrackMatcherDefinition,
+    'has-rtc-audio-track': HasAudioTrackMatcherDefinition,
+    'has-rtc-media-track': HasMediaTrackMatcherDefinition,
+    'rtc-page-hostname': HostnameMatcherDefinition,
+    'rtc-page-regex': UrlRegexMatcherDefinition,
+    'rtc-user-agent-regex': UserAgentRegexMatcherDefinition
 };
