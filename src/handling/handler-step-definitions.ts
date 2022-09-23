@@ -25,6 +25,10 @@ export class WaitForDurationStepDefinition extends Serializable implements Handl
         super();
     }
 
+    explain() {
+        return `wait for ${this.durationMs}ms`;
+    }
+
 }
 
 export class WaitForChannelStepDefinition extends Serializable implements HandlerStepDefinition {
@@ -36,6 +40,11 @@ export class WaitForChannelStepDefinition extends Serializable implements Handle
     ) {
         super();
     }
+
+    explain() {
+        return `wait for an RTC channel${this.channelLabel ? ` labelled '${this.channelLabel}'` : ''}`;
+    }
+
 }
 
 export class WaitForMessageStepDefinition extends Serializable implements HandlerStepDefinition {
@@ -48,17 +57,29 @@ export class WaitForMessageStepDefinition extends Serializable implements Handle
         super();
     }
 
+    explain() {
+        return `wait for an RTC message${this.channelLabel ? ` on channel '${this.channelLabel}'` : ''}`;
+    }
+
 }
 
 export class WaitForTrackStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-track';
 
+    explain() {
+        return `wait for an RTC track`;
+    }
+
 }
 
 export class WaitForMediaStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-media';
+
+    explain() {
+        return `wait for RTC media data`;
+    }
 
 }
 
@@ -70,6 +91,10 @@ export class CreateChannelStepDefinition extends Serializable implements Handler
         public readonly channelLabel: string
     ) {
         super();
+    }
+
+    explain() {
+        return `create an RTC data channel labelled '${this.channelLabel}'`;
     }
 
 }
@@ -85,17 +110,29 @@ export class SendStepDefinition extends Serializable implements HandlerStepDefin
         super();
     }
 
+    explain() {
+        return `send an RTC data message${this.channelLabel ? ` on channel '${this.channelLabel}'` : ''}`;
+    }
+
 }
 
 export class CloseStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'close-connection';
 
+    explain() {
+        return `close the RTC connection`;
+    }
+
 }
 
 export class EchoStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'echo-channels';
+
+    explain() {
+        return `echo all RTC media & data`;
+    }
 
 }
 
@@ -123,6 +160,10 @@ export class PeerProxyStepDefinition extends Serializable implements HandlerStep
         }
     }
 
+    explain() {
+        return `proxy the RTC connection to the configured peer`;
+    }
+
     serialize(channel: ClientServerChannel): {} {
         channel.onRequest<
             { offer: MockRTCSessionDescription },
@@ -139,6 +180,10 @@ export class PeerProxyStepDefinition extends Serializable implements HandlerStep
 export class DynamicProxyStepDefinition extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'dynamic-proxy';
+
+    explain() {
+        return `proxy the RTC connection to the relevant external peer`;
+    }
 
 }
 
