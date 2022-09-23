@@ -255,14 +255,14 @@ export class DynamicProxyStep extends DynamicProxyStepDefinition {
 
 export const StepLookup: typeof StepDefinitionLookup = {
     'wait-for-duration': WaitForDurationStep,
-    'wait-for-channel': WaitForChannelStep,
-    'wait-for-track': WaitForTrackStep,
-    'wait-for-media': WaitForMediaStep,
-    'wait-for-message': WaitForMessageStep,
-    'create-channel': CreateChannelStep,
-    'send-message': SendStep,
-    'close-connection': CloseStep,
-    'echo-channels': EchoStep,
-    'peer-proxy': PeerProxyStep,
-    'dynamic-proxy': DynamicProxyStep
+    'wait-for-rtc-data-channel': WaitForChannelStep,
+    'wait-for-rtc-track': WaitForTrackStep,
+    'wait-for-rtc-media': WaitForMediaStep,
+    'wait-for-rtc-message': WaitForMessageStep,
+    'create-rtc-data-channel': CreateChannelStep,
+    'send-rtc-data-message': SendStep,
+    'close-rtc-connection': CloseStep,
+    'echo-rtc': EchoStep,
+    'rtc-peer-proxy': PeerProxyStep,
+    'rtc-dynamic-proxy': DynamicProxyStep
 };

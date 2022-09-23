@@ -33,7 +33,7 @@ export class WaitForDurationStepDefinition extends Serializable implements Handl
 
 export class WaitForChannelStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'wait-for-channel';
+    readonly type = 'wait-for-rtc-data-channel';
 
     constructor(
         public readonly channelLabel?: string
@@ -49,7 +49,7 @@ export class WaitForChannelStepDefinition extends Serializable implements Handle
 
 export class WaitForMessageStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'wait-for-message';
+    readonly type = 'wait-for-rtc-message';
 
     constructor(
         public readonly channelLabel?: string
@@ -65,7 +65,7 @@ export class WaitForMessageStepDefinition extends Serializable implements Handle
 
 export class WaitForTrackStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'wait-for-track';
+    readonly type = 'wait-for-rtc-track';
 
     explain() {
         return `wait for an RTC track`;
@@ -75,7 +75,7 @@ export class WaitForTrackStepDefinition extends Serializable implements HandlerS
 
 export class WaitForMediaStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'wait-for-media';
+    readonly type = 'wait-for-rtc-media';
 
     explain() {
         return `wait for RTC media data`;
@@ -85,7 +85,7 @@ export class WaitForMediaStepDefinition extends Serializable implements HandlerS
 
 export class CreateChannelStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'create-channel';
+    readonly type = 'create-rtc-data-channel';
 
     constructor(
         public readonly channelLabel: string
@@ -101,7 +101,7 @@ export class CreateChannelStepDefinition extends Serializable implements Handler
 
 export class SendStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'send-message';
+    readonly type = 'send-rtc-data-message';
 
     constructor(
         public readonly channelLabel: string | undefined,
@@ -118,7 +118,7 @@ export class SendStepDefinition extends Serializable implements HandlerStepDefin
 
 export class CloseStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'close-connection';
+    readonly type = 'close-rtc-connection';
 
     explain() {
         return `close the RTC connection`;
@@ -128,7 +128,7 @@ export class CloseStepDefinition extends Serializable implements HandlerStepDefi
 
 export class EchoStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'echo-channels';
+    readonly type = 'echo-rtc';
 
     explain() {
         return `echo all RTC media & data`;
@@ -138,7 +138,7 @@ export class EchoStepDefinition extends Serializable implements HandlerStepDefin
 
 export class PeerProxyStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'peer-proxy';
+    readonly type = 'rtc-peer-proxy';
 
     protected getAnswer: (offer: MockRTCSessionDescription) => Promise<RTCSessionDescriptionInit>;
 
@@ -179,7 +179,7 @@ export class PeerProxyStepDefinition extends Serializable implements HandlerStep
 
 export class DynamicProxyStepDefinition extends Serializable implements HandlerStepDefinition {
 
-    readonly type = 'dynamic-proxy';
+    readonly type = 'rtc-dynamic-proxy';
 
     explain() {
         return `proxy the RTC connection to the relevant external peer`;
@@ -189,14 +189,14 @@ export class DynamicProxyStepDefinition extends Serializable implements HandlerS
 
 export const StepDefinitionLookup = {
     'wait-for-duration': WaitForDurationStepDefinition,
-    'wait-for-channel': WaitForChannelStepDefinition,
-    'wait-for-track': WaitForTrackStepDefinition,
-    'wait-for-media': WaitForMediaStepDefinition,
-    'wait-for-message': WaitForMessageStepDefinition,
-    'create-channel': CreateChannelStepDefinition,
-    'send-message': SendStepDefinition,
-    'close-connection': CloseStepDefinition,
-    'echo-channels': EchoStepDefinition,
-    'peer-proxy': PeerProxyStepDefinition,
-    'dynamic-proxy': DynamicProxyStepDefinition
+    'wait-for-rtc-data-channel': WaitForChannelStepDefinition,
+    'wait-for-rtc-track': WaitForTrackStepDefinition,
+    'wait-for-rtc-media': WaitForMediaStepDefinition,
+    'wait-for-rtc-message': WaitForMessageStepDefinition,
+    'create-rtc-data-channel': CreateChannelStepDefinition,
+    'send-rtc-data-message': SendStepDefinition,
+    'close-rtc-connection': CloseStepDefinition,
+    'echo-rtc': EchoStepDefinition,
+    'rtc-peer-proxy': PeerProxyStepDefinition,
+    'rtc-dynamic-proxy': DynamicProxyStepDefinition
 };
