@@ -20,7 +20,7 @@ export class WaitForDurationStepDefinition extends Serializable implements Handl
     readonly type = 'wait-for-duration';
 
     constructor(
-        protected durationMs: number
+        public readonly durationMs: number
     ) {
         super();
     }
@@ -32,7 +32,7 @@ export class WaitForChannelStepDefinition extends Serializable implements Handle
     readonly type = 'wait-for-channel';
 
     constructor(
-        protected channelLabel?: string
+        public readonly channelLabel?: string
     ) {
         super();
     }
@@ -43,7 +43,7 @@ export class WaitForMessageStepDefinition extends Serializable implements Handle
     readonly type = 'wait-for-message';
 
     constructor(
-        protected channelLabel?: string
+        public readonly channelLabel?: string
     ) {
         super();
     }
@@ -67,7 +67,7 @@ export class CreateChannelStepDefinition extends Serializable implements Handler
     readonly type = 'create-channel';
 
     constructor(
-        protected channelLabel: string
+        public readonly channelLabel: string
     ) {
         super();
     }
@@ -79,8 +79,8 @@ export class SendStepDefinition extends Serializable implements HandlerStepDefin
     readonly type = 'send-message';
 
     constructor(
-        protected channelLabel: string | undefined,
-        protected message: string | Buffer
+        public readonly channelLabel: string | undefined,
+        public readonly message: string | Buffer
     ) {
         super();
     }
