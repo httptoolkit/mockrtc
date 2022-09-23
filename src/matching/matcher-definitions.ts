@@ -14,18 +14,34 @@ export interface MatcherDefinition extends Serializable {
 
 export class HasDataChannelMatcherDefinition extends Serializable implements MatcherDefinition {
     readonly type = 'has-data-channel';
+
+    explain() {
+        return `with a data channel`;
+    }
 }
 
 export class HasVideoTrackMatcherDefinition extends Serializable implements MatcherDefinition {
     readonly type = 'has-video-track';
+
+    explain() {
+        return `with a video track`;
+    }
 }
 
 export class HasAudioTrackMatcherDefinition extends Serializable implements MatcherDefinition {
     readonly type = 'has-audio-track';
+
+    explain() {
+        return `with an audio track`;
+    }
 }
 
 export class HasMediaTrackMatcherDefinition extends Serializable implements MatcherDefinition {
     readonly type = 'has-media-track';
+
+    explain() {
+        return `with any media track`;
+    }
 }
 
 export class HostnameMatcherDefinition extends Serializable implements MatcherDefinition {
@@ -37,6 +53,11 @@ export class HostnameMatcherDefinition extends Serializable implements MatcherDe
     ) {
         super();
     }
+
+    explain() {
+        return `from a page on ${this.hostname}`;
+    }
+
 }
 
 export class UrlRegexMatcherDefinition extends Serializable implements MatcherDefinition {
@@ -51,6 +72,11 @@ export class UrlRegexMatcherDefinition extends Serializable implements MatcherDe
         this.regexSource = regex.source;
         this.regexFlags = regex.flags;
     }
+
+    explain() {
+        return `from a page with URL matching /${this.regexSource}/${this.regexFlags}`;
+    }
+
 }
 
 export class UserAgentRegexMatcherDefinition  extends Serializable implements MatcherDefinition {
@@ -65,6 +91,11 @@ export class UserAgentRegexMatcherDefinition  extends Serializable implements Ma
         this.regexSource = regex.source;
         this.regexFlags = regex.flags;
     }
+
+    explain() {
+        return `from a user agent matching /${this.regexSource}/${this.regexFlags}`;
+    }
+
 }
 
 export const MatcherDefinitionLookup = {
