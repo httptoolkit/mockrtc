@@ -182,7 +182,7 @@ export class DynamicProxyStepDefinition extends Serializable implements HandlerS
     readonly type = 'rtc-dynamic-proxy';
 
     explain() {
-        return `proxy the RTC connection to the relevant external peer`;
+        return `proxy the RTC connection to a remote peer`;
     }
 
 }
