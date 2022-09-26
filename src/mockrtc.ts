@@ -158,6 +158,11 @@ export type MockRTCEventData = {
 
 export type MockRTCEvent = keyof MockRTCEventData;
 
+export type MockRTCRuleDefinition = {
+    matchers: MatcherDefinition[];
+    steps: HandlerStepDefinition[];
+};
+
 export interface MockRTC {
 
     /**
@@ -252,5 +257,14 @@ export interface MockRTC {
         matcherDefinitions: MatcherDefinition[],
         handlerStepDefinitions: HandlerStepDefinition[]
     ): Promise<void>;
+
+    /**
+     * Create a connection-matching rule from a set of matchers and step definitions.
+     *
+     * This API is only useful if you're building rule from data programmatically,
+     * rather than using `forX()` and `MockRTCHandlerBuilder`, which are generally
+     * preferable otherwise.
+     */
+    setRulesFromDefinitions(rules: Array<MockRTCRuleDefinition>): Promise<void>;
 
 }

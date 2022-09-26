@@ -11,7 +11,7 @@
 import * as BrowserPluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 import type { PluggableAdmin } from 'mockttp';
 
-import { MockRTC, MockRTCEvent, MockRTCOptions } from "../mockrtc";
+import { MockRTC, MockRTCEvent, MockRTCOptions, MockRTCRuleDefinition } from "../mockrtc";
 import { MockRTCBase } from '../mockrtc-base';
 
 import type { MockRTCPeer } from '../mockrtc-peer';
@@ -63,6 +63,14 @@ export class MockRTCClient extends MockRTCBase implements MockRTC {
 
         await this.adminClient.sendQuery(
             this.requestBuilder.buildAddRuleQuery(matchers, handlerSteps, adminStream)
+        );
+    }
+
+    async setRulesFromDefinitions(rules: Array<MockRTCRuleDefinition>) {
+        const { adminStream } = this.adminClient;
+
+        await this.adminClient.sendQuery(
+            this.requestBuilder.buildSetRulesQuery(rules, adminStream)
         );
     }
 

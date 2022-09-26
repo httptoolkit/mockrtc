@@ -3,7 +3,12 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { MockRTC, MockRTCEventData, MockRTCPeerBuilder } from "./mockrtc";
+import {
+    MockRTC,
+    MockRTCEventData,
+    MockRTCPeerBuilder,
+    MockRTCRuleDefinition
+} from "./mockrtc";
 import { MockRTCPeer } from "./mockrtc-peer";
 import { MockRTCHandlerBuilder } from "./handling/handler-builder";
 import { HandlerStepDefinition } from "./handling/handler-step-definitions";
@@ -35,6 +40,10 @@ export abstract class MockRTCBase implements MockRTC {
     abstract addRuleFromDefinition(
         matcherDefinitions: MatcherDefinition[],
         handlerStepDefinitions: HandlerStepDefinition[]
+    ): Promise<void>;
+
+    abstract setRulesFromDefinitions(
+        ruleDefinitions: Array<MockRTCRuleDefinition>
     ): Promise<void>;
 
 }

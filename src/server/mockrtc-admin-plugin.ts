@@ -60,6 +60,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         extend type Mutation {
             createPeer(data: RTCHandlerData!): MockedPeer!
             addRTCRule(data: RTCRuleData!): Void
+            setRTCRules(data: [RTCRuleData!]!): Void
 
             createOffer(peerId: ID!, sessionId: ID, options: Raw): Session!
             createExternalOffer(peerId: ID!, options: Raw): Session!
@@ -255,6 +256,21 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                         steps.map((stepData) =>
                             deserialize(stepData, adminStream, ruleParams, StepLookup)
                         )
+                    );
+                },
+                setRTCRules: (__: any, { data: rules }: { data: Array<{
+                    matchers: Array<SerializedValue<MatcherDefinition>>
+                    steps: Array<SerializedValue<HandlerStepDefinition>>
+                }> }) => {
+                    return this.mockRTCServer.setRulesFromDefinitions(
+                        rules.map(({ matchers, steps }) => ({
+                            matchers: matchers.map((matcherData) =>
+                                deserialize(matcherData, adminStream, ruleParams, MatcherLookup)
+                            ),
+                            steps: steps.map((stepData) =>
+                                deserialize(stepData, adminStream, ruleParams, StepLookup)
+                            )
+                        }))
                     );
                 },
                 createOffer: async (__: any, { peerId, sessionId, options }: {

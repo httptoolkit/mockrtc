@@ -75,6 +75,29 @@ export class MockRTCAdminRequestBuilder {
         };
     }
 
+    buildSetRulesQuery(
+        rules: Array<{ matchers: MatcherDefinition[], steps: HandlerStepDefinition[] }>,
+        adminStream: stream.Duplex
+    ): AdminQuery<void> {
+        return {
+            query: gql`
+                mutation SetRTCRules($ruleData: [RTCRuleData!]!) {
+                    setRTCRules(data: $ruleData)
+                }
+            `,
+            variables: {
+                ruleData: rules.map(({ matchers, steps }) => ({
+                    matchers: matchers.map(matcher =>
+                        BrowserPluggableAdmin.Serialization.serialize(matcher, adminStream)
+                    ),
+                    steps: steps.map(step =>
+                        BrowserPluggableAdmin.Serialization.serialize(step, adminStream)
+                    )
+                }))
+            }
+        };
+    }
+
     buildSubscriptionRequest<E extends MockRTCEvent>(event: E): AdminQuery<MockRTCEventData[E]> | undefined {
         const query = {
             'peer-connected': gql`subscription OnPeerConnected {

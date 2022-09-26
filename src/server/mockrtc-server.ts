@@ -90,6 +90,18 @@ export class MockRTCServer extends MockRTCBase implements MockRTC {
         handlerSteps: HandlerStep[]
     }> = [];
 
+    async setRulesFromDefinitions(
+        rules: Array<{
+            matchers: MatcherDefinition[],
+            steps: HandlerStepDefinition[]
+        }>
+    ) {
+        this.rules = [];
+        await Promise.all(rules.map(({ matchers, steps }) =>
+            this.addRuleFromDefinition(matchers, steps)
+        ));
+    }
+
     async addRuleFromDefinition(
         matcherDefinitions: MatcherDefinition[],
         handlerStepDefinitions: HandlerStepDefinition[]

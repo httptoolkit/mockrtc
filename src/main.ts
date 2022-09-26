@@ -9,6 +9,7 @@ import {
     MockRTCPeerBuilder,
     MockRTCEvent,
     MockRTCEventData,
+    MockRTCRuleDefinition,
     MockRTCSessionDescription,
     SelectedRTCCandidate,
     TimingEvents
@@ -48,6 +49,7 @@ export type {
     MockRTCAdminServer,
     MockRTCEvent,
     MockRTCEventData,
+    MockRTCRuleDefinition,
     MockRTCSessionDescription,
     SelectedRTCCandidate,
     TimingEvents
