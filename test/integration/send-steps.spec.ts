@@ -98,4 +98,30 @@ describe("Send steps", function () {
         expect(message).to.equal('Hello from new channel');
     });
 
+    it("should be able to send a Buffer-based message", async () => {
+        const mockPeer = await mockRTC.buildPeer()
+            .waitForChannel('dataChannel1')
+            .thenSend(Buffer.from('Hello from buffer'));
+
+        const localConnection = new RTCPeerConnection();
+        const dataChannel1 = localConnection.createDataChannel("dataChannel1");
+
+        const localOffer = await localConnection.createOffer();
+        await localConnection.setLocalDescription(localOffer);
+        const { answer } = await mockPeer.answerOffer(localOffer);
+        await localConnection.setRemoteDescription(answer);
+
+        // Wait for a response:
+        let messages: Array<any> = [];
+        dataChannel1.addEventListener('message', (event) => {
+            messages.push(Buffer.from(event.data)); // ArrayBuffer -> node Buffer
+        });
+
+        await waitForChannelClose(dataChannel1);
+
+        expect(messages.map(m => m.toString('utf8'))).to.deep.equal([
+            'Hello from buffer'
+        ]);
+    });
+
 });

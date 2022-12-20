@@ -161,6 +161,20 @@ export class SendStep extends SendStepDefinition {
         );
     }
 
+    static deserialize(data: {
+        channelLabel: string | undefined,
+        message: string | { type: 'Buffer', data: number[] }
+    }): SendStep {
+        return new SendStep(
+            data.channelLabel,
+            typeof data.message === 'string'
+                ? data.message
+                // Buffers are serialized very roughly, so here we
+                // turn them back into real Buffer instances:
+                : Buffer.from(data.message.data)
+        );
+    }
+
 }
 
 export class CloseStep extends CloseStepDefinition {
