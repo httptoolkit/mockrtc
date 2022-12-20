@@ -430,7 +430,7 @@ export class RTCConnection extends EventEmitter {
         this.localDescription = undefined;
 
         if (rawConn.state() === 'closed') return;
-        rawConn.close();
+        rawConn.destroy();
         this.emit('connection-closed');
     }
 
