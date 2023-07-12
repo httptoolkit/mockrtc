@@ -36,7 +36,7 @@ export class RTCConnection extends EventEmitter {
     // Set to null when the connection is closed, as otherwise calling any method (including checking
     // the connection state) will segfault the process.
     private rawConn: NodeDataChannel.PeerConnection | null
-        = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [] });
+        = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [], forceMediaTransport: true });
 
     private remoteDescription: RTCSessionDescriptionInit & ParsedSDP | undefined;
     private localDescription: MockRTCSessionDescription & ParsedSDP | undefined;
