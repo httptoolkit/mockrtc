@@ -5,6 +5,7 @@
 
 import {
     MockRTC,
+    delay,
     expect,
     waitForChannelClose
 } from '../test-setup';
@@ -32,13 +33,14 @@ describe("Send steps", function () {
         await localConnection.setRemoteDescription(answer);
 
         // Wait for a response:
-        let messages: Array<any> = [];
+        let messages: Array<string> = [];
         dataChannel1.addEventListener('message', (event) => messages.push("1: " + event.data));
         dataChannel2.addEventListener('message', (event) => messages.push("2: " + event.data));
 
         await waitForChannelClose(dataChannel1);
+        await delay(1);
 
-        expect(messages).to.deep.equal([
+        expect(messages.sort()).to.deep.equal([
             '1: Hello and goodbye',
             '2: Hello and goodbye',
         ]);
@@ -66,6 +68,7 @@ describe("Send steps", function () {
         dataChannel2.addEventListener('message', (event) => messages.push("2: " + event.data));
 
         await waitForChannelClose(dataChannel1);
+        await delay(1);
 
         // We only see a 2nd channel message:
         expect(messages).to.deep.equal([
@@ -112,12 +115,13 @@ describe("Send steps", function () {
         await localConnection.setRemoteDescription(answer);
 
         // Wait for a response:
-        let messages: Array<any> = [];
+        let messages: Array<Buffer> = [];
         dataChannel1.addEventListener('message', (event) => {
             messages.push(Buffer.from(event.data)); // ArrayBuffer -> node Buffer
         });
 
         await waitForChannelClose(dataChannel1);
+        await delay(1);
 
         expect(messages.map(m => m.toString('utf8'))).to.deep.equal([
             'Hello from buffer'

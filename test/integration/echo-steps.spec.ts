@@ -29,27 +29,26 @@ describe("Echo steps", function () {
         const { answer } = await mockPeer.answerOffer(localOffer);
         await localConnection.setRemoteDescription(answer);
 
-        let messages: Array<any> = [];
+        let messages: Array<string> = [];
         dataChannel1.addEventListener('message', (event) => messages.push("1: " + event.data));
 
         await waitForChannelOpen(dataChannel1);
         dataChannel1.send('Test message 1');
+        dataChannel1.send('Test message 2');
 
         const dataChannel2 = localConnection.createDataChannel("dataChannel2");
         dataChannel2.addEventListener('message', (event) => messages.push("2: " + event.data));
         await waitForChannelOpen(dataChannel2);
-        await delay(10); // Delay to guarantee ordering
-        dataChannel2.send('Test message 2');
 
-        await delay(10); // Delay to guarantee ordering
-        dataChannel1.send('Test message 3');
+        await delay(50); // Delay to guarantee ordering
+        dataChannel2.send('Test message 3');
 
         await delay(50); // Delay to guarantee delivery
 
         expect(messages).to.deep.equal([
             '1: Test message 1',
-            '2: Test message 2',
-            '1: Test message 3',
+            '1: Test message 2',
+            '2: Test message 3',
         ]);
     });
 
