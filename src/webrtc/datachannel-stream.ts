@@ -4,7 +4,7 @@
  */
 
 import * as stream from 'stream';
-import * as NodeDataChannel from 'node-datachannel';
+import type * as NodeDataChannel from 'node-datachannel';
 
 /**
  * Turns a node-datachannel DataChannel into a real Node.js stream, complete with

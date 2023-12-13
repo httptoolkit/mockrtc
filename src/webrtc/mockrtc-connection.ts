@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as NodeDataChannel from 'node-datachannel';
+import type * as NodeDataChannel from 'node-datachannel';
 
 import { MockRTCControlMessage, MOCKRTC_CONTROL_CHANNEL } from './control-channel';
 

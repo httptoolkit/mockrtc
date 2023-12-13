@@ -4,9 +4,7 @@
  */
 
 import * as stream from 'stream';
-import * as NodeDataChannel from 'node-datachannel';
-
-const { Direction } = NodeDataChannel;
+import type * as NodeDataChannel from 'node-datachannel';
 
 /**
  * Turns a node-datachannel media track into a real Node.js stream, complete with
