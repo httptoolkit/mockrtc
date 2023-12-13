@@ -11,7 +11,8 @@ import {
     waitForChannelClose,
     waitForState,
     setupPerfectNegotiation,
-    getDeferred
+    getDeferred,
+    delay
 } from '../test-setup';
 
 describe("When proxying WebRTC traffic", () => {
@@ -154,6 +155,7 @@ describe("When proxying WebRTC traffic", () => {
         dataChannel.send('local message 3');
 
         await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+        await delay(200);
 
         expect(locallyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by thenSend step
@@ -215,6 +217,7 @@ describe("When proxying WebRTC traffic", () => {
         dataChannel.send('local message 3');
 
         await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+        await delay(200);
 
         expect(locallyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by thenSend step
@@ -284,6 +287,7 @@ describe("When proxying WebRTC traffic", () => {
         dataChannel.send('local message 3');
 
         await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+        await delay(200);
 
         expect(locallyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by send step
@@ -343,6 +347,7 @@ describe("When proxying WebRTC traffic", () => {
         dataChannel.send('local message 3');
 
         await new Promise((resolve) => dataChannel.addEventListener('close', resolve));
+        await delay(200);
 
         expect(locallyReceivedMessages).to.deep.equal([
             'Injected message', // Injected by send step

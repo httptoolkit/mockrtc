@@ -54,7 +54,7 @@ describe("Connection rule matching", () => {
         dataChannel.send('local message 2');
         dataChannel.send('local message 3');
 
-        await delay(100);
+        await delay(500); // Usually be much quicker locally, but can be slow in CI
 
         // Traffic is passed through untouched, as expected:
         expect(remotelyReceivedMessages).to.deep.equal([
