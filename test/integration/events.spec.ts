@@ -356,7 +356,7 @@ describe("MockRTC event subscriptions", function () {
 
             const mockPeer = await mockRTC.buildPeer()
                 .waitForChannel()
-                .thenClose();
+                .thenEcho();
 
             const localConnection = new RTCPeerConnection();
             const dataChannel = localConnection.createDataChannel("test-channel");
@@ -366,7 +366,12 @@ describe("MockRTC event subscriptions", function () {
             const { answer } = await mockPeer.answerOffer(localOffer);
             await localConnection.setRemoteDescription(answer);
 
-            dataChannel.addEventListener('open', () => dataChannel.close());
+            dataChannel.addEventListener('open', () => {
+                // Work around https://github.com/murat-dogan/node-datachannel/issues/211
+                setTimeout(() => {
+                    dataChannel.close();
+                }, 10);
+            });
 
             const channelEvent = await eventPromise;
             expect(channelEvent.peerId).to.equal(mockPeer.peerId);
