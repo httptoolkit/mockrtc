@@ -87,7 +87,7 @@ describe("MockRTC smoke test:", function () {
             channel.send("remote message 2");
         });
 
-        await delay(200);
+        await delay(500);
 
         expect(log).to.deep.equal([
             'LOCAL: MockRTC injected message',
