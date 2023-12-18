@@ -7,7 +7,19 @@ import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
-import * as NodeDataChannel from 'node-datachannel';
+
+import {
+    PeerConnection as NDCPeerConnection,
+    Track as NDCTrack,
+    DataChannel as NDCDataChannel,
+    Direction as NDCDirection
+} from 'node-datachannel';
+
+// Node-DataChannel is now an ES6 module, but we're not - work around
+// that with a synchronous import wrapper:
+const importSync = require('import-sync');
+const NodeDataChannel = importSync('node-datachannel') as
+    typeof import('node-datachannel');
 
 import type { MockRTCSessionDescription } from '../mockrtc';
 import {
@@ -35,7 +47,7 @@ export class RTCConnection extends EventEmitter {
 
     // Set to null when the connection is closed, as otherwise calling any method (including checking
     // the connection state) will segfault the process.
-    private rawConn: NodeDataChannel.PeerConnection | null
+    private rawConn: NDCPeerConnection | null
         = new NodeDataChannel.PeerConnection("MockRTCConnection", { iceServers: [], forceMediaTransport: true });
 
     private remoteDescription: RTCSessionDescriptionInit & ParsedSDP | undefined;
@@ -93,7 +105,7 @@ export class RTCConnection extends EventEmitter {
             this.trackNewChannel(channel, { isLocal: false });
         });
 
-        this.rawConn!.onTrack((track: NodeDataChannel.Track) => {
+        this.rawConn!.onTrack((track: NDCTrack) => {
             if (!this.rawConn) return; // https://github.com/murat-dogan/node-datachannel/issues/103
 
             this.trackNewMediaTrack(track, { isLocal: false });
@@ -122,7 +134,7 @@ export class RTCConnection extends EventEmitter {
         return this.trackNewChannel(channel, { isLocal: true });
     }
 
-    protected trackNewChannel(channel: NodeDataChannel.DataChannel, options: { isLocal: boolean }) {
+    protected trackNewChannel(channel: NDCDataChannel, options: { isLocal: boolean }) {
         const channelStream = new DataChannelStream(channel);
         this.trackedChannels.push({ stream: channelStream, isLocal: options.isLocal });
 
@@ -147,7 +159,7 @@ export class RTCConnection extends EventEmitter {
         return channelStream;
     }
 
-    protected trackNewMediaTrack(track: NodeDataChannel.Track, options: { isLocal: boolean }) {
+    protected trackNewMediaTrack(track: NDCTrack, options: { isLocal: boolean }) {
         const trackStream = new MediaTrackStream(track);
         this.trackedMediaTracks.push({ stream: trackStream, isLocal: options.isLocal });
 
@@ -193,7 +205,7 @@ export class RTCConnection extends EventEmitter {
     async buildLocalDescription(): Promise<MockRTCSessionDescription> {
         if (!this.rawConn) throw new Error("Can't get local description after connection is closed");
 
-        let setupChannel: NodeDataChannel.DataChannel | undefined;
+        let setupChannel: NDCDataChannel | undefined;
         if (this.rawConn.gatheringState() === 'new') {
             // We can't create an offer until we have something to negotiate, but we don't want to
             // negotiate ourselves when we don't really know what's being negotiated here. To work
@@ -304,7 +316,7 @@ export class RTCConnection extends EventEmitter {
             this.trackNewMediaTrack(track, { isLocal: true });
         });
 
-        let setupChannel: NodeDataChannel.DataChannel | undefined;
+        let setupChannel: NDCDataChannel | undefined;
         const channelRequiredForDescription = this.rawConn.gatheringState() === 'new' &&
             !mediaStreamsToMirror.length;
         if (shouldMirrorDataStream || channelRequiredForDescription || options.addDataStream) {
@@ -436,7 +448,7 @@ export class RTCConnection extends EventEmitter {
 
 }
 
-function sdpDirectionToNDCDirection(direction: SDP.SharedAttributes['direction']): NodeDataChannel.Direction {
+function sdpDirectionToNDCDirection(direction: SDP.SharedAttributes['direction']): NDCDirection {
     if (direction === 'inactive') return NodeDataChannel.Direction.Inactive;
     else if (direction?.length === 8) {
         return direction[0].toUpperCase() +
