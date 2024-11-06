@@ -15,11 +15,17 @@ import {
     Direction as NDCDirection
 } from 'node-datachannel';
 
-// Node-DataChannel is now an ES6 module, but we're not - work around
-// that with a synchronous import wrapper:
-const importSync = require('import-sync');
-const NodeDataChannel = importSync('node-datachannel') as
-    typeof import('node-datachannel');
+// Node-DataChannel is now an ES6 module, but we're not. In all but the
+// latest node, that breaks require(). Work around that with a synchronous
+// import wrapper if required:
+let NodeDataChannel: typeof import('node-datachannel');
+try {
+    NodeDataChannel = require('node-datachannel');
+} catch (e) {
+    const importSync = require('import-sync');
+    NodeDataChannel = importSync('node-datachannel') as
+        typeof import('node-datachannel');
+}
 
 import type { MockRTCSessionDescription } from '../mockrtc';
 import {
