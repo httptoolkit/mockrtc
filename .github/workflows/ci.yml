@@ -7,7 +7,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x, 20.x, v20.8.0, '*']
+        node-version: [14.x, 16.x, 18.x, 20.x, v20.8.0, 22.x]
 
     steps:
       - uses: actions/checkout@v3
@@ -22,6 +22,8 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm test
+        env:
+          NODE_OPTIONS: ${{ matrix.node-version == '22.x' && '--experimental-require-module' || '' }}
 
       - name: Deploy docs
         if: github.ref == 'refs/heads/main' && matrix.node-version == 'v20.8.0'
