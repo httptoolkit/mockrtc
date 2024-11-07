@@ -81,7 +81,7 @@
     "import-sync": "^2.2.0",
     "lodash": "^4.17.21",
     "mockttp": "^3.2.1",
-    "node-datachannel": "^0.5.3",
+    "node-datachannel": "^0.12.0",
     "performance-now": "^2.1.0",
     "sdp-transform": "^2.14.1"
   },
