@@ -351,7 +351,7 @@ export class RTCConnection extends EventEmitter {
 
         const offerSDP = SDP.parse(localDesc.sdp);
         mirrorMediaParams(offerToMirror, offerSDP);
-        localDesc.sdp = SDP.write(offerSDP);
+        localDesc.sdp = SDP.write(offerSDP) as any;
 
         this.localDescription = {
             ...localDesc as MockRTCSessionDescription,
@@ -367,7 +367,7 @@ export class RTCConnection extends EventEmitter {
         const answerSDP = SDP.parse(localDesc.sdp!);
         mirrorMediaParams(answerToMirror, answerSDP);
 
-        localDesc.sdp = SDP.write(answerSDP);
+        localDesc.sdp = SDP.write(answerSDP) as any;
 
         this.localDescription = {
             ...localDesc as MockRTCSessionDescription,
@@ -460,7 +460,7 @@ function sdpDirectionToNDCDirection(direction: SDP.SharedAttributes['direction']
         return direction[0].toUpperCase() +
             direction.slice(1, 4) +
             direction[4].toUpperCase() +
-            direction.slice(5) as NodeDataChannel.Direction;
+            direction.slice(5) as NDCDirection;
     } else {
         return NodeDataChannel.Direction.Unknown;
     }
