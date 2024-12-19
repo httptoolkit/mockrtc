@@ -7,7 +7,7 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [14.x, 16.x, 18.x, 20.x, v20.8.0, 22.x]
+        node-version: [20.x, v20.18.1, 22.x, 23.x]
 
     steps:
       - uses: actions/checkout@v3
@@ -26,7 +26,7 @@ jobs:
           NODE_OPTIONS: ${{ matrix.node-version == '22.x' && '--experimental-require-module' || '' }}
 
       - name: Deploy docs
-        if: github.ref == 'refs/heads/main' && matrix.node-version == 'v20.8.0'
+        if: github.ref == 'refs/heads/main' && matrix.node-version == 'v20.18.1'
         uses: JamesIves/github-pages-deploy-action@v4.5.0
         with:
           single-commit: true
