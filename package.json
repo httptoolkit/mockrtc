@@ -78,7 +78,6 @@
     "graphql": "^15.8.0",
     "graphql-subscriptions": "^1.2.1",
     "graphql-tag": "^2.12.6",
-    "import-sync": "^2.2.0",
     "lodash": "^4.17.21",
     "mockttp": "^3.2.1",
     "node-datachannel": "^0.12.0",
