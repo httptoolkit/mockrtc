@@ -12,7 +12,7 @@ export interface MatcherDefinition extends Serializable {
     readonly type: keyof typeof MatcherDefinitionLookup;
 }
 
-export class HasDataChannelMatcherDefinition extends Serializable implements MatcherDefinition {
+export class HasDataChannelMatcher extends Serializable implements MatcherDefinition {
     readonly type = 'has-rtc-data-channel';
 
     explain() {
@@ -20,7 +20,7 @@ export class HasDataChannelMatcherDefinition extends Serializable implements Mat
     }
 }
 
-export class HasVideoTrackMatcherDefinition extends Serializable implements MatcherDefinition {
+export class HasVideoTrackMatcher extends Serializable implements MatcherDefinition {
     readonly type = 'has-rtc-video-track';
 
     explain() {
@@ -28,7 +28,7 @@ export class HasVideoTrackMatcherDefinition extends Serializable implements Matc
     }
 }
 
-export class HasAudioTrackMatcherDefinition extends Serializable implements MatcherDefinition {
+export class HasAudioTrackMatcher extends Serializable implements MatcherDefinition {
     readonly type = 'has-rtc-audio-track';
 
     explain() {
@@ -36,7 +36,7 @@ export class HasAudioTrackMatcherDefinition extends Serializable implements Matc
     }
 }
 
-export class HasMediaTrackMatcherDefinition extends Serializable implements MatcherDefinition {
+export class HasMediaTrackMatcher extends Serializable implements MatcherDefinition {
     readonly type = 'has-rtc-media-track';
 
     explain() {
@@ -44,7 +44,7 @@ export class HasMediaTrackMatcherDefinition extends Serializable implements Matc
     }
 }
 
-export class HostnameMatcherDefinition extends Serializable implements MatcherDefinition {
+export class HostnameMatcher extends Serializable implements MatcherDefinition {
 
     readonly type = 'rtc-page-hostname';
 
@@ -60,7 +60,7 @@ export class HostnameMatcherDefinition extends Serializable implements MatcherDe
 
 }
 
-export class UrlRegexMatcherDefinition extends Serializable implements MatcherDefinition {
+export class UrlRegexMatcher extends Serializable implements MatcherDefinition {
 
     readonly type = 'rtc-page-regex';
 
@@ -79,7 +79,7 @@ export class UrlRegexMatcherDefinition extends Serializable implements MatcherDe
 
 }
 
-export class UserAgentRegexMatcherDefinition  extends Serializable implements MatcherDefinition {
+export class UserAgentRegexMatcher  extends Serializable implements MatcherDefinition {
 
     readonly type = 'rtc-user-agent-regex';
 
@@ -99,11 +99,11 @@ export class UserAgentRegexMatcherDefinition  extends Serializable implements Ma
 }
 
 export const MatcherDefinitionLookup = {
-    'has-rtc-data-channel': HasDataChannelMatcherDefinition,
-    'has-rtc-video-track': HasVideoTrackMatcherDefinition,
-    'has-rtc-audio-track': HasAudioTrackMatcherDefinition,
-    'has-rtc-media-track': HasMediaTrackMatcherDefinition,
-    'rtc-page-hostname': HostnameMatcherDefinition,
-    'rtc-page-regex': UrlRegexMatcherDefinition,
-    'rtc-user-agent-regex': UserAgentRegexMatcherDefinition
+    'has-rtc-data-channel': HasDataChannelMatcher,
+    'has-rtc-video-track': HasVideoTrackMatcher,
+    'has-rtc-audio-track': HasAudioTrackMatcher,
+    'has-rtc-media-track': HasMediaTrackMatcher,
+    'rtc-page-hostname': HostnameMatcher,
+    'rtc-page-regex': UrlRegexMatcher,
+    'rtc-user-agent-regex': UserAgentRegexMatcher
 };

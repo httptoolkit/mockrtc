@@ -6,6 +6,7 @@
 import * as PluggableAdmin from 'mockttp/dist/pluggable-admin-api/pluggable-admin.browser';
 
 import { MockRTCSessionDescription } from '../mockrtc';
+import type { RTCConnection } from '../webrtc/rtc-connection';
 
 export type Serializable = PluggableAdmin.Serialization.Serializable;
 export const { Serializable } = PluggableAdmin.Serialization;
@@ -15,7 +16,7 @@ export interface HandlerStepDefinition extends Serializable {
     readonly type: keyof typeof StepDefinitionLookup;
 }
 
-export class WaitForDurationStepDefinition extends Serializable implements HandlerStepDefinition {
+export class WaitForDurationStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-duration';
     static readonly isFinal = false;
@@ -32,7 +33,7 @@ export class WaitForDurationStepDefinition extends Serializable implements Handl
 
 }
 
-export class WaitForChannelStepDefinition extends Serializable implements HandlerStepDefinition {
+export class WaitForChannelStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-rtc-data-channel';
     static readonly isFinal = false;
@@ -49,7 +50,7 @@ export class WaitForChannelStepDefinition extends Serializable implements Handle
 
 }
 
-export class WaitForMessageStepDefinition extends Serializable implements HandlerStepDefinition {
+export class WaitForMessageStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-rtc-message';
     static readonly isFinal = false;
@@ -66,7 +67,7 @@ export class WaitForMessageStepDefinition extends Serializable implements Handle
 
 }
 
-export class WaitForTrackStepDefinition extends Serializable implements HandlerStepDefinition {
+export class WaitForTrackStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-rtc-track';
     static readonly isFinal = false;
@@ -77,7 +78,7 @@ export class WaitForTrackStepDefinition extends Serializable implements HandlerS
 
 }
 
-export class WaitForMediaStepDefinition extends Serializable implements HandlerStepDefinition {
+export class WaitForMediaStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'wait-for-rtc-media';
     static readonly isFinal = false;
@@ -88,7 +89,7 @@ export class WaitForMediaStepDefinition extends Serializable implements HandlerS
 
 }
 
-export class CreateChannelStepDefinition extends Serializable implements HandlerStepDefinition {
+export class CreateChannelStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'create-rtc-data-channel';
     static readonly isFinal = false;
@@ -105,7 +106,7 @@ export class CreateChannelStepDefinition extends Serializable implements Handler
 
 }
 
-export class SendStepDefinition extends Serializable implements HandlerStepDefinition {
+export class SendStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'send-rtc-data-message';
     static readonly isFinal = false;
@@ -123,7 +124,7 @@ export class SendStepDefinition extends Serializable implements HandlerStepDefin
 
 }
 
-export class CloseStepDefinition extends Serializable implements HandlerStepDefinition {
+export class CloseStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'close-rtc-connection';
     static readonly isFinal = true;
@@ -134,7 +135,7 @@ export class CloseStepDefinition extends Serializable implements HandlerStepDefi
 
 }
 
-export class EchoStepDefinition extends Serializable implements HandlerStepDefinition {
+export class EchoStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'echo-rtc';
     static readonly isFinal = true;
@@ -145,10 +146,12 @@ export class EchoStepDefinition extends Serializable implements HandlerStepDefin
 
 }
 
-export class PeerProxyStepDefinition extends Serializable implements HandlerStepDefinition {
+export class PeerProxyStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'rtc-peer-proxy';
     static readonly isFinal = true;
+
+    protected externalConnections: RTCConnection[] = []; // Set here so it can be used in impl subclass
 
     protected getAnswer: (offer: MockRTCSessionDescription) => Promise<RTCSessionDescriptionInit>;
 
@@ -187,10 +190,12 @@ export class PeerProxyStepDefinition extends Serializable implements HandlerStep
 
 }
 
-export class DynamicProxyStepDefinition extends Serializable implements HandlerStepDefinition {
+export class DynamicProxyStep extends Serializable implements HandlerStepDefinition {
 
     readonly type = 'rtc-dynamic-proxy';
     static readonly isFinal = true;
+
+    protected externalConnections: RTCConnection[] = []; // Set here so it can be used in impl subclass
 
     explain() {
         return `proxy the RTC connection to a remote peer`;
@@ -199,15 +204,15 @@ export class DynamicProxyStepDefinition extends Serializable implements HandlerS
 }
 
 export const StepDefinitionLookup = {
-    'wait-for-duration': WaitForDurationStepDefinition,
-    'wait-for-rtc-data-channel': WaitForChannelStepDefinition,
-    'wait-for-rtc-track': WaitForTrackStepDefinition,
-    'wait-for-rtc-media': WaitForMediaStepDefinition,
-    'wait-for-rtc-message': WaitForMessageStepDefinition,
-    'create-rtc-data-channel': CreateChannelStepDefinition,
-    'send-rtc-data-message': SendStepDefinition,
-    'close-rtc-connection': CloseStepDefinition,
-    'echo-rtc': EchoStepDefinition,
-    'rtc-peer-proxy': PeerProxyStepDefinition,
-    'rtc-dynamic-proxy': DynamicProxyStepDefinition
+    'wait-for-duration': WaitForDurationStep,
+    'wait-for-rtc-data-channel': WaitForChannelStep,
+    'wait-for-rtc-track': WaitForTrackStep,
+    'wait-for-rtc-media': WaitForMediaStep,
+    'wait-for-rtc-message': WaitForMessageStep,
+    'create-rtc-data-channel': CreateChannelStep,
+    'send-rtc-data-message': SendStep,
+    'close-rtc-connection': CloseStep,
+    'echo-rtc': EchoStep,
+    'rtc-peer-proxy': PeerProxyStep,
+    'rtc-dynamic-proxy': DynamicProxyStep
 };

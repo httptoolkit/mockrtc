@@ -18,7 +18,7 @@ import {
     OfferOptions,
     AnswerOptions
 } from "../mockrtc-peer";
-import { HandlerStep } from '../handling/handler-steps';
+import { HandlerStepImpl } from '../handling/handler-step-impls';
 
 import { RTCConnection } from '../webrtc/rtc-connection';
 import { MockRTCConnection } from '../webrtc/mockrtc-connection';
@@ -28,7 +28,7 @@ import { TimingEvents } from '../mockrtc';
 
 export class MockRTCServerPeer implements MockRTCPeer {
 
-    readonly peerId = randomUUID();
+    readonly peerId: string = randomUUID();
 
     private debug: boolean = false;
 
@@ -40,7 +40,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
     constructor(
         private getHandlerSteps: (conn: RTCConnection) =>
-            (HandlerStep[] | Promise<HandlerStep[]>),
+            (HandlerStepImpl[] | Promise<HandlerStepImpl[]>),
         private options: MockRTCPeerOptions & { peerId?: string } = {},
         private eventEmitter: EventEmitter
     ) {

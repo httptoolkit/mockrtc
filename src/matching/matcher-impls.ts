@@ -7,20 +7,20 @@ import { RTCConnection } from "../webrtc/rtc-connection";
 import {
     MatcherDefinition,
     MatcherDefinitionLookup,
-    HasAudioTrackMatcherDefinition,
-    HasDataChannelMatcherDefinition,
-    HasMediaTrackMatcherDefinition,
-    HasVideoTrackMatcherDefinition,
-    HostnameMatcherDefinition,
-    UrlRegexMatcherDefinition,
-    UserAgentRegexMatcherDefinition
+    HasAudioTrackMatcher,
+    HasDataChannelMatcher,
+    HasMediaTrackMatcher,
+    HasVideoTrackMatcher,
+    HostnameMatcher,
+    UrlRegexMatcher,
+    UserAgentRegexMatcher
 } from "./matcher-definitions";
 
-export interface Matcher extends MatcherDefinition {
+export interface MatcherImpl extends MatcherDefinition {
     matches(connection: RTCConnection): boolean;
 }
 
-export class HasDataChannelMatcher extends HasDataChannelMatcherDefinition {
+export class HasDataChannelMatcherImpl extends HasDataChannelMatcher {
 
     matches(connection: RTCConnection): boolean {
         return [
@@ -31,7 +31,7 @@ export class HasDataChannelMatcher extends HasDataChannelMatcherDefinition {
 
 }
 
-export class HasVideoTrackMatcher extends HasVideoTrackMatcherDefinition {
+export class HasVideoTrackMatcherImpl extends HasVideoTrackMatcher {
 
     matches(connection: RTCConnection): boolean {
         return [
@@ -42,7 +42,7 @@ export class HasVideoTrackMatcher extends HasVideoTrackMatcherDefinition {
 
 }
 
-export class HasAudioTrackMatcher extends HasAudioTrackMatcherDefinition {
+export class HasAudioTrackMatcherImpl extends HasAudioTrackMatcher {
 
     matches(connection: RTCConnection): boolean {
         return [
@@ -53,7 +53,7 @@ export class HasAudioTrackMatcher extends HasAudioTrackMatcherDefinition {
 
 }
 
-export class HasMediaTrackMatcher extends HasMediaTrackMatcherDefinition {
+export class HasMediaTrackMatcherImpl extends HasMediaTrackMatcher {
 
     matches(connection: RTCConnection): boolean {
         return [
@@ -76,7 +76,7 @@ const getConnectionSourceURL = (connection: RTCConnection): URL | undefined => {
     }
 };
 
-export class HostnameMatcher extends HostnameMatcherDefinition {
+export class HostnameMatcherImpl extends HostnameMatcher {
 
     matches(connection: RTCConnection): boolean {
         const url = getConnectionSourceURL(connection);
@@ -85,7 +85,7 @@ export class HostnameMatcher extends HostnameMatcherDefinition {
 
 }
 
-export class UrlRegexMatcher extends UrlRegexMatcherDefinition {
+export class UrlRegexMatcherImpl extends UrlRegexMatcher {
 
     matches(connection: RTCConnection): boolean {
         const url = getConnectionSourceURL(connection);
@@ -96,7 +96,7 @@ export class UrlRegexMatcher extends UrlRegexMatcherDefinition {
 
 }
 
-export class UserAgentRegexMatcher extends UserAgentRegexMatcherDefinition {
+export class UserAgentRegexMatcherImpl extends UserAgentRegexMatcher {
 
     matches(connection: RTCConnection): boolean {
         const userAgent = connection.metadata.userAgent;
@@ -108,11 +108,11 @@ export class UserAgentRegexMatcher extends UserAgentRegexMatcherDefinition {
 }
 
 export const MatcherLookup: typeof MatcherDefinitionLookup = {
-    'has-rtc-data-channel': HasDataChannelMatcher,
-    'has-rtc-video-track': HasVideoTrackMatcher,
-    'has-rtc-audio-track': HasAudioTrackMatcher,
-    'has-rtc-media-track': HasMediaTrackMatcher,
-    'rtc-page-hostname': HostnameMatcher,
-    'rtc-page-regex': UrlRegexMatcher,
-    'rtc-user-agent-regex': UserAgentRegexMatcher
+    'has-rtc-data-channel': HasDataChannelMatcherImpl,
+    'has-rtc-video-track': HasVideoTrackMatcherImpl,
+    'has-rtc-audio-track': HasAudioTrackMatcherImpl,
+    'has-rtc-media-track': HasMediaTrackMatcherImpl,
+    'rtc-page-hostname': HostnameMatcherImpl,
+    'rtc-page-regex': UrlRegexMatcherImpl,
+    'rtc-user-agent-regex': UserAgentRegexMatcherImpl
 };

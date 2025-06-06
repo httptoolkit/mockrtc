@@ -12,9 +12,9 @@ import { MockRTCPeer } from "../mockrtc-peer";
 import { RTCConnection } from "../webrtc/rtc-connection";
 
 import type { MatcherDefinition } from "../matching/matcher-definitions";
-import { Matcher, MatcherLookup } from "../matching/matchers";
+import { MatcherImpl, MatcherLookup } from "../matching/matcher-impls";
 import type { HandlerStepDefinition } from "../handling/handler-step-definitions";
-import { DynamicProxyStep, HandlerStep, StepLookup } from "../handling/handler-steps";
+import { DynamicProxyStepImpl, HandlerStepImpl, StepLookup } from "../handling/handler-step-impls";
 
 const MATCHING_PEER_ID = 'matching-peer';
 
@@ -86,8 +86,8 @@ export class MockRTCServer extends MockRTCBase implements MockRTC {
     }
 
     private rules: Array<{
-        matchers: Matcher[],
-        handlerSteps: HandlerStep[]
+        matchers: MatcherImpl[],
+        handlerSteps: HandlerStepImpl[]
     }> = [];
 
     async setRulesFromDefinitions(
@@ -106,14 +106,14 @@ export class MockRTCServer extends MockRTCBase implements MockRTC {
         matcherDefinitions: MatcherDefinition[],
         handlerStepDefinitions: HandlerStepDefinition[]
     ) {
-        const matchers = matcherDefinitions.map((definition): Matcher => {
+        const matchers = matcherDefinitions.map((definition): MatcherImpl => {
             return Object.assign(
                 Object.create(MatcherLookup[definition.type].prototype),
                 definition
             );
         });
 
-        const handlerSteps = handlerStepDefinitions.map((definition): HandlerStep => {
+        const handlerSteps = handlerStepDefinitions.map((definition): HandlerStepImpl => {
             return Object.assign(
                 Object.create(StepLookup[definition.type].prototype),
                 definition
@@ -143,13 +143,13 @@ export class MockRTCServer extends MockRTCBase implements MockRTC {
 
         // Unmatched connections are proxied dynamically. In practice, that means they're accepted
         // and ignored initially, unless an external peer also connects and is attached:
-        return [new DynamicProxyStep()];
+        return [new DynamicProxyStepImpl()];
     }
 
     // Peer definition API:
 
     async buildPeerFromDefinition(handlerStepDefinitions: HandlerStepDefinition[]): Promise<MockRTCServerPeer> {
-        const handlerSteps = handlerStepDefinitions.map((definition): HandlerStep => {
+        const handlerSteps = handlerStepDefinitions.map((definition): HandlerStepImpl => {
             return Object.assign(
                 Object.create(StepLookup[definition.type].prototype),
                 definition

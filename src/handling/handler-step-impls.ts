@@ -12,27 +12,27 @@ import type { MockRTCConnection } from '../webrtc/mockrtc-connection';
 import { RTCConnection } from '../webrtc/rtc-connection';
 import {
     StepDefinitionLookup,
-    CloseStepDefinition,
-    DynamicProxyStepDefinition,
-    EchoStepDefinition,
+    CloseStep,
+    DynamicProxyStep,
+    EchoStep,
     HandlerStepDefinition,
-    PeerProxyStepDefinition,
-    CreateChannelStepDefinition,
-    SendStepDefinition,
-    WaitForChannelStepDefinition,
-    WaitForDurationStepDefinition,
-    WaitForMediaStepDefinition,
-    WaitForMessageStepDefinition,
-    WaitForTrackStepDefinition
+    PeerProxyStep,
+    CreateChannelStep,
+    SendStep,
+    WaitForChannelStep,
+    WaitForDurationStep,
+    WaitForMediaStep,
+    WaitForMessageStep,
+    WaitForTrackStep
 } from './handler-step-definitions';
 
 type ClientServerChannel = PluggableAdmin.Serialization.ClientServerChannel;
 
-export interface HandlerStep extends HandlerStepDefinition {
+export interface HandlerStepImpl extends HandlerStepDefinition {
     handle(connection: MockRTCConnection): Promise<void>;
 }
 
-export class WaitForDurationStep extends WaitForDurationStepDefinition {
+export class WaitForDurationStepImpl extends WaitForDurationStep {
 
     async handle(): Promise<void> {
         return new Promise<void>((resolve) => setTimeout(resolve, this.durationMs));
@@ -40,7 +40,7 @@ export class WaitForDurationStep extends WaitForDurationStepDefinition {
 
 }
 
-export class WaitForChannelStep extends WaitForChannelStepDefinition {
+export class WaitForChannelStepImpl extends WaitForChannelStep {
 
     private matchesChannel(channel: DataChannelStream) {
         return this.channelLabel === undefined || this.channelLabel === channel.label;
@@ -62,7 +62,7 @@ export class WaitForChannelStep extends WaitForChannelStepDefinition {
 
 }
 
-export class WaitForMessageStep extends WaitForMessageStepDefinition {
+export class WaitForMessageStepImpl extends WaitForMessageStep {
 
     private matchesChannel(channel: DataChannelStream) {
         return this.channelLabel === undefined || this.channelLabel === channel.label;
@@ -93,7 +93,7 @@ export class WaitForMessageStep extends WaitForMessageStepDefinition {
 
 }
 
-export class WaitForTrackStep extends WaitForTrackStepDefinition {
+export class WaitForTrackStepImpl extends WaitForTrackStep {
 
     async handle(connection: MockRTCConnection): Promise<void> {
         await new Promise<void>((resolve) => {
@@ -104,7 +104,7 @@ export class WaitForTrackStep extends WaitForTrackStepDefinition {
 
 }
 
-export class WaitForMediaStep extends WaitForMediaStepDefinition {
+export class WaitForMediaStepImpl extends WaitForMediaStep {
 
     async handle(connection: MockRTCConnection): Promise<void> {
         return new Promise<void>((resolve) => {
@@ -129,7 +129,7 @@ export class WaitForMediaStep extends WaitForMediaStepDefinition {
 
 }
 
-export class CreateChannelStep extends CreateChannelStepDefinition {
+export class CreateChannelStepImpl extends CreateChannelStep {
 
     async handle(conn: MockRTCConnection): Promise<void> {
         const channel = conn.createDataChannel(this.channelLabel);
@@ -140,7 +140,7 @@ export class CreateChannelStep extends CreateChannelStepDefinition {
 
 }
 
-export class SendStep extends SendStepDefinition {
+export class SendStepImpl extends SendStep {
 
     private matchesChannel(channel: DataChannelStream) {
         return this.channelLabel === undefined || this.channelLabel === channel.label;
@@ -177,7 +177,7 @@ export class SendStep extends SendStepDefinition {
 
 }
 
-export class CloseStep extends CloseStepDefinition {
+export class CloseStepImpl extends CloseStep {
 
     async handle(connection: MockRTCConnection): Promise<void> {
         await connection.close();
@@ -185,7 +185,7 @@ export class CloseStep extends CloseStepDefinition {
 
 }
 
-export class EchoStep extends EchoStepDefinition {
+export class EchoStepImpl extends EchoStep {
 
     async handle(connection: MockRTCConnection): Promise<void> {
         const echoContent = (stream: DataChannelStream | MediaTrackStream) => {
@@ -203,9 +203,7 @@ export class EchoStep extends EchoStepDefinition {
 
 }
 
-export class PeerProxyStep extends PeerProxyStepDefinition {
-
-    private externalConnections: RTCConnection[] = [];
+export class PeerProxyStepImpl extends PeerProxyStep {
 
     async handle(connection: MockRTCConnection) {
         const externalConn = new RTCConnection();
@@ -250,9 +248,7 @@ export class PeerProxyStep extends PeerProxyStepDefinition {
 
 }
 
-export class DynamicProxyStep extends DynamicProxyStepDefinition {
-
-    private externalConnections: RTCConnection[] = [];
+export class DynamicProxyStepImpl extends DynamicProxyStep {
 
     async handle(connection: MockRTCConnection) {
         await connection.proxyTrafficToExternalConnection();
@@ -268,15 +264,15 @@ export class DynamicProxyStep extends DynamicProxyStepDefinition {
 }
 
 export const StepLookup: typeof StepDefinitionLookup = {
-    'wait-for-duration': WaitForDurationStep,
-    'wait-for-rtc-data-channel': WaitForChannelStep,
-    'wait-for-rtc-track': WaitForTrackStep,
-    'wait-for-rtc-media': WaitForMediaStep,
-    'wait-for-rtc-message': WaitForMessageStep,
-    'create-rtc-data-channel': CreateChannelStep,
-    'send-rtc-data-message': SendStep,
-    'close-rtc-connection': CloseStep,
-    'echo-rtc': EchoStep,
-    'rtc-peer-proxy': PeerProxyStep,
-    'rtc-dynamic-proxy': DynamicProxyStep
+    'wait-for-duration': WaitForDurationStepImpl,
+    'wait-for-rtc-data-channel': WaitForChannelStepImpl,
+    'wait-for-rtc-track': WaitForTrackStepImpl,
+    'wait-for-rtc-media': WaitForMediaStepImpl,
+    'wait-for-rtc-message': WaitForMessageStepImpl,
+    'create-rtc-data-channel': CreateChannelStepImpl,
+    'send-rtc-data-message': SendStepImpl,
+    'close-rtc-connection': CloseStepImpl,
+    'echo-rtc': EchoStepImpl,
+    'rtc-peer-proxy': PeerProxyStepImpl,
+    'rtc-dynamic-proxy': DynamicProxyStepImpl
 };

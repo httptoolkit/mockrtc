@@ -22,12 +22,12 @@ export { MockRTCAdminPlugin } from "./server/mockrtc-admin-plugin";
 import { MockRTCClient, MockRTCClientOptions } from "./client/mockrtc-client";
 
 // Export the required structures to remotely build and send rules to the admin API:
-export * as HandlerStepDefinitions from "./handling/handler-step-definitions";
-export * as MatcherDefinitions from "./matching/matcher-definitions";
+export * as steps from "./handling/handler-step-definitions";
+export * as matchers from "./matching/matcher-definitions";
 export { MockRTCAdminRequestBuilder } from "./client/mockrtc-admin-request-builder";
 
 // Re-export lots of types are used in various APIs (mostly to make TypeDoc happy):
-export type { HandlerStep } from "./handling/handler-steps";
+export type { HandlerStepImpl as HandlerStep } from "./handling/handler-step-impls";
 export type { MockRTCHandlerBuilder } from "./handling/handler-builder";
 export type { MockRTCRuleBuilder, RuleHandlerBuilder } from "./rule-builder";
 

@@ -5,17 +5,17 @@
 
 import {
     type HandlerStepDefinition,
-    PeerProxyStepDefinition,
-    CreateChannelStepDefinition,
-    SendStepDefinition,
-    DynamicProxyStepDefinition,
-    WaitForChannelStepDefinition,
-    WaitForMessageStepDefinition,
-    WaitForDurationStepDefinition,
-    CloseStepDefinition,
-    EchoStepDefinition,
-    WaitForTrackStepDefinition,
-    WaitForMediaStepDefinition
+    PeerProxyStep,
+    CreateChannelStep,
+    SendStep,
+    DynamicProxyStep,
+    WaitForChannelStep,
+    WaitForMessageStep,
+    WaitForDurationStep,
+    CloseStep,
+    EchoStep,
+    WaitForTrackStep,
+    WaitForMediaStep
 } from "./handler-step-definitions";
 
 /**
@@ -37,7 +37,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     sleep(duration: number): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new WaitForDurationStepDefinition(duration));
+        this.handlerSteps.push(new WaitForDurationStep(duration));
         return this;
     }
 
@@ -47,7 +47,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     waitForChannel(channelLabel?: string): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new WaitForChannelStepDefinition(channelLabel));
+        this.handlerSteps.push(new WaitForChannelStep(channelLabel));
         return this;
     }
 
@@ -57,7 +57,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     waitForTrack(): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new WaitForTrackStepDefinition());
+        this.handlerSteps.push(new WaitForTrackStep());
         return this;
     }
 
@@ -70,7 +70,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     waitForNextMessage(): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new WaitForMessageStepDefinition());
+        this.handlerSteps.push(new WaitForMessageStep());
         return this;
     }
 
@@ -82,7 +82,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     waitForNextMedia(): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new WaitForMediaStepDefinition());
+        this.handlerSteps.push(new WaitForMediaStep());
         return this;
     }
 
@@ -95,7 +95,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     waitForNextMessageOnChannel(channelLabel: string): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new WaitForMessageStepDefinition(channelLabel));
+        this.handlerSteps.push(new WaitForMessageStep(channelLabel));
         return this;
     }
 
@@ -106,7 +106,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Steps
      */
     createDataChannel(channelLabel: string): MockRTCHandlerBuilder<R> {
-        this.handlerSteps.push(new CreateChannelStepDefinition(channelLabel));
+        this.handlerSteps.push(new CreateChannelStep(channelLabel));
         return this;
     }
 
@@ -128,10 +128,10 @@ export class MockRTCHandlerBuilder<R> {
     send(...args: [string | undefined, string | Buffer] | [string | Buffer]): MockRTCHandlerBuilder<R> {
         if (args[1] !== undefined) {
             const [channel, message] = args as [string, string | Buffer];
-            this.handlerSteps.push(new SendStepDefinition(channel, message));
+            this.handlerSteps.push(new SendStep(channel, message));
         } else {
             const [message] = args as [string | Buffer];
-            this.handlerSteps.push(new SendStepDefinition(undefined, message));
+            this.handlerSteps.push(new SendStep(undefined, message));
         }
         return this;
     }
@@ -146,7 +146,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Final Steps
      */
     thenClose(): Promise<R> {
-        this.handlerSteps.push(new CloseStepDefinition());
+        this.handlerSteps.push(new CloseStep());
         return this.buildCallback(this.handlerSteps);
     }
 
@@ -179,7 +179,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Final Steps
      */
     thenEcho(): Promise<R> {
-        this.handlerSteps.push(new EchoStepDefinition());
+        this.handlerSteps.push(new EchoStep());
         return this.buildCallback(this.handlerSteps);
     }
 
@@ -195,7 +195,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Final Steps
      */
     thenForwardTo(peer: RTCPeerConnection): Promise<R> {
-        this.handlerSteps.push(new PeerProxyStepDefinition(peer));
+        this.handlerSteps.push(new PeerProxyStep(peer));
         return this.buildCallback(this.handlerSteps);
     }
 
@@ -220,7 +220,7 @@ export class MockRTCHandlerBuilder<R> {
      * @category Final Steps
      */
     thenPassThrough(): Promise<R> {
-        this.handlerSteps.push(new DynamicProxyStepDefinition());
+        this.handlerSteps.push(new DynamicProxyStep());
         return this.buildCallback(this.handlerSteps);
     }
 

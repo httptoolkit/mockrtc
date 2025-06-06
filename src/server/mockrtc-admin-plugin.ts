@@ -10,12 +10,12 @@ import { PluggableAdmin } from 'mockttp';
 import type { IResolvers } from "@graphql-tools/utils";
 import { PubSub } from "graphql-subscriptions";
 
-import { StepLookup } from '../handling/handler-steps';
+import { StepLookup } from '../handling/handler-step-impls';
 import { MockRTCOptions, MockRTCSessionDescription } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 import { AnswerOptions, OfferOptions } from '../mockrtc-peer';
 import { MatcherDefinition } from '../matching/matcher-definitions';
-import { MatcherLookup } from '../matching/matchers';
+import { MatcherLookup } from '../matching/matcher-impls';
 import { HandlerStepDefinition } from '../handling/handler-step-definitions';
 
 const { deserialize } = PluggableAdmin.Serialization;
@@ -225,7 +225,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
         }
     `;
 
-    buildResolvers(adminStream: stream.Duplex, ruleParams: {}): IResolvers {
+    buildResolvers(adminStream: stream.Duplex): IResolvers {
         const pubsub = new PubSub();
 
         EVENTS.forEach((eventName) => {
@@ -241,7 +241,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 } }) => {
                     return this.mockRTCServer.buildPeerFromDefinition(
                         steps.map((stepData) =>
-                            deserialize(stepData, adminStream, ruleParams, StepLookup)
+                            deserialize(stepData, adminStream, {}, StepLookup)
                         )
                     );
                 },
@@ -251,10 +251,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                 } }) => {
                     return this.mockRTCServer.addRuleFromDefinition(
                         matchers.map((matcherData) =>
-                            deserialize(matcherData, adminStream, ruleParams, MatcherLookup)
+                            deserialize(matcherData, adminStream, {}, MatcherLookup)
                         ),
                         steps.map((stepData) =>
-                            deserialize(stepData, adminStream, ruleParams, StepLookup)
+                            deserialize(stepData, adminStream, {}, StepLookup)
                         )
                     );
                 },
@@ -265,10 +265,10 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
                     return this.mockRTCServer.setRulesFromDefinitions(
                         rules.map(({ matchers, steps }) => ({
                             matchers: matchers.map((matcherData) =>
-                                deserialize(matcherData, adminStream, ruleParams, MatcherLookup)
+                                deserialize(matcherData, adminStream, {}, MatcherLookup)
                             ),
                             steps: steps.map((stepData) =>
-                                deserialize(stepData, adminStream, ruleParams, StepLookup)
+                                deserialize(stepData, adminStream, {}, StepLookup)
                             )
                         }))
                     );

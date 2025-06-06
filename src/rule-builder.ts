@@ -7,13 +7,13 @@ import { MockRTCHandlerBuilder } from "./handling/handler-builder";
 import { HandlerStepDefinition } from "./handling/handler-step-definitions";
 import {
     MatcherDefinition,
-    HostnameMatcherDefinition,
-    UrlRegexMatcherDefinition,
-    UserAgentRegexMatcherDefinition,
-    HasAudioTrackMatcherDefinition,
-    HasVideoTrackMatcherDefinition,
-    HasMediaTrackMatcherDefinition,
-    HasDataChannelMatcherDefinition
+    HostnameMatcher,
+    UrlRegexMatcher,
+    UserAgentRegexMatcher,
+    HasAudioTrackMatcher,
+    HasVideoTrackMatcher,
+    HasMediaTrackMatcher,
+    HasDataChannelMatcher
 } from "./matching/matcher-definitions";
 
 export type RuleHandlerBuilder = MockRTCHandlerBuilder<void>;
@@ -38,7 +38,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * Match RTC connections whose initial negotiation includes a data channel.
      */
     withDataChannels() {
-        this.matchers.push(new HasDataChannelMatcherDefinition());
+        this.matchers.push(new HasDataChannelMatcher());
         return this;
     }
 
@@ -47,7 +47,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * media track.
      */
     withMedia() {
-        this.matchers.push(new HasMediaTrackMatcherDefinition());
+        this.matchers.push(new HasMediaTrackMatcher());
         return this;
     }
 
@@ -55,7 +55,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * Match RTC connections whose initial negotiation includes a video media track
      */
     withVideo() {
-        this.matchers.push(new HasVideoTrackMatcherDefinition());
+        this.matchers.push(new HasVideoTrackMatcher());
         return this;
     }
 
@@ -63,7 +63,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * Match RTC connections whose initial negotiation includes an audio media track
      */
     withAudio() {
-        this.matchers.push(new HasAudioTrackMatcherDefinition());
+        this.matchers.push(new HasAudioTrackMatcher());
         return this;
     }
 
@@ -78,7 +78,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * @category Matcher
      */
     fromPageHostname(hostname: string): this {
-        this.matchers.push(new HostnameMatcherDefinition(hostname));
+        this.matchers.push(new HostnameMatcher(hostname));
         return this;
     }
 
@@ -93,7 +93,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * @category Matcher
      */
     fromPageUrlMatching(urlRegex: RegExp): this {
-        this.matchers.push(new UrlRegexMatcherDefinition(urlRegex));
+        this.matchers.push(new UrlRegexMatcher(urlRegex));
         return this;
     }
 
@@ -109,7 +109,7 @@ export class MockRTCRuleBuilder implements Omit<RuleHandlerBuilder, 'handlerStep
      * @category Matcher
      */
     fromUserAgentMatching(userAgentRegEx: RegExp): this {
-        this.matchers.push(new UserAgentRegexMatcherDefinition(userAgentRegEx));
+        this.matchers.push(new UserAgentRegexMatcher(userAgentRegEx));
         return this;
     }
 
