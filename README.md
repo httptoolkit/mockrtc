@@ -1,6 +1,6 @@
 # MockRTC [![Build Status](https://github.com/httptoolkit/mockrtc/actions/workflows/ci.yml/badge.svg)](https://github.com/httptoolkit/mockrtc/actions) [![Available on NPM](https://img.shields.io/npm/v/mockrtc.svg?)](https://npmjs.com/package/mockrtc)
 
-> _Part of [HTTP Toolkit](https://httptoolkit.tech): powerful tools for building, testing & debugging HTTP(S), WebSockets and WebRTC_
+> _Part of [HTTP Toolkit](https://httptoolkit.com): powerful tools for building, testing & debugging HTTP(S), WebSockets and WebRTC_
 
 MockRTC lets you intercept, assert on and mock WebRTC peers. This makes it possible to:
 
@@ -8,14 +8,6 @@ MockRTC lets you intercept, assert on and mock WebRTC peers. This makes it possi
 * Simulate WebRTC errors in a reliable reproducible way.
 * Capture and inspect traffic between real WebRTC peers for debugging.
 * Create WebRTC proxy peers to automate message transformation, monitoring or logging.
-
----
-
-:warning: _MockRTC is still new & rapidly developing!_ :warning:
-
-_Everything described here works today, but there's lots more to come, and some advanced WebRTC use cases may run into rough edges. If you hit any problems or missing features, please [open an issue](https://github.com/httptoolkit/mockrtc/issues/new)._
-
----
 
 ## Example
 
