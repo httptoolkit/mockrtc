@@ -251,7 +251,8 @@ export class PeerProxyStepImpl extends PeerProxyStep {
 export class DynamicProxyStepImpl extends DynamicProxyStep {
 
     async handle(connection: MockRTCConnection) {
-        await connection.proxyTrafficToExternalConnection();
+        const externalConn = await connection.proxyTrafficToExternalConnection();
+        this.externalConnections.push(externalConn);
 
         // This step keeps running indefinitely, until the connection closes
         return new Promise<void>((resolve) => connection.on('connection-closed', resolve));

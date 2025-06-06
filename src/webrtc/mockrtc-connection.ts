@@ -90,6 +90,7 @@ export class MockRTCConnection extends RTCConnection {
         }
 
         await this.proxyTrafficTo(this.externalConnection!);
+        return this.externalConnection!;
     }
 
     async proxyTrafficTo(externalConnection: RTCConnection) {
