@@ -7,7 +7,13 @@ jobs:
 
     strategy:
       matrix:
-        node-version: [20.x, v22.14.0, 22.x, 24.x]
+        include:
+          - node-version: 20.x
+          - node-version: 22.x
+          - node-version: 'v22.20.0'
+            deploys-docs: true
+          - node-version: 24.x
+          - node-version: '*'
 
     steps:
       - uses: actions/checkout@v3
@@ -22,12 +28,36 @@ jobs:
       - run: npm install
       - run: npm run build
       - run: npm test
-        env:
-          NODE_OPTIONS: ${{ matrix.node-version == '22.x' && '--experimental-require-module' || '' }}
 
-      - name: Deploy docs
-        if: github.ref == 'refs/heads/main' && matrix.node-version == 'v20.18.1'
-        uses: JamesIves/github-pages-deploy-action@v4.5.0
+      - name: Upload docs artifact
+        uses: actions/upload-artifact@v6
+        if: matrix.deploys-docs == true
+        with:
+          name: typedoc
+          path: typedoc
+          retention-days: 1
+
+  deploy-docs:
+    name: Deploy docs
+    needs: build
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/download-artifact@v7
+        with:
+          name: typedoc
+          path: typedoc
+      - name: Check for generated docs
+        run: |
+          # Fails if directory doesn't exist or is empty
+          if [ ! -d "typedoc" ] || [ -z "$(ls -A typedoc)" ]; then
+            echo "Error: 'typedoc' directory is missing or empty."
+            exit 1
+          fi
+      - uses: JamesIves/github-pages-deploy-action@v4
         with:
           single-commit: true
           branch: gh-pages
