@@ -102,6 +102,7 @@ export class RTCConnection extends EventEmitter {
         // Important to remember that only node-dc only allows one listener per event. To handle that,
         // we reemit important events here to use normal node event methods instead:
         this.rawConn!.onStateChange((state) => {
+            if (!this.rawConn) return;
             this.emit('connection-state-changed', state);
         });
 
