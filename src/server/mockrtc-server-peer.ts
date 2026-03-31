@@ -5,8 +5,6 @@
 
 import { randomUUID } from 'crypto';
 import { EventEmitter } from "events";
-import now = require("performance-now");
-
 import {
     MockRTCPeer,
     MockRTCPeerOptions,
@@ -60,7 +58,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
             conn.once('connection-connected', () => {
                 const timingEvents: TimingEvents = {
                     startTime: Date.now(),
-                    connectTimestamp: now()
+                    connectTimestamp: performance.now()
                 }
 
                 const connectionEventParams = {
@@ -83,7 +81,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 });
 
                 conn.once('external-connection-attached', (externalConn: RTCConnection) => {
-                    timingEvents.externalAttachTimestamp = now();
+                    timingEvents.externalAttachTimestamp = performance.now();
 
                     const selectedExternalCandidates = externalConn.getSelectedCandidates()!;
 
@@ -111,7 +109,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                             ...channelEventParams,
                             channelLabel: channelStream.label,
                             channelProtocol: channelStream.protocol,
-                            eventTimestamp: now()
+                            eventTimestamp: performance.now()
                         });
                     };
                     if (channelStream.isOpen) announceOpen();
@@ -129,7 +127,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                             direction,
                             content,
                             isBinary,
-                            eventTimestamp: now()
+                            eventTimestamp: performance.now()
                         });
                     };
 
@@ -138,7 +136,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
 
                     channelStream.on('close', () => this.eventEmitter.emit('data-channel-closed', {
                         ...channelEventParams,
-                        eventTimestamp: now()
+                        eventTimestamp: performance.now()
                     }));
                 }
 
@@ -159,7 +157,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                             ...trackEventParams,
                             trackType: mediaTrack.type,
                             trackDirection: mediaTrack.direction,
-                            eventTimestamp: now()
+                            eventTimestamp: performance.now()
                         });
                     };
 
@@ -179,7 +177,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                             ...trackEventParams,
                             totalBytesSent: mediaTrack.totalBytesSent,
                             totalBytesReceived: mediaTrack.totalBytesReceived,
-                            eventTimestamp: now()
+                            eventTimestamp: performance.now()
                         });
 
                         previousBytesSent = mediaTrack.totalBytesSent;
@@ -190,7 +188,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                         clearInterval(statsInterval);
                         this.eventEmitter.emit('media-track-closed', {
                             ...trackEventParams,
-                            eventTimestamp: now()
+                            eventTimestamp: performance.now()
                         });
                     });
                 }
@@ -202,7 +200,7 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 conn.mediaTracks.forEach(emitTrackEvents);
 
                 conn.once('connection-closed', () => {
-                    timingEvents.disconnectTimestamp = now();
+                    timingEvents.disconnectTimestamp = performance.now();
                     this.eventEmitter.emit('peer-disconnected', { ...connectionEventParams });
                 });
             });

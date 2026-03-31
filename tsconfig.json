@@ -5,7 +5,9 @@
         "outDir": "./dist",
         "declaration": true,
         "sourceMap": true,
-        "strict": true
+        "strict": true,
+        "lib": ["es6", "dom", "dom.iterable", "esnext.disposable"],
+        "types": ["node"]
     },
     "include": [
         "custom-typings/*.d.ts",

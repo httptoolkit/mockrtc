@@ -76,11 +76,13 @@ export class DataChannelStream extends stream.Duplex {
     }
 
     private _readActive = true;
+    /** @internal */
     _read() {
         // Stop dropping messages, if the buffer filling up meant we were doing so before.
         this._readActive = true;
     }
 
+    /** @internal */
     _write(chunk: string | Buffer | unknown, encoding: string, callback: (error: Error | null) => void) {
         let sentOk: boolean;
 
@@ -106,11 +108,13 @@ export class DataChannelStream extends stream.Duplex {
         }
     }
 
+    /** @internal */
     _final(callback: (error: Error | null) => void) {
         if (!this.allowHalfOpen) this.destroy();
         callback(null);
     }
 
+    /** @internal */
     _destroy(maybeErr: Error | null, callback: (error: Error | null) => void) {
         // When the stream is destroyed, we close the DataChannel.
         this.rawChannel.close();

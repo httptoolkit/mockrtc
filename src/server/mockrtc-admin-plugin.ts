@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as _ from 'lodash';
 import * as stream from 'stream';
 import { gql } from 'graphql-tag';
 import { PluggableAdmin } from 'mockttp';
@@ -11,12 +10,17 @@ import type { IResolvers } from "@graphql-tools/utils";
 import { PubSub } from "graphql-subscriptions";
 
 import { StepLookup } from '../handling/handler-step-impls';
+
 import { MockRTCOptions, MockRTCSessionDescription } from '../mockrtc';
 import { MockRTCServer } from './mockrtc-server';
 import { AnswerOptions, OfferOptions } from '../mockrtc-peer';
 import { MatcherDefinition } from '../matching/matcher-definitions';
 import { MatcherLookup } from '../matching/matcher-impls';
 import { HandlerStepDefinition } from '../handling/handler-step-definitions';
+
+function kebabToCamel(str: string) {
+    return str.replace(/-([a-z])/g, (_, c) => c.toUpperCase());
+}
 
 const { deserialize } = PluggableAdmin.Serialization;
 type SerializedValue<T> = PluggableAdmin.Serialization.SerializedValue<T>;
@@ -230,7 +234,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
 
         EVENTS.forEach((eventName) => {
             this.mockRTCServer.on(eventName, (peer) => {
-                pubsub.publish(eventName, { [_.camelCase(eventName)]: peer });
+                pubsub.publish(eventName, { [kebabToCamel(eventName)]: peer });
             });
         });
 
@@ -377,7 +381,7 @@ export class MockRTCAdminPlugin implements PluggableAdmin.AdminPlugin<MockRTCOpt
             Subscription: {
                 ...(EVENTS.reduce((acc, eventName) => ({
                     ...acc,
-                    [_.camelCase(eventName)]: {
+                    [kebabToCamel(eventName)]: {
                         subscribe: () => pubsub.asyncIterator(eventName)
                     }
                 }), {}))

@@ -3,7 +3,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import * as _ from 'lodash';
 import { randomUUID } from 'crypto';
 import { EventEmitter } from 'events';
 import * as SDP from 'sdp-transform';
@@ -240,16 +239,20 @@ export class RTCConnection extends EventEmitter {
         if (!candidates) return undefined;
 
         // Rename transportType -> protocol, to better match the browser WebRTC APIs
+        // N.b. we omit transportType from *Candidate here
+        const { transportType: localTransportType, ...localCandidate } = candidates.local;
+        const { transportType: remoteTransportType, ...remoteCandidate } = candidates.remote;
+
         return {
             local: {
-                ..._.omit(candidates.local, 'transportType'),
+                ...localCandidate,
                 type: candidates.local.type as RTCIceCandidateType,
-                protocol: candidates.local.transportType.toLowerCase()
+                protocol: localTransportType.toLowerCase()
             },
             remote: {
-                ..._.omit(candidates.remote, 'transportType'),
+                ...remoteCandidate,
                 type: candidates.remote.type as RTCIceCandidateType,
-                protocol: candidates.remote.transportType.toLowerCase()
+                protocol: remoteTransportType.toLowerCase()
             }
         };
     }
