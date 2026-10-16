@@ -13,9 +13,10 @@ import { NodeGlobalsPolyfillPlugin } from '@esbuild-plugins/node-globals-polyfil
 
 if (CONTINUOUS) {
     const adminProc = ChildProcess.spawn(
-        "./node_modules/.bin/node-dev",
+        process.execPath,
         [
-            '--notify=false',
+            '--watch',
+            '-r', 'ts-node/register',
             './test/start-test-admin-server.ts'
         ],
         { stdio: 'inherit' }
