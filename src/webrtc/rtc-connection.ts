@@ -26,6 +26,8 @@ export type ParsedSDP = {
 
 const CONNECTED_SETTLE_DELAY_MS = 5;
 
+const CLOSE_LINGER_MS = 100;
+
 /**
  * An RTC connection is a single connection. This base class defines the raw connection management and
  * tracking logic for a generic connection. The MockRTCConnection subclass extends this and adds
@@ -42,6 +44,8 @@ export class RTCConnection extends EventEmitter {
 
     private remoteDescription: RTCSessionDescriptionInit & ParsedSDP | undefined;
     private localDescription: MockRTCSessionDescription & ParsedSDP | undefined;
+
+    private lastDataWriteTime = -Infinity;
 
     private _connectionMetadata: ConnectionMetadata = {};
     public get metadata() {
@@ -138,6 +142,9 @@ export class RTCConnection extends EventEmitter {
 
         channelStream.on('error', (error) => {
             console.error('Channel error:', error);
+        });
+        channelStream.on('wrote-data', () => {
+            this.lastDataWriteTime = performance.now();
         });
         this.emit('channel-created', channelStream);
         this.emit(`${options.isLocal ? 'local' : 'remote'}-channel-created`, channelStream);
@@ -436,6 +443,14 @@ export class RTCConnection extends EventEmitter {
 
     async close() {
         if (!this.rawConn) return; // Already closed
+
+        // node-datachannel aborts the SCTP association on close, dropping any data that hasn't been
+        // transmitted yet. If we've only just sent data, we give it a moment to go out first.
+        const lingerMs = this.lastDataWriteTime + CLOSE_LINGER_MS - performance.now();
+        if (lingerMs > 0) {
+            await new Promise((resolve) => setTimeout(resolve, lingerMs));
+            if (!this.rawConn) return;
+        }
 
         const { rawConn } = this;
         this.rawConn = null; // Drop the reference, so nothing tries to use it after close
