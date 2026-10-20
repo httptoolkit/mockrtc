@@ -55,7 +55,16 @@ export class MockRTCServerPeer implements MockRTCPeer {
         if (conn instanceof MockRTCConnection) {
             // Here we listen to the various internal connection events, and convert them into
             // their corresponding public-API events.
-            conn.once('connection-connected', () => {
+            let handledConnection = false;
+            const onConnected = () => {
+                if (handledConnection) return;
+                handledConnection = true;
+
+                // If there are no candidates then the connection has already closed, so nothingn to do.
+                // This runs in an NDC callback, so we can't throw - we just return silently.
+                const selectedCandidates = conn.getSelectedCandidates();
+                if (!selectedCandidates) return;
+
                 const timingEvents: TimingEvents = {
                     startTime: Date.now(),
                     connectTimestamp: performance.now()
@@ -66,8 +75,6 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     sessionId: conn.id,
                     timingEvents
                 };
-
-                const selectedCandidates = conn.getSelectedCandidates()!;
 
                 this.eventEmitter.emit('peer-connected', {
                     ...connectionEventParams,
@@ -81,9 +88,11 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 });
 
                 conn.once('external-connection-attached', (externalConn: RTCConnection) => {
-                    timingEvents.externalAttachTimestamp = performance.now();
+                    // If conn has already closed (no candidates) do nothing:
+                    const selectedExternalCandidates = externalConn.getSelectedCandidates();
+                    if (!selectedExternalCandidates) return;
 
-                    const selectedExternalCandidates = externalConn.getSelectedCandidates()!;
+                    timingEvents.externalAttachTimestamp = performance.now();
 
                     this.eventEmitter.emit('external-peer-attached', {
                         ...connectionEventParams,
@@ -141,9 +150,8 @@ export class MockRTCServerPeer implements MockRTCPeer {
                 }
 
                 conn.on('channel-created', emitChannelEvents);
-                // Due to race conditions somewhere (?) presumably in node-datachannel, channels can
-                // be created before the 'connected' event fires, so we need to handle already
-                // existing channels here too:
+                // Channels can be created before we handle the connection (see below), so we need to
+                // handle already existing channels here too:
                 conn.channels.forEach(emitChannelEvents);
 
                 const emitTrackEvents = (mediaTrack: MediaTrackStream) => {
@@ -203,7 +211,13 @@ export class MockRTCServerPeer implements MockRTCPeer {
                     timingEvents.disconnectTimestamp = performance.now();
                     this.eventEmitter.emit('peer-disconnected', { ...connectionEventParams });
                 });
-            });
+            };
+
+            conn.once('connection-connected', onConnected);
+            // Remote channels only exist once we're connected, but node-datachannel can deliver them
+            // (and their first messages) before the connected event. Treating them as connection too
+            // ensures we're listening before any of their messages are processed.
+            conn.once('remote-channel-created', onConnected);
         }
     }
 

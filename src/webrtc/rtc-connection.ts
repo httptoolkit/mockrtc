@@ -243,7 +243,7 @@ export class RTCConnection extends EventEmitter {
     }
 
     getSelectedCandidates() {
-        if (!this.rawConn) throw new Error("Can't get selected candidates after connection is closed");
+        if (!this.rawConn) return undefined;
 
         const candidates = this.rawConn.getSelectedCandidatePair();
         if (!candidates) return undefined;
