@@ -24,6 +24,8 @@ export type ParsedSDP = {
     parsedSdp: SDP.SessionDescription;
 };
 
+const CONNECTED_SETTLE_DELAY_MS = 5;
+
 /**
  * An RTC connection is a single connection. This base class defines the raw connection management and
  * tracking logic for a generic connection. The MockRTCConnection subclass extends this and adds
@@ -367,17 +369,23 @@ export class RTCConnection extends EventEmitter {
         return new Promise<void>((resolve, reject) => {
             if (!this.rawConn) throw new Error("Connection closed while/before waiting until connected");
 
-            this.on('connection-state-changed', (state) => {
-                if (state === 'connected') resolve();
-                if (state === 'failed') {
+            const onStateChange = (state: string) => {
+                if (state === 'connected') {
+                    this.removeListener('connection-state-changed', onStateChange);
+                    // libdatachannel opens pending channels in a task queued just after the connected
+                    // event, and re-opens any channel created before that task runs, which the remote
+                    // then resets. We give that task a moment to run before anything creates channels.
+                    setTimeout(() => {
+                        if (this.rawConn?.state() === 'connected') resolve();
+                    }, CONNECTED_SETTLE_DELAY_MS);
+                } else if (state === 'failed') {
+                    this.removeListener('connection-state-changed', onStateChange);
                     reject(new Error("Connection failed while waiting for connection"));
                 }
-            });
+            };
 
-            if (this.rawConn.state() === 'connected') resolve();
-            if (this.rawConn.state() === 'failed') {
-                reject(new Error("Connection failed while waiting for connection"));
-            }
+            this.on('connection-state-changed', onStateChange);
+            onStateChange(this.rawConn.state());
         });
     }
 
