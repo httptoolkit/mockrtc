@@ -10,10 +10,10 @@ jobs:
         include:
           - node-version: 20.x
           - node-version: 22.x
-          - node-version: 'v22.20.0'
-            deploys-docs: true
           - node-version: 24.x
-          - node-version: '*'
+          - node-version: 'v24.19.0'
+            deploys-docs: true
+          - node-version: latest
 
     steps:
       - uses: actions/checkout@v6
@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           check-latest: true
-          cache: 'npm'
+          cache: ${{ github.event_name != 'schedule' && 'npm' || '' }}
           cache-dependency-path: 'package.json'
 
       - run: npm install
@@ -80,7 +80,7 @@ jobs:
 
       - uses: actions/setup-node@v6
         with:
-          node-version: 'v22.20.0'
+          node-version: 'v24.19.0'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
           cache-dependency-path: 'package.json'
@@ -109,17 +109,17 @@ jobs:
           fi
 
       # Make sure we have the latest npm for publishing:
-      - run: npm install -g npm@latest
+      - run: npm install -g npm@^11
 
       - name: Publish to npm
         run: |
           if [ "${{ steps.version-check.outputs.is_prerelease }}" == "true" ]; then
             echo "Publishing untagged prerelease"
-            npm publish --provenance --tag test
+            npm stage publish --provenance --tag test
             # We have to publish with a tag (so we use 'test') but we can clean it up:
             npm dist-tag rm mockrtc test --silent
           else
             echo "Publishing stable release with 'latest' tag"
-            npm publish --provenance
+            npm stage publish --provenance
           fi
 
