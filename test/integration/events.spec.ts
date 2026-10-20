@@ -462,8 +462,10 @@ describe("MockRTC event subscriptions", function () {
         });
 
         it("fires an event when a media track is closed", async () => {
+            const connectEventPromise = getDeferred<MockRTCEventData['peer-connected']>();
             const eventPromise = getDeferred<MockRTCEventData['media-track-closed']>();
 
+            mockRTC.on('peer-connected', (peer) => connectEventPromise.resolve(peer));
             mockRTC.on('media-track-closed', (track) => eventPromise.resolve(track));
 
             const mockPeer = await mockRTC.buildPeer()
@@ -478,7 +480,9 @@ describe("MockRTC event subscriptions", function () {
             const { answer } = await mockPeer.answerOffer(localOffer);
             await localConnection.setRemoteDescription(answer);
 
-            await waitForState(localConnection, 'connected');
+            // Wait until MockRTC is fully aware of the connection - if we disconnect before then,
+            // there are no events at all.
+            await connectEventPromise;
 
             // Close the connection entirely, implicitly closing the media tracks:
             localConnection.close();
